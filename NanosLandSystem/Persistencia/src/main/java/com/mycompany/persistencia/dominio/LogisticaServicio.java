@@ -4,30 +4,40 @@
  */
 package com.mycompany.persistencia.dominio;
 
+import com.mycompany.persistencia.dominio.enums.EstadoLogistica;
 import jakarta.persistence.*;
+import java.time.LocalTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.Date;
 
 @Entity
-@Table(name = "items_checklist")
+@Table(name = "logistica_servicios")
 @Data
 @NoArgsConstructor
-public class ItemChecklist {
+public class LogisticaServicio {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private boolean listo;
-    
-    private String notas;
+    @Column(name = "hora_requerida")
+    private LocalTime horaRequerida;
 
-    @Temporal(TemporalType.DATE)
-    private Date fechaContacto;
+    @Column(length = 500)
+    private String especificaciones;
 
-    @Temporal(TemporalType.DATE)
-    private Date fechaListo;
+    @Column(name = "desglose_opciones", length = 500)
+    private String desgloseOpciones;
+
+    @Column(name = "ubicacion_montaje")
+    private String ubicacionMontaje;
+
+    @Column(name = "responsable_turno")
+    private String responsableTurno;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoLogistica estado;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "servicio_id")

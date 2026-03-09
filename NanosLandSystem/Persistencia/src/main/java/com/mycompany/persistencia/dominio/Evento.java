@@ -4,6 +4,7 @@
  */
 package com.mycompany.persistencia.dominio;
 
+import com.mycompany.persistencia.dominio.enums.TurnoEvento;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;

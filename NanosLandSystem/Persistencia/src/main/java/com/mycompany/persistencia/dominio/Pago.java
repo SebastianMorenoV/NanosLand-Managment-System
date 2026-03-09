@@ -4,6 +4,7 @@
  */
 package com.mycompany.persistencia.dominio;
 
+import com.mycompany.persistencia.dominio.enums.MetodoPago;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
