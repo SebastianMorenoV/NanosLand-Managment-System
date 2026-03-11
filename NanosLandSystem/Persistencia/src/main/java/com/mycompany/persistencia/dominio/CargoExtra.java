@@ -27,16 +27,13 @@ public class CargoExtra {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación al catálogo (Puede ser NULL si es un cargo inventado/manual en el momento)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "servicio_id", nullable = true)
     private Servicio servicio;
 
-    // El texto libre que escriben en la pantalla (Ej. "Vaso roto" o "Bolsa de Hielo")
     @Column(length = 255)
     private String descripcion;
 
-    // Se deja como double por si se cobran fracciones (Ej. 0.5 horas extra)
     @Column(nullable = false)
     private double cantidad;
     
@@ -46,12 +43,77 @@ public class CargoExtra {
     @Column(nullable = false)
     private double subtotal;
 
-    // Para saber en qué momento exacto de la fiesta se pidió o registró este cargo
     @Column(name = "fecha_hora_cargo")
     private LocalDateTime fechaHoraCargo;
 
-    // ¡Crucial! Va ligado directamente al EVENTO físico, no a la cotización planeada
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evento_id", nullable = false)
     private Evento evento;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Servicio getServicio() {
+        return servicio;
+    }
+
+    public void setServicio(Servicio servicio) {
+        this.servicio = servicio;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public double getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(double cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public double getPrecioUnitario() {
+        return precioUnitario;
+    }
+
+    public void setPrecioUnitario(double precioUnitario) {
+        this.precioUnitario = precioUnitario;
+    }
+
+    public double getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
+
+    public LocalDateTime getFechaHoraCargo() {
+        return fechaHoraCargo;
+    }
+
+    public void setFechaHoraCargo(LocalDateTime fechaHoraCargo) {
+        this.fechaHoraCargo = fechaHoraCargo;
+    }
+
+    public Evento getEvento() {
+        return evento;
+    }
+
+    public void setEvento(Evento evento) {
+        this.evento = evento;
+    }
+    
+    
+    
 }

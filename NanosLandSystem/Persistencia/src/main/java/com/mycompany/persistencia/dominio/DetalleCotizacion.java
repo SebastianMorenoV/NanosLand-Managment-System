@@ -31,10 +31,6 @@ public class DetalleCotizacion {
     private int cantidad;
     private double subtotal;
 
-    // --- REQUERIMIENTOS DEL CLIENTE (ORDEN DE VENTA) ---
-    // Estos campos guardan lo que el cliente pidió. Al aprobarse el evento, 
-    // tu código los tomará para generar las tareas en LogisticaServicio.
-
     @Column(name = "hora_sugerida")
     private LocalTime horaSugerida;
 
@@ -46,4 +42,86 @@ public class DetalleCotizacion {
 
     @Column(name = "ubicacion_montaje")
     private String ubicacionMontaje;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Servicio getServicio() {
+        return servicio;
+    }
+
+    public void setServicio(Servicio servicio) {
+        this.servicio = servicio;
+    }
+
+    public Cotizacion getCotizacion() {
+        return cotizacion;
+    }
+
+    public void setCotizacion(Cotizacion cotizacion) {
+        this.cotizacion = cotizacion;
+    }
+
+    public double getPrecioUnitario() {
+        return precioUnitario;
+    }
+
+    public void setPrecioUnitario(double precioUnitario) {
+        this.precioUnitario = precioUnitario;
+    }
+
+    public int getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public double getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
+
+    public LocalTime getHoraSugerida() {
+        return horaSugerida;
+    }
+
+    public void setHoraSugerida(LocalTime horaSugerida) {
+        this.horaSugerida = horaSugerida;
+    }
+
+    public String getEspecificacionesCliente() {
+        return especificacionesCliente;
+    }
+
+    public void setEspecificacionesCliente(String especificacionesCliente) {
+        this.especificacionesCliente = especificacionesCliente;
+    }
+
+    public String getDesgloseOpciones() {
+        return desgloseOpciones;
+    }
+
+    public void setDesgloseOpciones(String desgloseOpciones) {
+        this.desgloseOpciones = desgloseOpciones;
+    }
+
+    public String getUbicacionMontaje() {
+        return ubicacionMontaje;
+    }
+
+    public void setUbicacionMontaje(String ubicacionMontaje) {
+        this.ubicacionMontaje = ubicacionMontaje;
+    }
+    
+    
 }

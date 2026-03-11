@@ -7,6 +7,7 @@ package com.mycompany.persistencia.dominio;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "paquetes_servicios")
@@ -21,11 +22,52 @@ public class PaqueteServicio {
     private int cantidad;
     private double subtotal;
 
+    @ToString.Exclude 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "paquete_id")
     private Paquete paquete;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "servicio_id")
     private Servicio servicio;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public int getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public double getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
+
+    public Paquete getPaquete() {
+        return paquete;
+    }
+
+    public void setPaquete(Paquete paquete) {
+        this.paquete = paquete;
+    }
+
+    public Servicio getServicio() {
+        return servicio;
+    }
+
+    public void setServicio(Servicio servicio) {
+        this.servicio = servicio;
+    }
+
 }

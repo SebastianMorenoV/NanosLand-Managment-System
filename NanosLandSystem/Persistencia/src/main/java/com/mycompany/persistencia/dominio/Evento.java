@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.ToString;
 
 @Entity
 @Table(name = "eventos")
@@ -28,16 +29,74 @@ public class Evento {
 
     private String notas;
 
-    // Relación 1 a 1 con Cotización. A través de ella llegamos al Cliente automáticamente.
+    @ToString.Exclude
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cotizacion_id")
     private Cotizacion cotizacion;
     
-    // Lista de tareas operativas (Checklist del Staff)
+    @ToString.Exclude
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LogisticaServicio> logisticaServicios;
 
-    // Lista de consumos extras de última hora (El día de la fiesta)
+    @ToString.Exclude
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CargoExtra> cargosExtras;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getFechaHoraInicio() {
+        return fechaHoraInicio;
+    }
+
+    public void setFechaHoraInicio(LocalDateTime fechaHoraInicio) {
+        this.fechaHoraInicio = fechaHoraInicio;
+    }
+
+    public TurnoEvento getTurno() {
+        return turno;
+    }
+
+    public void setTurno(TurnoEvento turno) {
+        this.turno = turno;
+    }
+
+    public String getNotas() {
+        return notas;
+    }
+
+    public void setNotas(String notas) {
+        this.notas = notas;
+    }
+
+    public Cotizacion getCotizacion() {
+        return cotizacion;
+    }
+
+    public void setCotizacion(Cotizacion cotizacion) {
+        this.cotizacion = cotizacion;
+    }
+
+    public List<LogisticaServicio> getLogisticaServicios() {
+        return logisticaServicios;
+    }
+
+    public void setLogisticaServicios(List<LogisticaServicio> logisticaServicios) {
+        this.logisticaServicios = logisticaServicios;
+    }
+
+    public List<CargoExtra> getCargosExtras() {
+        return cargosExtras;
+    }
+
+    public void setCargosExtras(List<CargoExtra> cargosExtras) {
+        this.cargosExtras = cargosExtras;
+    }
+    
+    
 }
