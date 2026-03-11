@@ -7,6 +7,7 @@ package com.mycompany.persistencia.dominio;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "detalles_cotizacion")
@@ -29,4 +30,20 @@ public class DetalleCotizacion {
     private double precioUnitario;
     private int cantidad;
     private double subtotal;
+
+    // --- REQUERIMIENTOS DEL CLIENTE (ORDEN DE VENTA) ---
+    // Estos campos guardan lo que el cliente pidió. Al aprobarse el evento, 
+    // tu código los tomará para generar las tareas en LogisticaServicio.
+
+    @Column(name = "hora_sugerida")
+    private LocalTime horaSugerida;
+
+    @Column(name = "especificaciones_cliente", length = 500)
+    private String especificacionesCliente;
+
+    @Column(name = "desglose_opciones", length = 500)
+    private String desgloseOpciones;
+
+    @Column(name = "ubicacion_montaje")
+    private String ubicacionMontaje;
 }

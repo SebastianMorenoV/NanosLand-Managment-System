@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "eventos")
@@ -27,12 +28,16 @@ public class Evento {
 
     private String notas;
 
-    // Relación 1 a 1 con Cotización según el diagrama
+    // Relación 1 a 1 con Cotización. A través de ella llegamos al Cliente automáticamente.
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cotizacion_id")
     private Cotizacion cotizacion;
+    
+    // Lista de tareas operativas (Checklist del Staff)
+    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LogisticaServicio> logisticaServicios;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id")
-    private Cliente cliente;
+    // Lista de consumos extras de última hora (El día de la fiesta)
+    @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CargoExtra> cargosExtras;
 }

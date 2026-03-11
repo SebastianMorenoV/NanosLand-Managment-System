@@ -27,6 +27,11 @@ public class Cotizacion {
     @Temporal(TemporalType.DATE)
     private Date fecha;
 
+    // Relación obligatoria con Cliente. Todos los contactos se registran en BD.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id", nullable = false)
+    private Cliente cliente;
+
     private String nombreFestejado;
     private double total;
     private String notas;
