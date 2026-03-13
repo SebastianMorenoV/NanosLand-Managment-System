@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>negocio</artifactId>
+	<artifactId>Negocio</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>negocio</name>
+	<name>Negocio</name>
 	<description>Businness layer for NanosLand</description>
 	<url/>
 	<licenses>
@@ -63,6 +63,11 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+	 <dependency>
+	  <groupId>com.mycompany</groupId>
+	  <artifactId>Persistencia</artifactId>
+	  <version>1.0-SNAPSHOT</version>
+	 </dependency>
 	</dependencies>
 
 	<build>

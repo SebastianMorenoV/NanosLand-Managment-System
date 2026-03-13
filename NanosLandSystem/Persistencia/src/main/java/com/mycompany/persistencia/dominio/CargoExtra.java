@@ -35,7 +35,7 @@ public class CargoExtra {
     private String descripcion;
 
     @Column(nullable = false)
-    private double cantidad;
+    private int cantidad;
     
     @Column(name = "precio_unitario", nullable = false)
     private double precioUnitario;
@@ -58,14 +58,6 @@ public class CargoExtra {
         this.id = id;
     }
 
-    public Servicio getServicio() {
-        return servicio;
-    }
-
-    public void setServicio(Servicio servicio) {
-        this.servicio = servicio;
-    }
-
     public String getDescripcion() {
         return descripcion;
     }
@@ -78,7 +70,7 @@ public class CargoExtra {
         return cantidad;
     }
 
-    public void setCantidad(double cantidad) {
+    public void setCantidad(int cantidad) {
         this.cantidad = cantidad;
     }
 
