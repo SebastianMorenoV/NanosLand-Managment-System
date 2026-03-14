@@ -4,10 +4,12 @@
  */
 package com.mycompany.persistencia.dominio;
 
-import com.mycompany.persistencia.dominio.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.EstadoCotizacion;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import lombok.ToString;
@@ -26,7 +28,7 @@ public class Cotizacion {
     private String folio;
 
     @Temporal(TemporalType.DATE)
-    private Date fecha;
+    private LocalDate fecha;
 
     @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,102 +55,5 @@ public class Cotizacion {
    @ToString.Exclude
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleCotizacion> serviciosExtra;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFolio() {
-        return folio;
-    }
-
-    public void setFolio(String folio) {
-        this.folio = folio;
-    }
-
-    public Date getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(Date fecha) {
-        this.fecha = fecha;
-    }
-
-    public Cliente getCliente() {
-        return cliente;
-    }
-
-    public void setCliente(Cliente cliente) {
-        this.cliente = cliente;
-    }
-
-    public String getNombreFestejado() {
-        return nombreFestejado;
-    }
-
-    public void setNombreFestejado(String nombreFestejado) {
-        this.nombreFestejado = nombreFestejado;
-    }
-
-    public double getTotal() {
-        return total;
-    }
-
-    public void setTotal(double total) {
-        this.total = total;
-    }
-
-    public String getNotas() {
-        return notas;
-    }
-
-    public void setNotas(String notas) {
-        this.notas = notas;
-    }
-
-    public EstadoCotizacion getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoCotizacion estado) {
-        this.estado = estado;
-    }
-
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public Paquete getPaquete() {
-        return paquete;
-    }
-
-    public void setPaquete(Paquete paquete) {
-        this.paquete = paquete;
-    }
-
-    public String getTematica() {
-        return tematica;
-    }
-
-    public void setTematica(String tematica) {
-        this.tematica = tematica;
-    }
-
-    public List<DetalleCotizacion> getServiciosExtra() {
-        return serviciosExtra;
-    }
-
-    public void setServiciosExtra(List<DetalleCotizacion> serviciosExtra) {
-        this.serviciosExtra = serviciosExtra;
-    }
-    
     
 }

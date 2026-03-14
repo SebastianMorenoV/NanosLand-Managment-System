@@ -9,6 +9,8 @@ import com.mycompany.persistencia.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  *
  * @author skyro
@@ -16,10 +18,14 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class BuscarClienteUseCase {
-    
+
     private final ClienteRepository clienteRepository;
-    
+
     public Cliente porId(Long id) {
         return clienteRepository.findById(id).orElse(null);
+    }
+
+    public List<Cliente> porNombre(String nombre) {
+        return clienteRepository.findByNombreContainingIgnoreCase(nombre);
     }
 }

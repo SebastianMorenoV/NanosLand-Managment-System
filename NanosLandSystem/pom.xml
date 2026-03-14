@@ -1,31 +1,49 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
       
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
       
-  <groupId>com.mycompany</groupId>
+    <groupId>com.mycompany</groupId>
       
-  <artifactId>NanosLandSystem</artifactId>
+    <artifactId>NanosLandSystem</artifactId>
       
-  <version>1.0-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
       
-  <packaging>pom</packaging>
+    <packaging>pom</packaging>
       
-  <modules>
-            
-    <module>negocio</module>
+    <modules>
+        <module>negocio</module>
+        <module>Persistencia</module>
+        <module>Presentacion</module>
+        <module>Common</module>
+    </modules>
       
-        
-    <module>Persistencia</module>
-          
-    <module>Presentacion</module>
-      
-  </modules>
-      
-  <properties>
-            
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lombok.version>1.18.36</lombok.version>
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
   
 </project>

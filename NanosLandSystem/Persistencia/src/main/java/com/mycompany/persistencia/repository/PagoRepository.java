@@ -7,10 +7,13 @@ package com.mycompany.persistencia.repository;
 import com.mycompany.persistencia.dominio.Pago;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 /**
  *
  * @author skyro
  */
 public interface PagoRepository extends JpaRepository<Pago, Long>{
-    
+
+    List<Pago> findByCotizacionId(Long cotizacionId);
 }

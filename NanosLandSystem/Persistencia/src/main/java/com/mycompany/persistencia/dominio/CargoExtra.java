@@ -36,10 +36,10 @@ public class CargoExtra {
 
     @Column(nullable = false)
     private int cantidad;
-    
+
     @Column(name = "precio_unitario", nullable = false)
     private double precioUnitario;
-    
+
     @Column(nullable = false)
     private double subtotal;
 
@@ -50,62 +50,4 @@ public class CargoExtra {
     @JoinColumn(name = "evento_id", nullable = false)
     private Evento evento;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public double getCantidad() {
-        return cantidad;
-    }
-
-    public void setCantidad(int cantidad) {
-        this.cantidad = cantidad;
-    }
-
-    public double getPrecioUnitario() {
-        return precioUnitario;
-    }
-
-    public void setPrecioUnitario(double precioUnitario) {
-        this.precioUnitario = precioUnitario;
-    }
-
-    public double getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(double subtotal) {
-        this.subtotal = subtotal;
-    }
-
-    public LocalDateTime getFechaHoraCargo() {
-        return fechaHoraCargo;
-    }
-
-    public void setFechaHoraCargo(LocalDateTime fechaHoraCargo) {
-        this.fechaHoraCargo = fechaHoraCargo;
-    }
-
-    public Evento getEvento() {
-        return evento;
-    }
-
-    public void setEvento(Evento evento) {
-        this.evento = evento;
-    }
-    
-    
-    
 }

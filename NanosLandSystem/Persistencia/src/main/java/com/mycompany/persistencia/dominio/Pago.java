@@ -4,7 +4,7 @@
  */
 package com.mycompany.persistencia.dominio;
 
-import com.mycompany.persistencia.dominio.enums.MetodoPago;
+import com.mycompany.persistencia.enums.MetodoPago;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,53 +33,4 @@ public class Pago {
 
     private String folioPago;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public double getCantidad() {
-        return cantidad;
-    }
-
-    public void setCantidad(double cantidad) {
-        this.cantidad = cantidad;
-    }
-
-    public LocalDateTime getFechaHora() {
-        return fechaHora;
-    }
-
-    public void setFechaHora(LocalDateTime fechaHora) {
-        this.fechaHora = fechaHora;
-    }
-
-    public MetodoPago getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(MetodoPago tipo) {
-        this.tipo = tipo;
-    }
-
-    public Cotizacion getCotizacion() {
-        return cotizacion;
-    }
-
-    public void setCotizacion(Cotizacion cotizacion) {
-        this.cotizacion = cotizacion;
-    }
-
-    public String getFolioPago() {
-        return folioPago;
-    }
-
-    public void setFolioPago(String folioPago) {
-        this.folioPago = folioPago;
-    }
-    
-    
 }

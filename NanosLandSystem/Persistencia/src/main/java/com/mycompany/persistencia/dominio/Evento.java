@@ -4,7 +4,7 @@
  */
 package com.mycompany.persistencia.dominio;
 
-import com.mycompany.persistencia.dominio.enums.TurnoEvento;
+import com.mycompany.persistencia.enums.TurnoEvento;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +33,7 @@ public class Evento {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cotizacion_id")
     private Cotizacion cotizacion;
-    
+
     @ToString.Exclude
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LogisticaServicio> logisticaServicios;
@@ -42,61 +42,4 @@ public class Evento {
     @OneToMany(mappedBy = "evento", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CargoExtra> cargosExtras;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDateTime getFechaHoraInicio() {
-        return fechaHoraInicio;
-    }
-
-    public void setFechaHoraInicio(LocalDateTime fechaHoraInicio) {
-        this.fechaHoraInicio = fechaHoraInicio;
-    }
-
-    public TurnoEvento getTurno() {
-        return turno;
-    }
-
-    public void setTurno(TurnoEvento turno) {
-        this.turno = turno;
-    }
-
-    public String getNotas() {
-        return notas;
-    }
-
-    public void setNotas(String notas) {
-        this.notas = notas;
-    }
-
-    public Cotizacion getCotizacion() {
-        return cotizacion;
-    }
-
-    public void setCotizacion(Cotizacion cotizacion) {
-        this.cotizacion = cotizacion;
-    }
-
-    public List<LogisticaServicio> getLogisticaServicios() {
-        return logisticaServicios;
-    }
-
-    public void setLogisticaServicios(List<LogisticaServicio> logisticaServicios) {
-        this.logisticaServicios = logisticaServicios;
-    }
-
-    public List<CargoExtra> getCargosExtras() {
-        return cargosExtras;
-    }
-
-    public void setCargosExtras(List<CargoExtra> cargosExtras) {
-        this.cargosExtras = cargosExtras;
-    }
-    
-    
 }

@@ -2,30 +2,20 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.mycompany.persistencia.dominio;
+package com.mycompany.common.dtos;
 
-import jakarta.persistence.*;
+
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "servicios")
 @Data
 @NoArgsConstructor
-public class Servicio {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class PaqueteDTO {
     private Long id;
-
-    @Column(nullable = false)
     private String nombre;
-
     private String descripcion;
-
-    private double precio;
-
-    @Lob
-    private byte[] imagen;
-
+    private double costoBase;
+    private List<ServicioDTO> servicios;
+    
 }
