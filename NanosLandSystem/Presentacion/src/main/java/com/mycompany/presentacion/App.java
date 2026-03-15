@@ -26,7 +26,7 @@ public class App extends Application {
     public void start(Stage primaryStage) throws Exception {
         ViewSwitcher.setSpringContext(springContext);
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/presentacion/views/SeleccionarFecha.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/presentacion/views/MainShell.fxml"));
         loader.setControllerFactory(springContext::getBean);
         Parent root = loader.load();
         Scene scene = new Scene(root, 1280, 720);
