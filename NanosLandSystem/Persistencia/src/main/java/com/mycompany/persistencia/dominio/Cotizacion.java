@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import lombok.ToString;
 
@@ -52,8 +51,8 @@ public class Cotizacion {
 
     private String tematica;
 
-   @ToString.Exclude
+    @ToString.Exclude
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleCotizacion> serviciosExtra;
-    
+
 }

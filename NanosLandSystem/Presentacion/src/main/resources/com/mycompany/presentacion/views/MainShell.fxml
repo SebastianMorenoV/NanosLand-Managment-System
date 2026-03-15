@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane fx:id="rootPane" stylesheets="@../styles/styles.css" styleClass="raiz-fondo" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.MainShellController">
+    <fx:define>
+        <ToggleGroup fx:id="navGroup"/>
+    </fx:define>
+    <left>
+        <VBox styleClass="sidebar" prefWidth="250" spacing="10">
+            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+            <Label text="Mi App" style="-fx-font-size: 1.7em; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+            <Separator />
+            <ToggleButton fx:id="btnCotizacion" text="📄 Nueva Cotización" styleClass="boton-menu" prefWidth="210" toggleGroup="$navGroup" onAction="#navCotizacion"/>
+            <ToggleButton fx:id="btnClientes" text="👥 Clientes" styleClass="boton-menu" prefWidth="210" toggleGroup="$navGroup" onAction="#navClientes"/>
+        </VBox>
+    </left>
+</BorderPane>

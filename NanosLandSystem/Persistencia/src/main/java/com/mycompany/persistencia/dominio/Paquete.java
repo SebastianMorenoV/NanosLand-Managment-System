@@ -25,9 +25,9 @@ public class Paquete {
 
     private String descripcion;
 
-    private double costoBase;
+    private double costo;
     @ToString.Exclude
-    @OneToMany(mappedBy = "paquete", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "paquete", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PaqueteServicio> servicios;
 
 }

@@ -5,8 +5,12 @@
 package com.mycompany.common.mapper;
 
 
+import com.mycompany.common.dtos.ClienteDTO;
+import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.common.dtos.PaqueteDTO;
+
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class PaqueteMapper {
@@ -17,7 +21,7 @@ public class PaqueteMapper {
         dto.setId(paquete.getId());
         dto.setNombre(paquete.getNombre());
         dto.setDescripcion(paquete.getDescripcion());
-        dto.setCostoBase(paquete.getCostoBase());
+        dto.setCostoBase(paquete.getCosto());
         if (paquete.getServicios() != null) {
             dto.setServicios(paquete.getServicios().stream()
                 .map(ps -> ServicioMapper.toDTO(ps.getServicio()))
@@ -32,7 +36,21 @@ public class PaqueteMapper {
         paquete.setId(dto.getId());
         paquete.setNombre(dto.getNombre());
         paquete.setDescripcion(dto.getDescripcion());
-        paquete.setCostoBase(dto.getCostoBase());
+        paquete.setCosto(dto.getCostoBase());
         return paquete;
+    }
+
+    public static List<PaqueteDTO> toDTOList(List<Paquete> paquetes) {
+        if (paquetes == null) return null;
+        return paquetes.stream()
+                .map(PaqueteMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public static List<Paquete> toEntityList(List<PaqueteDTO> dtos) {
+        if (dtos == null) return null;
+        return dtos.stream()
+                .map(PaqueteMapper::toEntity)
+                .collect(Collectors.toList());
     }
 }

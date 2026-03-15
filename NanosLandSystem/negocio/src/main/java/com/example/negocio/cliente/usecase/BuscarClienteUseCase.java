@@ -4,6 +4,8 @@
  */
 package com.example.negocio.cliente.usecase;
 
+import com.mycompany.common.dtos.ClienteDTO;
+import com.mycompany.common.mapper.ClienteMapper;
 import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +29,9 @@ public class BuscarClienteUseCase {
 
     public List<Cliente> porNombre(String nombre) {
         return clienteRepository.findByNombreContainingIgnoreCase(nombre);
+    }
+
+    public List<ClienteDTO> obtenerTodos() {
+        return ClienteMapper.toDTOList(clienteRepository.findAll());
     }
 }

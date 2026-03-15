@@ -1,0 +1,379 @@
+/* =================================================== */
+/* 1. CONFIGURACIÓN GLOBAL Y ESTRUCTURA                */
+/* =================================================== */
+.root {
+    -fx-font-size: 14px;
+}
+
+.raiz-fondo {
+    -fx-background-color: #e4e9f0;
+}
+
+.sidebar {
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);
+}
+
+/* =================================================== */
+/* 2. TIPOGRAFÍA Y TARJETAS                            */
+/* =================================================== */
+.tarjeta-blanca {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 0.8em;
+    -fx-padding: 1.5em;
+    -fx-border-color: #dadddf;
+    -fx-border-radius: 0.8em;
+}
+
+.tarjeta-paquete-seleccionada {
+    -fx-background-color: #e8f4fa;
+    -fx-border-color: #1a82b8;
+    -fx-border-width: 2px;
+    -fx-border-radius: 0.6em;
+    -fx-background-radius: 0.6em;
+    -fx-padding: 1.1em;
+}
+
+.titulo-seccion {
+    -fx-text-fill: #4e5b69;
+    -fx-font-weight: bold;
+    -fx-font-size: 0.9em;
+}
+
+.label-pequeno {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 0.8em;
+    -fx-font-weight: bold;
+}
+
+/* =================================================== */
+/* 3. BOTONES                                          */
+/* =================================================== */
+.boton-menu {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2c3e50;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0.8em 1em;
+    -fx-font-size: 1em;
+    -fx-cursor: hand;
+}
+
+.boton-menu:hover {
+    -fx-background-color: #f0f4f8;
+    -fx-background-radius: 0.4em;
+}
+
+.boton-azul {
+    -fx-background-color: #1a82b8;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 0.5em;
+    -fx-cursor: hand;
+    -fx-padding: 0.8em 1.5em;
+}
+
+.boton-azul:hover {
+    -fx-background-color: #156994;
+}
+
+.boton-azul-claro {
+    -fx-background-color: #e8f4fa;
+    -fx-text-fill: #1a82b8;
+    -fx-font-weight: bold;
+    -fx-background-radius: 0.5em;
+    -fx-cursor: hand;
+    -fx-padding: 0.5em 1em;
+}
+
+/* Botón cuadrado de icono (ej. el "+" de añadir cliente) */
+.boton-cuadrado-icono {
+    -fx-background-color: #1a82b8;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 18px;
+    -fx-padding: 0;
+    -fx-min-width: 38px;
+    -fx-min-height: 38px;
+    -fx-max-width: 38px;
+    -fx-max-height: 38px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.boton-cuadrado-icono:hover {
+    -fx-background-color: #156994;
+}
+
+/* =================================================== */
+/* 4. CAMPOS DE TEXTO, COMBOBOX Y DATEPICKER (BASE)    */
+/* =================================================== */
+/* Base exterior limpia y plana */
+.text-field-moderno, .combo-box-base, .date-picker {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #ccd4db;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+}
+
+/* Efecto Focus (Clic) */
+.text-field-moderno:focused,
+.combo-box-base:contains-focus,
+.date-picker:contains-focus {
+    -fx-border-color: #1a82b8;
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(26, 130, 184, 0.2), 5, 0, 0, 0);
+}
+
+/* Padding específico para TextField normal */
+.text-field-moderno {
+    -fx-padding: 10px 12px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2c3e50;
+}
+
+/* Quitamos padding a la caja exterior de los ComboBox y DatePicker */
+.combo-box-base, .date-picker {
+    -fx-padding: 0;
+}
+
+/* =================================================== */
+/* 5. INTERIORES DE COMBOBOX Y DATEPICKER              */
+/* =================================================== */
+/* Transparentar text-fields internos para evitar doble borde */
+.combo-box-base > .text-field,
+.date-picker > .text-field,
+.combo-box-base > .list-cell,
+.searchable-combo-box > .text-field,
+.searchable-combo-box > .custom-text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 10px 12px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2c3e50;
+    -fx-border-color: transparent;
+}
+
+/* Estilo de los botones de flecha nativos */
+.combo-box-base > .arrow-button,
+.date-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12px;
+}
+
+.combo-box-base > .arrow-button > .arrow,
+.date-picker > .arrow-button > .arrow {
+    -fx-background-color: #7f8c8d;
+}
+
+/* =================================================== */
+/* 6. SEARCHABLE COMBOBOX (TWEAKS DE CONTROLSFX)       */
+/* =================================================== */
+/* Ocultar iconos de lupa/embudo (left-pane) y cruz de limpiar (right-pane) */
+.searchable-combo-box .left-pane,
+.combo-box-popup .custom-text-field .left-pane,
+.searchable-combo-box .right-pane,
+.combo-box-popup .custom-text-field .right-pane {
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+    -fx-padding: 0;
+    visibility: hidden;
+}
+
+/* Ocultar "texto fantasma" original para que no se empalme al buscar */
+.searchable-combo-box:focused > .list-cell,
+.searchable-combo-box:showing > .list-cell {
+    -fx-text-fill: transparent;
+}
+
+/* =================================================== */
+/* 7. LISTA DESPLEGABLE (POPUP) DE LOS COMBOBOX        */
+/* =================================================== */
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 5px;
+    -fx-border-color: #ccd4db;
+    -fx-border-radius: 5px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+}
+
+.combo-box-popup .list-cell {
+    -fx-padding: 10px;
+    -fx-text-fill: #2c3e50;
+}
+
+.combo-box-popup .list-cell:filled:hover {
+    -fx-background-color: #f0f4f8;
+    -fx-text-fill: #1a82b8;
+}
+
+/* =================================================== */
+/* 8. CALENDARIO PREMIUM (DATEPICKER POPUP)            */
+/* =================================================== */
+.date-picker-popup {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #ccd4db;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 4, 4);
+}
+
+/* Cabecera (Mes y Año) */
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #ffffff;
+    -fx-padding: 12px 10px 5px 10px;
+}
+
+.date-picker-popup .month-year-pane .label {
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Flechas de navegación de la cabecera */
+.date-picker-popup .month-year-pane .button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-background-radius: 4px;
+}
+
+.date-picker-popup .month-year-pane .button:hover {
+    -fx-background-color: #f0f4f8;
+}
+
+.date-picker-popup .spinner .button .left-arrow,
+.date-picker-popup .spinner .button .right-arrow {
+    -fx-background-color: #1a82b8;
+}
+
+/* Cuadrícula central */
+.date-picker-popup .calendar-grid {
+    -fx-background-color: #ffffff;
+    -fx-padding: 8px;
+}
+
+/* Nombres de los días de la semana (Dom, Lun...) */
+.date-picker-popup .day-name-cell {
+    -fx-text-fill: #95a5a6;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-background-color: #ffffff;
+    -fx-padding: 5px 0 10px 0;
+}
+
+/* --- ESTILOS PARA LOS NÚMEROS DE LOS DÍAS --- */
+
+/* Día normal */
+.date-picker-popup .day-cell {
+    -fx-text-fill: #2c3e50;
+    -fx-background-color: transparent;
+    -fx-padding: 8px;
+    -fx-background-radius: 6px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+/* Día en hover */
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: #f0f4f8 !important;
+    -fx-text-fill: #1a82b8 !important;
+}
+
+/* Día seleccionado - usar clase en lugar de pseudoestado */
+.date-picker-popup .day-cell.selected,
+.date-picker-popup .calendar-grid .day-cell.selected {
+    -fx-background-color: #1a82b8 !important;
+    -fx-text-fill: #ffffff !important;
+    -fx-font-weight: bold !important;
+    -fx-background-radius: 6px !important;
+    -fx-border-color: transparent !important;
+}
+
+/* Día actual */
+.date-picker-popup .day-cell.today {
+    -fx-border-color: #1a82b8 !important;
+    -fx-border-width: 1.5px !important;
+    -fx-border-radius: 6px !important;
+}
+
+/* Hoy y seleccionado */
+.date-picker-popup .day-cell.today.selected {
+    -fx-background-color: #156994 !important;
+    -fx-text-fill: #ffffff !important;
+    -fx-border-color: transparent !important;
+}
+
+/* Días de otros meses */
+.date-picker-popup .day-cell.other-month {
+    -fx-text-fill: #bdc3c7 !important;
+    -fx-background-color: transparent !important;
+}
+
+/* =================================================== */
+/* 9. LISTA DE SERVICIOS EXTRAS Y SCROLLPANE           */
+/* =================================================== */
+.item-extra {
+    -fx-background-color: #f1f3f5;
+    -fx-padding: 12px;
+    -fx-background-radius: 8px;
+}
+
+.nombre-servicio-extra {
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.precio-servicio-extra {
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+/* Scrollpane transparente y limpio */
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Barra de scroll delgada */
+.scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #ccd4db;
+    -fx-background-insets: 2px;
+    -fx-background-radius: 10px;
+}
+
+.scroll-bar:vertical:hover .thumb {
+    -fx-background-color: #1a82b8;
+}
+
+/* Ocultar botones de flecha del scroll */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+.boton-menu:selected {
+    -fx-background-color: #e8f4fa;
+    -fx-text-fill: #1a82b8;
+    -fx-font-weight: bold;
+    -fx-background-radius: 0.4em;
+}

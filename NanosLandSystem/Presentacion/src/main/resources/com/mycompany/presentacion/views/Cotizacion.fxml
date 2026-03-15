@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import org.controlsfx.control.SearchableComboBox?>
+
+<VBox spacing="20" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.CotizacionController">
+    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="20">
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Nueva Cotización" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label text="Llene los datos. Los cambios se calculan automáticamente." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+        <VBox alignment="CENTER_RIGHT">
+            <Label text="TOTAL ESTIMADO" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+            <Label text=" &#36;250.00" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+        <VBox spacing="20" prefWidth="350" maxWidth="450" HBox.hgrow="SOMETIMES">
+            <VBox styleClass="tarjeta-blanca" spacing="10">
+                <Label text="👤 ASIGNAR CLIENTE" styleClass="titulo-seccion"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <SearchableComboBox fx:id="comboClientes"
+                                        promptText="Buscar por nombre o teléfono..."
+                                        styleClass="combo-box-base"
+                                        HBox.hgrow="ALWAYS" />
+                    <Button text="+" styleClass="boton-cuadrado-icono" onAction="#abrirModalNuevoCliente"/>
+                </HBox>
+            </VBox>
+
+            <VBox styleClass="tarjeta-blanca" spacing="15">
+                <Label text="📅 AGENDA DEL EVENTO" styleClass="titulo-seccion"/>
+                <VBox spacing="5">
+                    <Label text="FECHA SELECCIONADA" styleClass="label-pequeno"/>
+                    <DatePicker maxWidth="Infinity" styleClass="text-field-moderno"/>
+                </VBox>
+                <VBox spacing="5">
+                    <Label text="TURNO DISPONIBLE" styleClass="label-pequeno"/>
+                    <ComboBox promptText="Vespertino (3:00 PM - 7:00 PM)" maxWidth="Infinity" styleClass="text-field-moderno"/>
+                </VBox>
+            </VBox>
+        </VBox>
+
+        <VBox spacing="20" HBox.hgrow="ALWAYS">
+            <VBox styleClass="tarjeta-blanca" spacing="15">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="📦 PAQUETE BASE" styleClass="titulo-seccion"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <SearchableComboBox fx:id="comboPaquetes" promptText="Seleccione un paquete..." styleClass="combo-box-base" prefWidth="250"/>
+                </HBox>
+
+                <VBox styleClass="tarjeta-paquete-seleccionada" spacing="5">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label fx:id="lblNombrePaquete" text="Seleccione un paquete" style="-fx-font-weight: bold; -fx-font-size: 15px;"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblPrecioPaquete" text=" &#36;0.00" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1a82b8;"/>
+                    </HBox>
+                    <Label fx:id="lblDetallesPaquete" text="Los detalles aparecerán aquí" style="-fx-text-fill: #7f8c8d;"/>
+                </VBox>
+            </VBox>
+
+            <VBox styleClass="tarjeta-blanca" spacing="15" VBox.vgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="✨ SERVICIOS EXTRAS" styleClass="titulo-seccion"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Añadir Servicio" styleClass="boton-azul-claro"/>
+                </HBox>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" prefHeight="250" style="-fx-background-color: transparent; -fx-background: transparent;">
+                    <VBox fx:id="contenedorListaExtras" spacing="10">
+                        <padding><Insets right="12" bottom="10"/></padding>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Bollitos Decorados (24 pzs)" styleClass="nombre-servicio-extra"/>
+                                <Label text="Temática personalizada" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $450.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Show de Payaso (1 hora)" styleClass="nombre-servicio-extra"/>
+                                <Label text="Incluye figuras de globos" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $1,200.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Brincolín Castillo" styleClass="nombre-servicio-extra"/>
+                                <Label text="4x4 metros con resbaladilla" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $850.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Máquina de Palomitas" styleClass="nombre-servicio-extra"/>
+                                <Label text="Servicio ilimitado por 3 horas" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $600.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Barra de Aguas Frescas" styleClass="nombre-servicio-extra"/>
+                                <Label text="3 sabores a elegir" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $550.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Sesión Fotográfica" styleClass="nombre-servicio-extra"/>
+                                <Label text="Digitales y 5 impresas" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $1,500.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Candy Bar Estándar" styleClass="nombre-servicio-extra"/>
+                                <Label text="Para 30 niños" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $950.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Arco de Globos Orgánico" styleClass="nombre-servicio-extra"/>
+                                <Label text="Colores a elección" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $750.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Pinta Caritas" styleClass="nombre-servicio-extra"/>
+                                <Label text="Material antialérgico (2 horas)" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $400.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Mesa de Honor Decorada" styleClass="nombre-servicio-extra"/>
+                                <Label text="Mantelería premium" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $1,100.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Mesero Adicional" styleClass="nombre-servicio-extra"/>
+                                <Label text="Servicio por 5 horas" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $350.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+
+                        <HBox styleClass="item-extra" alignment="CENTER_LEFT">
+                            <VBox HBox.hgrow="ALWAYS">
+                                <Label text="Renta de Bafle Potente" styleClass="nombre-servicio-extra"/>
+                                <Label text="Con bluetooth y micrófono" styleClass="label-pequeno"/>
+                            </VBox>
+                            <Label text=" + $300.00" styleClass="precio-servicio-extra"/>
+                        </HBox>
+                    </VBox>
+                </ScrollPane>
+            </VBox>
+
+            <HBox styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20">
+                <Button text="Guardar Borrador" style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand; -fx-font-weight: bold;"/>
+                <Button text="✔️ Confirmar Cotización" styleClass="boton-azul" />
+            </HBox>
+        </VBox>
+    </HBox>
+</VBox>
