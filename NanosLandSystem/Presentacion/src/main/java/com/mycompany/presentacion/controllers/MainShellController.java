@@ -21,7 +21,6 @@ public class MainShellController {
         btnCotizacion.setSelected(true);
         navCotizacion();
 
-        // Evitar que se deseleccione al hacer click en el ya seleccionado
         navGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) oldVal.setSelected(true);
         });
@@ -29,7 +28,7 @@ public class MainShellController {
 
     @FXML
     private void navCotizacion() {
-        ViewSwitcher.cargarVista("Cotizacion.fxml");
+        ViewSwitcher.cargarVista("SeleccionarFecha.fxml");
     }
 
     @FXML

@@ -36,7 +36,7 @@
                 <Label text="📅 AGENDA DEL EVENTO" styleClass="titulo-seccion"/>
                 <VBox spacing="5">
                     <Label text="FECHA SELECCIONADA" styleClass="label-pequeno"/>
-                    <DatePicker maxWidth="Infinity" styleClass="text-field-moderno"/>
+                    <DatePicker fx:id="datePickerFecha" maxWidth="Infinity" styleClass="text-field-moderno"/>
                 </VBox>
                 <VBox spacing="5">
                     <Label text="TURNO DISPONIBLE" styleClass="label-pequeno"/>

@@ -377,3 +377,136 @@
     -fx-font-weight: bold;
     -fx-background-radius: 0.4em;
 }
+
+/* =================================================== */
+/* 10. CALENDARIO DE DISPONIBILIDAD                    */
+/* =================================================== */
+
+.dia-semana-header {
+    -fx-text-fill: #95a5a6;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-alignment: CENTER;
+    -fx-max-width: Infinity;
+    -fx-padding: 5px 0px 8px 0px;
+}
+
+.celda-dia {
+    -fx-background-color: #f8f9fa;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #e8ecef;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+}
+
+.celda-dia:hover {
+    -fx-background-color: #e8f4fa;
+    -fx-border-color: #1a82b8;
+}
+
+.celda-dia-seleccionada {
+    -fx-background-color: #1a82b8;
+    -fx-border-color: #156994;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 2px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+}
+
+.celda-dia-llena {
+    -fx-background-color: #fdf0f0;
+    -fx-border-color: #f5c6c6;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+    -fx-cursor: default;
+    -fx-opacity: 0.6;
+}
+
+.celda-dia-hoy {
+    -fx-background-color: #fff8e8;
+    -fx-border-color: #f39c12;
+    -fx-border-width: 2px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+}
+
+.numero-dia {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.numero-dia-seleccionado {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.numero-dia-lleno {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #c0392b;
+}
+
+.disponibilidad-libre {
+    -fx-font-size: 10px;
+    -fx-text-fill: #27ae60;
+    -fx-font-weight: bold;
+}
+
+.disponibilidad-medio {
+    -fx-font-size: 10px;
+    -fx-text-fill: #f39c12;
+    -fx-font-weight: bold;
+}
+
+.disponibilidad-lleno {
+    -fx-font-size: 10px;
+    -fx-text-fill: #e74c3c;
+    -fx-font-weight: bold;
+}
+
+.disponibilidad-seleccionada {
+    -fx-font-size: 10px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.boton-nav-mes {
+    -fx-background-color: #f0f4f8;
+    -fx-text-fill: #1a82b8;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 6px 16px;
+    -fx-border-color: transparent;
+}
+
+.boton-nav-mes:hover {
+    -fx-background-color: #1a82b8;
+    -fx-text-fill: white;
+}
