@@ -17,12 +17,15 @@ public class CotizacionMapper {
         dto.setId(cotizacion.getId());
         dto.setFolio(cotizacion.getFolio());
         dto.setFecha(cotizacion.getFecha());
-        dto.setClienteId(cotizacion.getCliente().getId());
-        dto.setNombreCliente(cotizacion.getCliente().getNombre());
+        if (cotizacion.getCliente() != null) {
+            dto.setClienteId(cotizacion.getCliente().getId());
+            dto.setNombreCliente(cotizacion.getCliente().getNombre());
+        }
         dto.setNombreFestejado(cotizacion.getNombreFestejado());
         dto.setTotal(cotizacion.getTotal());
         dto.setNotas(cotizacion.getNotas());
         dto.setEstado(cotizacion.getEstado());
+        dto.setTurno(cotizacion.getTurno());
         dto.setTematica(cotizacion.getTematica());
         if (cotizacion.getPaquete() != null) {
             dto.setPaqueteId(cotizacion.getPaquete().getId());
@@ -46,6 +49,7 @@ public class CotizacionMapper {
         cotizacion.setTotal(dto.getTotal());
         cotizacion.setNotas(dto.getNotas());
         cotizacion.setEstado(dto.getEstado());
+        cotizacion.setTurno(dto.getTurno());
         cotizacion.setTematica(dto.getTematica());
         return cotizacion;
     }

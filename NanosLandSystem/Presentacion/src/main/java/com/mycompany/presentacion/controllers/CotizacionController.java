@@ -1,10 +1,15 @@
 package com.mycompany.presentacion.controllers;
 
+import com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase;
 import com.example.negocio.catalogo.usecase.ConsultarCatalogoUseCase;
 import com.example.negocio.cliente.usecase.BuscarClienteUseCase;
-import com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase;
+import com.example.negocio.cotizacion.usecase.CrearCotizacionUseCase;
+import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.ClienteDTO;
+import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.persistencia.enums.TurnoEvento;
+import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,9 +17,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -24,9 +27,6 @@ import lombok.RequiredArgsConstructor;
 import org.controlsfx.control.SearchableComboBox;
 import org.springframework.stereotype.Controller;
 
-import com.mycompany.persistencia.enums.TurnoEvento;
-import com.mycompany.presentacion.context.CotizacionContext;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -35,26 +35,34 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CotizacionController {
 
+    // ─── USE CASES ───────────────────────────────────────────────────────────
     private final BuscarClienteUseCase buscarClienteUseCase;
     private final ConsultarCatalogoUseCase consultarCatalogoUseCase;
-    private final CotizacionContext cotizacionContext;
     private final VerificarDisponibilidadTurnoUseCase verificarDisponibilidadTurnoUseCase;
+    private final CrearCotizacionUseCase crearCotizacionUseCase;
+    private final CotizacionContext cotizacionContext;
 
-    @FXML private SearchableComboBox<PaqueteDTO> comboPaquetes;
+    // ─── COMPONENTES FXML ─────────────────────────────────────────────────────
+    @FXML private SearchableComboBox<ClienteDTO>  comboClientes;
+    @FXML private SearchableComboBox<PaqueteDTO>  comboPaquetes;
+    @FXML private DatePicker                       datePickerFecha;
+    @FXML private ComboBox<TurnoEvento>            comboTurnos;
+    @FXML private TextArea                         textAreaNotas;
+
     @FXML private Label lblNombrePaquete;
     @FXML private Label lblPrecioPaquete;
     @FXML private Label lblDetallesPaquete;
-    @FXML private SearchableComboBox<ClienteDTO> comboClientes;
-    @FXML private DatePicker datePickerFecha;
-    @FXML private javafx.scene.control.ComboBox<TurnoEvento> comboTurnos;
     @FXML private Label lblTotalEstimado;
     @FXML private Label lblErrorTurnos;
+    @FXML private TextField txtNombreFestejado;
+    @FXML private TextField txtTematica;
 
+    // ─── INICIALIZACIÓN ───────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         configurarComboClientes();
         configurarComboPaquetes();
-        
+
         LocalDate fechaSeleccionada = cotizacionContext.getFechaSeleccionada();
         if (fechaSeleccionada != null && datePickerFecha != null) {
             datePickerFecha.setValue(fechaSeleccionada);
@@ -62,10 +70,9 @@ public class CotizacionController {
         } else {
             comboTurnos.setDisable(true);
         }
-        
+
         if (datePickerFecha != null) {
-            
-            datePickerFecha.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+            datePickerFecha.setDayCellFactory(picker -> new DateCell() {
                 @Override
                 public void updateItem(LocalDate date, boolean empty) {
                     super.updateItem(date, empty);
@@ -86,15 +93,65 @@ public class CotizacionController {
                 }
             });
         }
-        
+
         actualizarTotalEstimado();
     }
 
-    // ─── CONFIGURACIÓN COMBO TURNOS ───
+    // ─── GUARDAR COTIZACION ───────────────────────────────────────────────────
+    @FXML
+    private void guardarCotizacion() {
+        // Captura de valores desde los controles
+        ClienteDTO clienteSeleccionado = comboClientes.getValue();
+        PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
+        LocalDate fecha                = datePickerFecha.getValue();
+        TurnoEvento turno              = comboTurnos.getValue();
+        String notas                   = textAreaNotas.getText();
+        String nombreFestejado         = txtNombreFestejado.getText();
+        String tematica                = txtTematica.getText();
+
+        // Construcción del DTO — las validaciones de negocio las ejecuta el Use Case
+        CotizacionDTO dto = new CotizacionDTO();
+        dto.setClienteId(clienteSeleccionado != null ? clienteSeleccionado.getId() : null);
+        dto.setPaqueteId(paqueteSeleccionado != null ? paqueteSeleccionado.getId() : null);
+        dto.setFecha(fecha);
+        dto.setTurno(turno);
+        dto.setNotas(notas != null && !notas.isBlank() ? notas.trim() : null);
+        dto.setNombreFestejado(nombreFestejado != null && !nombreFestejado.isBlank() ? nombreFestejado.trim() : null);
+        dto.setTematica(tematica != null && !tematica.isBlank() ? tematica.trim() : null);
+
+        try {
+            CotizacionDTO resultado = crearCotizacionUseCase.crearCotizacion(dto);
+            mostrarExito(resultado.getFolio());
+        } catch (CotizacionException ex) {
+            mostrarError(ex.getMessage());
+        } catch (Exception ex) {
+            mostrarError("Ocurrió un error inesperado al guardar la cotización. Intente de nuevo.");
+            ex.printStackTrace();
+        }
+    }
+
+    // ─── ALERTAS ─────────────────────────────────────────────────────────────
+    private void mostrarExito(String folio) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Cotización Guardada");
+        alert.setHeaderText("¡Cotización guardada exitosamente!");
+        alert.setContentText("La cotización fue registrada con el folio:\n\n" + folio
+                + "\n\nEstado: BORRADOR");
+        alert.showAndWait();
+    }
+
+    private void mostrarError(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("No se pudo guardar");
+        alert.setHeaderText("Revisa los datos ingresados");
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    // ─── CONFIGURACIÓN COMBO TURNOS ───────────────────────────────────────────
     private void configurarComboTurnos(LocalDate fecha) {
         ObservableList<TurnoEvento> turnosDisponibles = FXCollections.observableArrayList();
 
-        // Si la fecha ya pasó, lógicamente no hay turnos disponibles sin importar si la base de datos está vacía.
         if (fecha != null && !fecha.isBefore(LocalDate.now())) {
             for (TurnoEvento turno : TurnoEvento.values()) {
                 if (verificarDisponibilidadTurnoUseCase.verificar(fecha, turno)) {
@@ -147,11 +204,11 @@ public class CotizacionController {
             lblErrorTurnos.setManaged(false);
         }
         if (datePickerFecha != null) {
-            datePickerFecha.setStyle(""); 
+            datePickerFecha.setStyle("");
         }
     }
 
-    // ─── CONFIGURACIÓN COMBO CLIENTES ───
+    // ─── CONFIGURACIÓN COMBO CLIENTES ─────────────────────────────────────────
     private void configurarComboClientes() {
         List<ClienteDTO> clienteDTOS = buscarClienteUseCase.obtenerTodos();
         ObservableList<ClienteDTO> listaClientes = FXCollections.observableArrayList(clienteDTOS);
@@ -198,7 +255,7 @@ public class CotizacionController {
         comboClientes.setItems(listaClientes);
     }
 
-    // ─── CONFIGURACIÓN COMBO PAQUETES ───
+    // ─── CONFIGURACIÓN COMBO PAQUETES ─────────────────────────────────────────
     private void configurarComboPaquetes() {
         List<PaqueteDTO> paqueteDTOS = consultarCatalogoUseCase.obtenerTodosLosPaquetes();
         ObservableList<PaqueteDTO> listaPaquetes = FXCollections.observableArrayList(paqueteDTOS);
@@ -221,7 +278,7 @@ public class CotizacionController {
             PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
             if (paqueteSeleccionado != null) {
                 lblNombrePaquete.setText(paqueteSeleccionado.getNombre());
-                lblPrecioPaquete.setText("$" + paqueteSeleccionado.getCostoBase());
+                lblPrecioPaquete.setText("$" + String.format("%,.2f", paqueteSeleccionado.getCostoBase()));
                 String detalles = paqueteSeleccionado.getDescripcion() != null
                         ? paqueteSeleccionado.getDescripcion() : "Sin detalles adicionales";
                 lblDetallesPaquete.setText(detalles);
@@ -230,7 +287,7 @@ public class CotizacionController {
         });
     }
 
-    // ─── CÁLCULO DE TOTAL ESTIMADO ───
+    // ─── CÁLCULO DE TOTAL ESTIMADO ────────────────────────────────────────────
     private void actualizarTotalEstimado() {
         double costoPaquete = 0.0;
         PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
@@ -238,17 +295,15 @@ public class CotizacionController {
             costoPaquete = paqueteSeleccionado.getCostoBase();
         }
 
-        // TODO: En el futuro, sumar aquí el costo de los servicios extras seleccionados
-        double costoExtras = 0.0;
-
-        double total = costoPaquete + costoExtras;
+        // TODO: Sumar costo de servicios extras cuando se implemente esa sección
+        double total = costoPaquete;
 
         if (lblTotalEstimado != null) {
             lblTotalEstimado.setText(String.format("$%,.2f", total));
         }
     }
 
-    // ─── MODAL NUEVO CLIENTE ───
+    // ─── MODAL NUEVO CLIENTE ─────────────────────────────────────────────────
     @FXML
     private void abrirModalNuevoCliente() {
         try {

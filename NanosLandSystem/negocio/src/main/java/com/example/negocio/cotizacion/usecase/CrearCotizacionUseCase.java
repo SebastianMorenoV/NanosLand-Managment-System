@@ -1,19 +1,147 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.example.negocio.cotizacion.usecase;
 
+import com.example.negocio.exception.CotizacionException;
+import com.mycompany.common.dtos.CotizacionDTO;
+import com.mycompany.common.mapper.CotizacionMapper;
+import com.mycompany.persistencia.dominio.Cliente;
+import com.mycompany.persistencia.dominio.Cotizacion;
+import com.mycompany.persistencia.dominio.Paquete;
+import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.repository.ClienteRepository;
+import com.mycompany.persistencia.repository.CotizacionRepository;
+import com.mycompany.persistencia.repository.PaqueteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.Year;
+import java.util.List;
 
 /**
+ * Caso de uso: Crear una nueva cotización.
  *
- * @author skyro
+ * Responsabilidades:
+ * - Validar todos los campos obligatorios del DTO.
+ * - Verificar que el cliente y el paquete existan en la base de datos.
+ * - Verificar que la fecha del evento sea futura (no en el pasado).
+ * - Verificar que el turno no esté duplicado en la misma fecha.
+ * - Generar un folio único con formato COT-YYYY-NNNN.
+ * - Calcular el total base desde el costo del paquete.
+ * - Asignar el estado inicial BORRADOR.
+ * - Persistir la cotización.
  */
 @Service
 @RequiredArgsConstructor
 public class CrearCotizacionUseCase {
-    
-    
+
+    private final CotizacionRepository cotizacionRepository;
+    private final ClienteRepository clienteRepository;
+    private final PaqueteRepository paqueteRepository;
+
+    /**
+     * Crea y persiste una cotización con estado BORRADOR.
+     *
+     * @param dto DTO con los datos capturados desde la presentación.
+     * @return DTO enriquecido con id y folio generados.
+     * @throws CotizacionException si alguna validación de negocio falla.
+     */
+    @Transactional
+    public CotizacionDTO crearCotizacion(CotizacionDTO dto) {
+
+        // ── 1. Validaciones de campos obligatorios ───────────────────────────
+        if (dto == null) {
+            throw new CotizacionException("El objeto de cotización no puede ser nulo.");
+        }
+        if (dto.getClienteId() == null) {
+            throw new CotizacionException("Debe seleccionar un cliente para la cotización.");
+        }
+        if (dto.getFecha() == null) {
+            throw new CotizacionException("Debe seleccionar una fecha para el evento.");
+        }
+        if (dto.getTurno() == null) {
+            throw new CotizacionException("Debe seleccionar un turno (Matutino o Vespertino).");
+        }
+        if (dto.getPaqueteId() == null) {
+            throw new CotizacionException("Debe seleccionar un paquete base para la cotización.");
+        }
+
+        // ── 1.1 Validaciones de longitud para evitar Data Truncation (VARCHAR 255) ──
+        if (dto.getNombreFestejado() != null && dto.getNombreFestejado().length() > 255) {
+            throw new CotizacionException("El nombre del festejado es demasiado largo (máximo 255 caracteres).");
+        }
+        if (dto.getTematica() != null && dto.getTematica().length() > 255) {
+            throw new CotizacionException("La temática es demasiado larga (máximo 255 caracteres).");
+        }
+        if (dto.getNotas() != null && dto.getNotas().length() > 255) {
+            throw new CotizacionException("Las notas del evento son demasiado largas (máximo 255 caracteres).");
+        }
+
+        // ── 2. Validación: la fecha debe ser presente o futura ───────────────
+        if (dto.getFecha().isBefore(LocalDate.now())) {
+            throw new CotizacionException(
+                "La fecha del evento no puede ser en el pasado. Seleccione una fecha válida."
+            );
+        }
+
+        // ── 3. Verificación de existencia del cliente ────────────────────────
+        Cliente cliente = clienteRepository.findById(dto.getClienteId())
+            .orElseThrow(() -> new CotizacionException(
+                "El cliente con ID " + dto.getClienteId() + " no existe en el sistema."
+            ));
+
+        // ── 4. Verificación de existencia del paquete ────────────────────────
+        Paquete paquete = paqueteRepository.findById(dto.getPaqueteId())
+            .orElseThrow(() -> new CotizacionException(
+                "El paquete con ID " + dto.getPaqueteId() + " no existe en el catálogo."
+            ));
+
+        // ── 5. Validación: no duplicar turno en la misma fecha ───────────────
+        boolean turnoOcupado = cotizacionRepository.existsByFechaAndTurnoAndEstadoNotIn(
+            dto.getFecha(),
+            dto.getTurno(),
+            List.of(EstadoCotizacion.CANCELADA, EstadoCotizacion.ELIMINADA)
+        );
+        if (turnoOcupado) {
+            throw new CotizacionException(
+                "El turno " + dto.getTurno().name() + " del " + dto.getFecha()
+                + " ya está ocupado por otra cotización."
+            );
+        }
+
+        // ── 6. Construcción de la entidad ────────────────────────────────────
+        Cotizacion cotizacion = CotizacionMapper.toEntity(dto);
+        cotizacion.setCliente(cliente);
+        cotizacion.setPaquete(paquete);
+        cotizacion.setEstado(EstadoCotizacion.BORRADOR);
+
+        // ── 7. Generación de folio único COT-YYYY-NNNN ───────────────────────
+        String folio = generarFolio();
+        cotizacion.setFolio(folio);
+
+        // ── 8. Cálculo del total base (costo del paquete) ────────────────────
+        // Los servicios extras se añadirán en un flujo posterior.
+        cotizacion.setTotal(paquete.getCosto());
+
+        // ── 9. Persistencia ──────────────────────────────────────────────────
+        Cotizacion guardada = cotizacionRepository.save(cotizacion);
+
+        return CotizacionMapper.toDTO(guardada);
+    }
+
+    /**
+     * Genera un folio único con formato COT-YYYY-NNNN.
+     * Usa un contador de inicio basado en count() y verifica en bucle
+     * hasta encontrar un folio que no colisione con registros existentes.
+     */
+    private String generarFolio() {
+        int anio = Year.now().getValue();
+        long base = cotizacionRepository.count() + 1;
+        String folio;
+        do {
+            folio = String.format("COT-%d-%04d", anio, base);
+            base++;
+        } while (cotizacionRepository.findByFolio(folio).isPresent());
+        return folio;
+    }
 }

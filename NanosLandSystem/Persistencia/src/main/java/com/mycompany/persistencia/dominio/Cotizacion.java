@@ -5,6 +5,7 @@
 package com.mycompany.persistencia.dominio;
 
 import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.TurnoEvento;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +27,6 @@ public class Cotizacion {
     @Column(nullable = false, unique = true)
     private String folio;
 
-    @Temporal(TemporalType.DATE)
     private LocalDate fecha;
 
     @ToString.Exclude
@@ -40,6 +40,9 @@ public class Cotizacion {
 
     @Enumerated(EnumType.STRING)
     private EstadoCotizacion estado;
+
+    @Enumerated(EnumType.STRING)
+    private TurnoEvento turno;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")

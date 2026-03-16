@@ -1,6 +1,7 @@
 package com.mycompany.common.dtos;
 
 import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.TurnoEvento;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Data;
@@ -22,8 +23,10 @@ public class CotizacionDTO {
     private double total;
     private String notas;
     private EstadoCotizacion estado;
+    private TurnoEvento turno;
     private Long paqueteId;
     private String nombrePaquete;
     private String tematica;
+    private Long usuarioId;
     private List<DetalleCotizacionDTO> detalles;
 }
