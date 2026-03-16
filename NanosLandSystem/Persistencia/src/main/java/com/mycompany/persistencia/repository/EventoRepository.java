@@ -8,7 +8,7 @@ import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +18,11 @@ import java.util.Optional;
  */
 public interface EventoRepository extends JpaRepository<Evento, Long>{
 
-    List<Evento> findByFechaHoraInicioAndTurno(LocalDateTime fechaHoraInicio, TurnoEvento turno);
+    List<Evento> findByFechaAndTurno(LocalDate fecha, TurnoEvento turno);
+    
+    List<Evento> findByFecha(LocalDate fecha);
+    
     Optional<Evento> findByCotizacionId(Long cotizacionId);
-    List<Evento> findByFechaHoraInicioBetween(LocalDateTime inicio, LocalDateTime fin);
+    
+    List<Evento> findByFechaBetween(LocalDate inicio, LocalDate fin);
 }

@@ -2,6 +2,7 @@ package com.mycompany.presentacion.controllers;
 
 import com.example.negocio.catalogo.usecase.ConsultarCatalogoUseCase;
 import com.example.negocio.cliente.usecase.BuscarClienteUseCase;
+import com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase;
 import com.mycompany.common.dtos.ClienteDTO;
 import com.mycompany.common.dtos.PaqueteDTO;
 import com.mycompany.presentacion.utils.ViewSwitcher;
@@ -23,6 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.controlsfx.control.SearchableComboBox;
 import org.springframework.stereotype.Controller;
 
+import com.mycompany.persistencia.enums.TurnoEvento;
+import com.mycompany.presentacion.context.CotizacionContext;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,6 +37,8 @@ public class CotizacionController {
 
     private final BuscarClienteUseCase buscarClienteUseCase;
     private final ConsultarCatalogoUseCase consultarCatalogoUseCase;
+    private final CotizacionContext cotizacionContext;
+    private final VerificarDisponibilidadTurnoUseCase verificarDisponibilidadTurnoUseCase;
 
     @FXML private SearchableComboBox<PaqueteDTO> comboPaquetes;
     @FXML private Label lblNombrePaquete;
@@ -40,19 +46,108 @@ public class CotizacionController {
     @FXML private Label lblDetallesPaquete;
     @FXML private SearchableComboBox<ClienteDTO> comboClientes;
     @FXML private DatePicker datePickerFecha;
+    @FXML private javafx.scene.control.ComboBox<TurnoEvento> comboTurnos;
+    @FXML private Label lblTotalEstimado;
+    @FXML private Label lblErrorTurnos;
 
     @FXML
     public void initialize() {
         configurarComboClientes();
         configurarComboPaquetes();
+        
+        LocalDate fechaSeleccionada = cotizacionContext.getFechaSeleccionada();
+        if (fechaSeleccionada != null && datePickerFecha != null) {
+            datePickerFecha.setValue(fechaSeleccionada);
+            configurarComboTurnos(fechaSeleccionada);
+        } else {
+            comboTurnos.setDisable(true);
+        }
+        
+        if (datePickerFecha != null) {
+            
+            datePickerFecha.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+                @Override
+                public void updateItem(LocalDate date, boolean empty) {
+                    super.updateItem(date, empty);
+                    if (date != null && date.isBefore(LocalDate.now())) {
+                        setDisable(true);
+                        setStyle("-fx-background-color: #f2f2f2; -fx-text-fill: #b2b2b2;");
+                    }
+                }
+            });
+
+            datePickerFecha.valueProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    configurarComboTurnos(newValue);
+                } else {
+                    comboTurnos.setDisable(true);
+                    comboTurnos.getItems().clear();
+                    ocultarErrorTurnos();
+                }
+            });
+        }
+        
+        actualizarTotalEstimado();
     }
 
-    // ─── MÉTODO PARA RECIBIR LA FECHA DESDE SeleccionarFechaController ───
-    public void setFechaSeleccionada(LocalDate fecha) {
-        if (fecha == null) return;
+    // ─── CONFIGURACIÓN COMBO TURNOS ───
+    private void configurarComboTurnos(LocalDate fecha) {
+        ObservableList<TurnoEvento> turnosDisponibles = FXCollections.observableArrayList();
 
+        // Si la fecha ya pasó, lógicamente no hay turnos disponibles sin importar si la base de datos está vacía.
+        if (fecha != null && !fecha.isBefore(LocalDate.now())) {
+            for (TurnoEvento turno : TurnoEvento.values()) {
+                if (verificarDisponibilidadTurnoUseCase.verificar(fecha, turno)) {
+                    turnosDisponibles.add(turno);
+                }
+            }
+        }
+
+        comboTurnos.setItems(turnosDisponibles);
+
+        if (turnosDisponibles.isEmpty()) {
+            comboTurnos.setValue(null);
+            comboTurnos.setPromptText("No hay turnos disponibles");
+            comboTurnos.setDisable(true);
+            mostrarErrorTurnos();
+        } else {
+            comboTurnos.setPromptText("Seleccione un turno...");
+            comboTurnos.setDisable(false);
+            ocultarErrorTurnos();
+        }
+
+        comboTurnos.setConverter(new StringConverter<TurnoEvento>() {
+            @Override
+            public String toString(TurnoEvento turno) {
+                if (turno == null) return "";
+                String nombre = turno.name();
+                return nombre.substring(0, 1).toUpperCase() + nombre.substring(1).toLowerCase();
+            }
+
+            @Override
+            public TurnoEvento fromString(String string) {
+                return null;
+            }
+        });
+    }
+
+    private void mostrarErrorTurnos() {
+        if (lblErrorTurnos != null) {
+            lblErrorTurnos.setVisible(true);
+            lblErrorTurnos.setManaged(true);
+        }
         if (datePickerFecha != null) {
-            datePickerFecha.setValue(fecha);
+            datePickerFecha.setStyle("-fx-border-color: #e74c3c; -fx-border-width: 2px; -fx-border-radius: 4px;");
+        }
+    }
+
+    private void ocultarErrorTurnos() {
+        if (lblErrorTurnos != null) {
+            lblErrorTurnos.setVisible(false);
+            lblErrorTurnos.setManaged(false);
+        }
+        if (datePickerFecha != null) {
+            datePickerFecha.setStyle(""); 
         }
     }
 
@@ -131,7 +226,26 @@ public class CotizacionController {
                         ? paqueteSeleccionado.getDescripcion() : "Sin detalles adicionales";
                 lblDetallesPaquete.setText(detalles);
             }
+            actualizarTotalEstimado();
         });
+    }
+
+    // ─── CÁLCULO DE TOTAL ESTIMADO ───
+    private void actualizarTotalEstimado() {
+        double costoPaquete = 0.0;
+        PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
+        if (paqueteSeleccionado != null) {
+            costoPaquete = paqueteSeleccionado.getCostoBase();
+        }
+
+        // TODO: En el futuro, sumar aquí el costo de los servicios extras seleccionados
+        double costoExtras = 0.0;
+
+        double total = costoPaquete + costoExtras;
+
+        if (lblTotalEstimado != null) {
+            lblTotalEstimado.setText(String.format("$%,.2f", total));
+        }
     }
 
     // ─── MODAL NUEVO CLIENTE ───

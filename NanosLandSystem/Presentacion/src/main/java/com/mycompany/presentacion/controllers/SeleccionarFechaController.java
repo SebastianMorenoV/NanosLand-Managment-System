@@ -3,6 +3,7 @@ package com.mycompany.presentacion.controllers;
 
 import com.example.negocio.agenda.usecase.ConsultarAgendaUseCase;
 import com.mycompany.persistencia.dominio.Evento;
+import com.mycompany.presentacion.context.CotizacionContext;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
@@ -10,19 +11,20 @@ import java.util.List;
 import java.util.Locale;
 
 import com.mycompany.presentacion.utils.ViewSwitcher;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import java.time.LocalTime;
 
 @Controller
 @RequiredArgsConstructor
 public class SeleccionarFechaController {
 
     private final ConsultarAgendaUseCase consultarAgendaUseCase;
+    private final CotizacionContext cotizacionContext;
 
     @FXML private GridPane gridCalendario;
     @FXML private Label lblMesAnio;
@@ -34,19 +36,6 @@ public class SeleccionarFechaController {
 
     @FXML
     public void initialize() {
-        Platform.runLater(() -> {
-            javafx.scene.Parent nodo = gridCalendario.getParent();
-            int nivel = 0;
-            while (nodo != null) {
-                System.out.println("Nivel " + nivel + ": " + nodo.getClass().getSimpleName());
-                if (nodo instanceof BorderPane rootPane) {
-                    ViewSwitcher.setContenedorPrincipal(rootPane);
-                    break;
-                }
-                nodo = nodo.getParent();
-                nivel++;
-            }
-        });
         renderizarCalendario();
     }
     @FXML
@@ -111,9 +100,25 @@ public class SeleccionarFechaController {
     }
 
     private VBox crearCelda(LocalDate fecha, List<Evento> eventos) {
-        long eventosDelDia = eventos.stream()
-                .filter(e -> e.getFechaHoraInicio().toLocalDate().equals(fecha))
-                .count();
+        List<Evento> eventosDelDia = eventos.stream()
+                .filter(e -> e.getFecha().equals(fecha))
+                .toList();
+
+        int turnosDisponibles = 0;
+
+        LocalTime inicioMatutino = LocalTime.of(9, 0);
+        LocalTime finMatutino = LocalTime.of(14, 0);
+        boolean matutinoOcupado = eventosDelDia.stream().anyMatch(e ->
+                inicioMatutino.isBefore(e.getHoraFin()) && finMatutino.isAfter(e.getHoraInicio())
+        );
+        if (!matutinoOcupado) turnosDisponibles++;
+
+        LocalTime inicioVespertino = LocalTime.of(15, 0);
+        LocalTime finVespertino = LocalTime.of(20, 0);
+        boolean vespertinoOcupado = eventosDelDia.stream().anyMatch(e ->
+                inicioVespertino.isBefore(e.getHoraFin()) && finVespertino.isAfter(e.getHoraInicio())
+        );
+        if (!vespertinoOcupado) turnosDisponibles++;
 
         boolean esHoy = fecha.equals(LocalDate.now());
         boolean esPasado = fecha.isBefore(LocalDate.now());
@@ -128,12 +133,12 @@ public class SeleccionarFechaController {
             estiloNumero = "numero-dia-lleno";
             estiloDisponibilidad = "disponibilidad-lleno";
             textoDisponibilidad = "No disponible";
-        } else if (eventosDelDia >= 2) {
+        } else if (turnosDisponibles == 0) {
             estiloCelda = "celda-dia-llena";
             estiloNumero = "numero-dia-lleno";
             estiloDisponibilidad = "disponibilidad-lleno";
             textoDisponibilidad = "● LLENO";
-        } else if (eventosDelDia == 1) {
+        } else if (turnosDisponibles == 1) {
             estiloCelda = esHoy ? "celda-dia-hoy" : "celda-dia";
             estiloNumero = "numero-dia";
             estiloDisponibilidad = "disponibilidad-medio";
@@ -159,7 +164,7 @@ public class SeleccionarFechaController {
         GridPane.setVgrow(celda, Priority.ALWAYS);
         GridPane.setHgrow(celda, Priority.ALWAYS);
 
-        if (eventosDelDia < 2 && !esPasado) {
+        if (turnosDisponibles > 0 && !esPasado) {
             celda.setOnMouseClicked(e -> seleccionarFecha(fecha, celda, lblNumero, lblDisp));
         }
 
@@ -221,25 +226,8 @@ public class SeleccionarFechaController {
     @FXML
     private void continuar() {
         if (fechaSeleccionada != null) {
-
-            // Buscar el BorderPane en el momento del click
-            if (ViewSwitcher.getContenedorPrincipal() == null) {
-                javafx.scene.Parent nodo = btnContinuar.getParent();
-                while (nodo != null) {
-                    System.out.println("Nodo: " + nodo.getClass().getSimpleName() + " id=" + nodo.getId());
-                    if (nodo instanceof BorderPane bp) {
-                        ViewSwitcher.setContenedorPrincipal(bp);
-                        break;
-                    }
-                    nodo = nodo.getParent();
-                }
-            }
-
-            CotizacionController controller =
-                    ViewSwitcher.cargarVistaConController("Cotizacion.fxml");
-            if (controller != null) {
-                controller.setFechaSeleccionada(fechaSeleccionada);
-            }
+            cotizacionContext.setFechaSeleccionada(fechaSeleccionada);
+            ViewSwitcher.cargarVista("Cotizacion.fxml");
         }
     }
     @FXML

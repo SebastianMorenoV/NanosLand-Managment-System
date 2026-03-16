@@ -8,7 +8,8 @@ import com.mycompany.persistencia.enums.TurnoEvento;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.ToString;
 
@@ -22,7 +23,11 @@ public class Evento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime fechaHoraInicio;
+    private LocalDate fecha;
+    
+    private LocalTime horaInicio;
+    
+    private LocalTime horaFin;
 
     @Enumerated(EnumType.STRING)
     private TurnoEvento turno;
