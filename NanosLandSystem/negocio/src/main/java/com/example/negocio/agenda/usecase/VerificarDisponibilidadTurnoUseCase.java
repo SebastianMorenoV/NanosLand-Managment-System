@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -26,8 +26,22 @@ public class VerificarDisponibilidadTurnoUseCase {
     private final EventoRepository eventoRepository;
 
     public boolean verificar(LocalDate fecha, TurnoEvento turno) {
-        LocalDateTime fechaHora = fecha.atStartOfDay();
-        List<Evento> eventos = eventoRepository.findByFechaHoraInicioAndTurno(fechaHora, turno);
-        return eventos.isEmpty();
+        List<Evento> eventos = eventoRepository.findByFecha(fecha);
+        if (eventos.isEmpty()) {
+            return true;
+        }
+
+        // Definir los límites teóricos del turno consultado
+        LocalTime inicioTurno = (turno == TurnoEvento.MATUTINO) ? LocalTime.of(9, 0) : LocalTime.of(15, 0);
+        LocalTime finTurno = (turno == TurnoEvento.MATUTINO) ? LocalTime.of(14, 0) : LocalTime.of(20, 0);
+
+        for (Evento evento : eventos) {
+            // Un evento se empalma si inicia antes de que termine el turno Y termina después de que inicie el turno
+            if (inicioTurno.isBefore(evento.getHoraFin()) && finTurno.isAfter(evento.getHoraInicio())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

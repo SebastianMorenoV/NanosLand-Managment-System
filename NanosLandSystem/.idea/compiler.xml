@@ -17,6 +17,7 @@
         </processorPath>
         <module name="Persistencia" />
         <module name="negocio" />
+        <module name="Negocio" />
         <module name="Presentacion" />
         <module name="Common" />
       </profile>

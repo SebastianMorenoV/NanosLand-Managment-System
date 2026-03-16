@@ -17,7 +17,9 @@ public class EventoMapper {
         if (evento == null) return null;
         EventoDTO dto = new EventoDTO();
         dto.setId(evento.getId());
-        dto.setFechaHoraInicio(evento.getFechaHoraInicio());
+        dto.setFecha(evento.getFecha());
+        dto.setHoraInicio(evento.getHoraInicio());
+        dto.setHoraFin(evento.getHoraFin());
         dto.setTurno(evento.getTurno());
         dto.setNotas(evento.getNotas());
         if (evento.getCotizacion() != null) {
@@ -31,7 +33,9 @@ public class EventoMapper {
         if (dto == null) return null;
         Evento evento = new Evento();
         evento.setId(dto.getId());
-        evento.setFechaHoraInicio(dto.getFechaHoraInicio());
+        evento.setFecha(dto.getFecha());
+        evento.setHoraInicio(dto.getHoraInicio());
+        evento.setHoraFin(dto.getHoraFin());
         evento.setTurno(dto.getTurno());
         evento.setNotas(dto.getNotas());
         return evento;

@@ -8,7 +8,7 @@ import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.persistencia.repository.EventoRepository;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -26,14 +26,25 @@ public class ConsultarAgendaUseCase {
     private final EventoRepository eventoRepository;
 
     public List<Evento> obtenerMesCompleto(int anio, int mes) {
-        LocalDateTime inicio = YearMonth.of(anio, mes).atDay(1).atStartOfDay();
-        LocalDateTime fin = YearMonth.of(anio, mes).atEndOfMonth().atTime(23, 59, 59);
-        return eventoRepository.findByFechaHoraInicioBetween(inicio, fin);
+        LocalDate inicio = YearMonth.of(anio, mes).atDay(1);
+        LocalDate fin = YearMonth.of(anio, mes).atEndOfMonth();
+        return eventoRepository.findByFechaBetween(inicio, fin);
     }
 
     public boolean verificarTurnoDisponible(LocalDate fecha, TurnoEvento turno) {
-        LocalDateTime fechaHora = fecha.atStartOfDay();
-        List<Evento> eventos = eventoRepository.findByFechaHoraInicioAndTurno(fechaHora, turno);
-        return eventos.isEmpty();
+        List<Evento> eventos = eventoRepository.findByFecha(fecha);
+        if (eventos.isEmpty()) {
+            return true;
+        }
+
+        LocalTime inicioTurno = (turno == TurnoEvento.MATUTINO) ? LocalTime.of(9, 0) : LocalTime.of(15, 0);
+        LocalTime finTurno = (turno == TurnoEvento.MATUTINO) ? LocalTime.of(14, 0) : LocalTime.of(20, 0);
+
+        for (Evento e : eventos) {
+            if (inicioTurno.isBefore(e.getHoraFin()) && finTurno.isAfter(e.getHoraInicio())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

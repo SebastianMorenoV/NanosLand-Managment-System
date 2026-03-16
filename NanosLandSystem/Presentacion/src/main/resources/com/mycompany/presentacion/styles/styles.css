@@ -377,3 +377,241 @@
     -fx-font-weight: bold;
     -fx-background-radius: 0.4em;
 }
+
+/* =================================================== */
+/* 10. CALENDARIO DE DISPONIBILIDAD                    */
+/* =================================================== */
+
+.dia-semana-header {
+    -fx-text-fill: #95a5a6;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-alignment: CENTER;
+    -fx-max-width: Infinity;
+    -fx-padding: 5px 0px 8px 0px;
+}
+
+.celda-dia {
+    -fx-background-color: #f8f9fa;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #e8ecef;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+}
+
+.celda-dia:hover {
+    -fx-background-color: #e8f4fa;
+    -fx-border-color: #1a82b8;
+}
+
+.celda-dia-seleccionada {
+    -fx-background-color: #1a82b8;
+    -fx-border-color: #156994;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 2px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+}
+
+.celda-dia-llena {
+    -fx-background-color: #fdf0f0;
+    -fx-border-color: #f5c6c6;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+    -fx-cursor: default;
+    -fx-opacity: 0.6;
+}
+
+.celda-dia-hoy {
+    -fx-background-color: #fff8e8;
+    -fx-border-color: #f39c12;
+    -fx-border-width: 2px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+}
+
+.numero-dia {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.numero-dia-seleccionado {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.numero-dia-lleno {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #c0392b;
+}
+
+.disponibilidad-libre {
+    -fx-font-size: 10px;
+    -fx-text-fill: #27ae60;
+    -fx-font-weight: bold;
+}
+
+.disponibilidad-medio {
+    -fx-font-size: 10px;
+    -fx-text-fill: #f39c12;
+    -fx-font-weight: bold;
+}
+
+.disponibilidad-lleno {
+    -fx-font-size: 10px;
+    -fx-text-fill: #e74c3c;
+    -fx-font-weight: bold;
+}
+
+.disponibilidad-seleccionada {
+    -fx-font-size: 10px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.boton-nav-mes {
+    -fx-background-color: #f0f4f8;
+    -fx-text-fill: #1a82b8;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-padding: 6px 16px;
+    -fx-border-color: transparent;
+}
+
+.boton-nav-mes:hover {
+    -fx-background-color: #1a82b8;
+    -fx-text-fill: white;
+}
+
+/* =================================================== */
+/* 11. TEXTAREA DE NOTAS                               */
+/* =================================================== */
+/* Contenedor exterior del TextArea */
+.text-area-notas {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #ccd4db;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+}
+
+.text-area-notas:focused {
+    -fx-border-color: #1a82b8;
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(26, 130, 184, 0.2), 5, 0, 0, 0);
+}
+
+/* Área de texto interna — quitar fondo doble */
+.text-area-notas .content {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-padding: 10px 12px;
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 13px;
+}
+
+/* Scrollbar interna del TextArea — estilo delgado */
+.text-area-notas .scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.text-area-notas .scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.text-area-notas .scroll-bar:vertical {
+    -fx-pref-width: 6px;
+    -fx-background-color: transparent;
+}
+
+.text-area-notas .scroll-bar:vertical .thumb {
+    -fx-background-color: #ccd4db;
+    -fx-background-radius: 10px;
+    -fx-background-insets: 1px;
+}
+
+.text-area-notas .scroll-bar:vertical:hover .thumb {
+    -fx-background-color: #1a82b8;
+}
+
+.text-area-notas .scroll-bar .increment-button,
+.text-area-notas .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.text-area-notas .scroll-bar .increment-arrow,
+.text-area-notas .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+/* =================================================== */
+/* 12. SCROLL PANEL COLUMNA IZQUIERDA COTIZACIÓN       */
+/* =================================================== */
+/* Asegura que el ScrollPane de la columna izquierda   */
+/* sea completamente transparente y sin bordes.        */
+.scroll-pane-columna-izq,
+.scroll-pane-columna-izq > .viewport {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane-columna-izq > .scroll-bar:vertical {
+    -fx-pref-width: 4px;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane-columna-izq > .scroll-bar:vertical .thumb {
+    -fx-background-color: #ccd4db;
+    -fx-background-radius: 10px;
+    -fx-background-insets: 0;
+}
+
+.scroll-pane-columna-izq > .scroll-bar:vertical:hover .thumb {
+    -fx-background-color: #1a82b8;
+}
+
+.scroll-pane-columna-izq > .scroll-bar .increment-button,
+.scroll-pane-columna-izq > .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-pane-columna-izq > .scroll-bar .increment-arrow,
+.scroll-pane-columna-izq > .scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}

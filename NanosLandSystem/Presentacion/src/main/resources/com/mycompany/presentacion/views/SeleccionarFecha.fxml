@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import java.lang.String?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.mycompany.presentacion.controllers.SeleccionarFechaController"
+      spacing="15">
+
+    <stylesheets>
+        <String fx:value="/com/mycompany/presentacion/styles/styles.css"/>
+    </stylesheets>
+
+    <padding><Insets top="25" right="35" bottom="20" left="35"/></padding>
+
+    <!-- ENCABEZADO -->
+    <HBox alignment="CENTER_LEFT">
+        <VBox>
+            <Label text="Disponibilidad del Salón"
+                   style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label text="Seleccione una fecha disponible para continuar con la cotización."
+                   style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+        </VBox>
+    </HBox>
+
+    <!-- NAVEGACIÓN + LEYENDA EN UNA SOLA LÍNEA -->
+    <HBox styleClass="tarjeta-blanca" alignment="CENTER" spacing="0">
+
+        <!-- Region izquierda para balancear -->
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <!-- Navegación CENTRADA -->
+        <HBox alignment="CENTER" spacing="20">
+            <Button fx:id="btnMesAnterior" text="&#8592;"
+                    styleClass="boton-nav-mes"
+                    onAction="#mesAnterior"/>
+            <Label fx:id="lblMesAnio" text="Febrero 2026"
+                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-min-width: 160px; -fx-alignment: CENTER;"/>
+            <Button fx:id="btnMesSiguiente" text="&#8594;"
+                    styleClass="boton-nav-mes"
+                    onAction="#mesSiguiente"/>
+        </HBox>
+
+        <!-- Region derecha para empujar leyenda -->
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <!-- Leyenda a la derecha -->
+        <HBox alignment="CENTER_RIGHT" spacing="15">
+            <HBox alignment="CENTER_LEFT" spacing="5">
+                <Label text="&#11044;" style="-fx-text-fill: #27ae60; -fx-font-size: 9px;"/>
+                <Label text="LIBRE" styleClass="label-pequeno"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="5">
+                <Label text="&#11044;" style="-fx-text-fill: #f39c12; -fx-font-size: 9px;"/>
+                <Label text="1 TURNO DISP." styleClass="label-pequeno"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="5">
+                <Label text="&#11044;" style="-fx-text-fill: #e74c3c; -fx-font-size: 9px;"/>
+                <Label text="LLENO" styleClass="label-pequeno"/>
+            </HBox>
+        </HBox>
+
+    </HBox>
+
+    <!-- SCROLLPANE CON EL GRID -->
+    <ScrollPane fitToWidth="true"
+                VBox.vgrow="ALWAYS"
+                styleClass="scroll-pane"
+                hbarPolicy="NEVER"
+                vbarPolicy="AS_NEEDED">
+
+        <VBox styleClass="tarjeta-blanca" spacing="10">
+            <GridPane fx:id="gridCalendario" hgap="6" vgap="6">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                    <ColumnConstraints hgrow="ALWAYS" percentWidth="14.28"/>
+                </columnConstraints>
+
+                <Label text="LUN" styleClass="dia-semana-header"
+                       GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <Label text="MAR" styleClass="dia-semana-header"
+                       GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="MIÉ" styleClass="dia-semana-header"
+                       GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                <Label text="JUE" styleClass="dia-semana-header"
+                       GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                <Label text="VIE" styleClass="dia-semana-header"
+                       GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+                <Label text="SÁB" styleClass="dia-semana-header"
+                       GridPane.columnIndex="5" GridPane.rowIndex="0"/>
+                <Label text="DOM" styleClass="dia-semana-header"
+                       GridPane.columnIndex="6" GridPane.rowIndex="0"/>
+            </GridPane>
+        </VBox>
+    </ScrollPane>
+
+    <!-- BARRA INFERIOR - SIEMPRE VISIBLE -->
+    <HBox styleClass="tarjeta-blanca"
+          alignment="CENTER_RIGHT"
+          spacing="15">
+        <Label fx:id="lblFechaSeleccionada"
+               text="Ninguna fecha seleccionada"
+               style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"
+               HBox.hgrow="ALWAYS"/>
+        <Button text="Cancelar"
+                style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand; -fx-font-weight: bold;"
+                onAction="#cancelar"/>
+        <Button fx:id="btnContinuar"
+                text="Continuar &#8594;"
+                styleClass="boton-azul"
+                disable="true"
+                onAction="#continuar"/>
+    </HBox>
+
+</VBox>

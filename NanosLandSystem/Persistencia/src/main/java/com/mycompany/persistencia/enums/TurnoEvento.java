@@ -11,5 +11,5 @@ package com.mycompany.persistencia.enums;
 public enum TurnoEvento {
     MATUTINO,
     VESPERTINO
-    
+
 }
