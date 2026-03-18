@@ -102,12 +102,7 @@ public class CrearCotizacionUseCase {
             dto.getTurno(),
             List.of(EstadoCotizacion.CANCELADA, EstadoCotizacion.ELIMINADA)
         );
-        if (turnoOcupado) {
-            throw new CotizacionException(
-                "El turno " + dto.getTurno().name() + " del " + dto.getFecha()
-                + " ya está ocupado por otra cotización."
-            );
-        }
+        
 
         // ── 6. Construcción de la entidad ────────────────────────────────────
         Cotizacion cotizacion = CotizacionMapper.toEntity(dto);
