@@ -43,19 +43,31 @@ public class CotizacionController {
     private final CotizacionContext cotizacionContext;
 
     // ─── COMPONENTES FXML ─────────────────────────────────────────────────────
-    @FXML private SearchableComboBox<ClienteDTO>  comboClientes;
-    @FXML private SearchableComboBox<PaqueteDTO>  comboPaquetes;
-    @FXML private DatePicker                       datePickerFecha;
-    @FXML private ComboBox<TurnoEvento>            comboTurnos;
-    @FXML private TextArea                         textAreaNotas;
+    @FXML
+    private SearchableComboBox<ClienteDTO> comboClientes;
+    @FXML
+    private SearchableComboBox<PaqueteDTO> comboPaquetes;
+    @FXML
+    private DatePicker datePickerFecha;
+    @FXML
+    private ComboBox<TurnoEvento> comboTurnos;
+    @FXML
+    private TextArea textAreaNotas;
 
-    @FXML private Label lblNombrePaquete;
-    @FXML private Label lblPrecioPaquete;
-    @FXML private Label lblDetallesPaquete;
-    @FXML private Label lblTotalEstimado;
-    @FXML private Label lblErrorTurnos;
-    @FXML private TextField txtNombreFestejado;
-    @FXML private TextField txtTematica;
+    @FXML
+    private Label lblNombrePaquete;
+    @FXML
+    private Label lblPrecioPaquete;
+    @FXML
+    private Label lblDetallesPaquete;
+    @FXML
+    private Label lblTotalEstimado;
+    @FXML
+    private Label lblErrorTurnos;
+    @FXML
+    private TextField txtNombreFestejado;
+    @FXML
+    private TextField txtTematica;
 
     // ─── INICIALIZACIÓN ───────────────────────────────────────────────────────
     @FXML
@@ -72,6 +84,9 @@ public class CotizacionController {
         }
 
         if (datePickerFecha != null) {
+            // Bloquear escritura manual
+            datePickerFecha.setEditable(false);
+
             datePickerFecha.setDayCellFactory(picker -> new DateCell() {
                 @Override
                 public void updateItem(LocalDate date, boolean empty) {
@@ -103,11 +118,11 @@ public class CotizacionController {
         // Captura de valores desde los controles
         ClienteDTO clienteSeleccionado = comboClientes.getValue();
         PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
-        LocalDate fecha                = datePickerFecha.getValue();
-        TurnoEvento turno              = comboTurnos.getValue();
-        String notas                   = textAreaNotas.getText();
-        String nombreFestejado         = txtNombreFestejado.getText();
-        String tematica                = txtTematica.getText();
+        LocalDate fecha = datePickerFecha.getValue();
+        TurnoEvento turno = comboTurnos.getValue();
+        String notas = textAreaNotas.getText();
+        String nombreFestejado = txtNombreFestejado.getText();
+        String tematica = txtTematica.getText();
 
         // Construcción del DTO — las validaciones de negocio las ejecuta el Use Case
         CotizacionDTO dto = new CotizacionDTO();
