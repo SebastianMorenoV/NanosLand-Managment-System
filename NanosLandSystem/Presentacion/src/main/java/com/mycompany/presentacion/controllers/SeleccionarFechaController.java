@@ -4,6 +4,7 @@ package com.mycompany.presentacion.controllers;
 import com.example.negocio.agenda.usecase.ConsultarAgendaUseCase;
 import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.presentacion.context.CotizacionContext;
+
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
@@ -17,6 +18,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+
 import java.time.LocalTime;
 
 @Controller
@@ -26,22 +28,47 @@ public class SeleccionarFechaController {
     private final ConsultarAgendaUseCase consultarAgendaUseCase;
     private final CotizacionContext cotizacionContext;
 
-    @FXML private GridPane gridCalendario;
-    @FXML private Label lblMesAnio;
-    @FXML private Label lblFechaSeleccionada;
-    @FXML private Button btnContinuar;
+    @FXML
+    private GridPane gridCalendario;
+    @FXML
+    private Label lblMesAnio;
+    @FXML
+    private Label lblFechaSeleccionada;
+    @FXML
+    private Button btnContinuar;
+
+    @FXML private Button btnMesAnterior;
 
     private YearMonth mesActual = YearMonth.now();
     private LocalDate fechaSeleccionada = null;
 
     @FXML
     public void initialize() {
+        // 1. Reiniciar el calendario al mes actual
+        mesActual = YearMonth.now();
+
+        // 2. Limpiar cualquier fecha que se haya quedado seleccionada anteriormente
+        fechaSeleccionada = null;
+
+        // 3. Restaurar los textos y botones visuales a su estado inicial
+        lblFechaSeleccionada.setText("Ninguna fecha seleccionada");
+        lblFechaSeleccionada.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 12px;");
+
+        if (btnContinuar != null) {
+            btnContinuar.setDisable(true);
+        }
+
+        // 4. Renderizar el calendario (esto disparará consultarAgendaUseCase.obtenerMesCompleto y actualizará los turnos)
         renderizarCalendario();
     }
+
     @FXML
     private void mesAnterior() {
-        mesActual = mesActual.minusMonths(1);
-        renderizarCalendario();
+        // Solo permite restar un mes si el mes actual del calendario es posterior al mes real en curso
+        if (mesActual.isAfter(YearMonth.now())) {
+            mesActual = mesActual.minusMonths(1);
+            renderizarCalendario();
+        }
     }
 
     @FXML
@@ -97,6 +124,11 @@ public class SeleccionarFechaController {
             rc.setFillHeight(true);
             gridCalendario.getRowConstraints().add(rc);
         }
+
+        if (btnMesAnterior != null) {
+            // El botón se deshabilita si el mes mostrado NO es mayor al mes real
+            btnMesAnterior.setDisable(!mesActual.isAfter(YearMonth.now()));
+        }
     }
 
     private VBox crearCelda(LocalDate fecha, List<Evento> eventos) {
@@ -129,9 +161,9 @@ public class SeleccionarFechaController {
         String estiloCelda;
 
         if (esPasado) {
-            estiloCelda = "celda-dia-llena";
-            estiloNumero = "numero-dia-lleno";
-            estiloDisponibilidad = "disponibilidad-lleno";
+            estiloCelda = "celda-dia-nodisponible";
+            estiloNumero = "numero-dia-no";
+            estiloDisponibilidad = "disponibilidad-no";
             textoDisponibilidad = "No disponible";
         } else if (turnosDisponibles == 0) {
             estiloCelda = "celda-dia-llena";
@@ -230,6 +262,7 @@ public class SeleccionarFechaController {
             ViewSwitcher.cargarVista("Cotizacion.fxml");
         }
     }
+
     @FXML
     private void cancelar() {
         fechaSeleccionada = null;

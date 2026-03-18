@@ -439,6 +439,22 @@
     -fx-opacity: 0.6;
 }
 
+.celda-dia-nodisponible {
+    -fx-background-color: #cfcfcf;
+    -fx-border-color: #b6b6b6;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-min-height: 70px;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+    -fx-spacing: 4px;
+    -fx-cursor: default;
+    -fx-opacity: 0.6;
+}
+
+
 .celda-dia-hoy {
     -fx-background-color: #fff8e8;
     -fx-border-color: #f39c12;
@@ -459,6 +475,12 @@
     -fx-text-fill: #2c3e50;
 }
 
+.numero-dia-no {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
 .numero-dia-seleccionado {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -469,6 +491,12 @@
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #c0392b;
+}
+
+.disponibilidad-no {
+    -fx-font-size: 10px;
+    -fx-text-fill: #020202;
+    -fx-font-weight: bold;
 }
 
 .disponibilidad-libre {

@@ -48,3 +48,16 @@ INSERT INTO paquetes_servicios (paquete_id, servicio_id, cantidad, subtotal) VAL
 (3, 2, 1, 2000.00),
 (3, 4, 1, 2500.00),
 (3, 5, 2, 2400.00); -- Aquí ponemos 2 decoraciones y el subtotal es doble.
+
+
+-- ==========================================
+-- SCRIPT DE INSERCIÓN PARA LA TABLA EVENTOS
+-- ==========================================
+
+-- Insertamos eventos de prueba con turnos MATUTINO y VESPERTINO
+INSERT INTO eventos (fecha, hora_inicio, hora_fin, turno, notas, cotizacion_id) VALUES
+                                                                                    ('2026-04-15', '09:00:00', '14:00:00', 'MATUTINO', 'Fiesta infantil con temática de superhéroes. Requiere acceso temprano para decoración.', NULL),
+                                                                                    ('2026-04-15', '15:00:00', '20:00:00', 'VESPERTINO', 'Cumpleaños 10 años, confirmar llegada del brincolín a tiempo.', NULL),
+                                                                                    ('2026-04-18', '10:00:00', '15:00:00', 'MATUTINO', 'Evento escolar de fin de curso. Capacidad máxima esperada.', NULL),
+                                                                                    ('2026-04-20', '16:00:00', '21:00:00', 'VESPERTINO', 'Reunión familiar, traer sillas extra y revisar limpieza de mesas.', NULL),
+                                                                                    ('2026-04-25', '09:00:00', '14:00:00', 'MATUTINO', 'Bautizo. El cliente solicitó acomodo especial de las mesas.', NULL);
