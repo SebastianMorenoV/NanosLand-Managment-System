@@ -8,6 +8,7 @@ import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.ClienteDTO;
 import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.utils.ViewSwitcher;
@@ -53,6 +54,7 @@ public class CotizacionController {
     private ComboBox<TurnoEvento> comboTurnos;
     @FXML
     private TextArea textAreaNotas;
+
 
     @FXML
     private Label lblNombrePaquete;
@@ -136,7 +138,9 @@ public class CotizacionController {
 
         try {
             CotizacionDTO resultado = crearCotizacionUseCase.crearCotizacion(dto);
-            mostrarExito(resultado.getFolio());
+
+            abrirModalPago();
+            //mostrarExito(resultado.getFolio());
         } catch (CotizacionException ex) {
             mostrarError(ex.getMessage());
         } catch (Exception ex) {
@@ -340,6 +344,37 @@ public class CotizacionController {
             configurarComboClientes();
 
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void abrirModalPago() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/presentacion/views/ConfirmarPagoModal.fxml"));
+            // Ensure Spring Context handles the controller creation
+            loader.setControllerFactory(ViewSwitcher.getSpringContext()::getBean);
+            Parent root = loader.load();
+
+            ConfirmarPagoModalController modalController = loader.getController();
+            // Pass the actual numbers you calculated in the main screen
+            modalController.setDatosCotizacion(2500.00, 300.00);
+
+            Stage stage = new Stage();
+            stage.setTitle("Confirmar Pago");
+            stage.setScene(new Scene(root));
+            // This blocks the main window until the modal is closed
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+
+            // Check the result after the modal closes
+            if (modalController.isPagoConfirmado()) {
+                double anticipo = modalController.getMontoAnticipo();
+                MetodoPago metodo = modalController.getMetodoSeleccionado();
+
+                System.out.println("Proceeding with payment: $" + anticipo + " via " + metodo);
+                // Call your UseCase to save the Cotizacion and the Anticipo here
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
