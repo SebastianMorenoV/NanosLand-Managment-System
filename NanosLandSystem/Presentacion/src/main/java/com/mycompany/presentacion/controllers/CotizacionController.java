@@ -3,21 +3,26 @@ package com.mycompany.presentacion.controllers;
 import com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase;
 import com.example.negocio.catalogo.usecase.ConsultarCatalogoUseCase;
 import com.example.negocio.cliente.usecase.BuscarClienteUseCase;
+import com.example.negocio.cotizacion.usecase.CalcularTotalCotizacionUseCase;
 import com.example.negocio.cotizacion.usecase.CrearCotizacionUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.ClienteDTO;
 import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.common.dtos.ServicioDTO;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener; 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets; 
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane; 
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -29,6 +34,7 @@ import org.springframework.stereotype.Controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -39,6 +45,7 @@ public class CotizacionController {
     private final BuscarClienteUseCase buscarClienteUseCase;
     private final ConsultarCatalogoUseCase consultarCatalogoUseCase;
     private final VerificarDisponibilidadTurnoUseCase verificarDisponibilidadTurnoUseCase;
+    private final CalcularTotalCotizacionUseCase calcularTotalCotizacionUseCase;
     private final CrearCotizacionUseCase crearCotizacionUseCase;
     private final CotizacionContext cotizacionContext;
 
@@ -69,11 +76,16 @@ public class CotizacionController {
     @FXML
     private TextField txtTematica;
 
+    // Elementos para Servicios Extras (Flujo 2.2.3 y 2.2.4)
+    @FXML
+    private ListView<ServicioDTO> listaServiciosExtras;
+
     // ─── INICIALIZACIÓN ───────────────────────────────────────────────────────
     @FXML
     public void initialize() {
         configurarComboClientes();
         configurarComboPaquetes();
+        configurarListaServiciosExtras();
 
         LocalDate fechaSeleccionada = cotizacionContext.getFechaSeleccionada();
         if (fechaSeleccionada != null && datePickerFecha != null) {
@@ -91,9 +103,20 @@ public class CotizacionController {
                 @Override
                 public void updateItem(LocalDate date, boolean empty) {
                     super.updateItem(date, empty);
-                    if (date != null && date.isBefore(LocalDate.now())) {
-                        setDisable(true);
-                        setStyle("-fx-background-color: #f2f2f2; -fx-text-fill: #b2b2b2;");
+                    if (date != null) {
+                        if (date.isBefore(LocalDate.now())) {
+                            setDisable(true);
+                            setStyle("-fx-background-color: #f2f2f2; -fx-text-fill: #b2b2b2;");
+                        } else {
+                            // Lógica de colores según Flujo 2.2.1 y 2.2.2
+                            String estado = verificarDisponibilidadTurnoUseCase.obtenerEstadoDisponibilidad(date);
+                            if (estado.equals("GRIS")) {
+                                setDisable(true);
+                                setStyle("-fx-background-color: #bdc3c7;"); // Gris (Bloqueado)
+                            } else if (estado.equals("AMARILLO")) {
+                                setStyle("-fx-background-color: #f1c40f;"); // Amarillo (Parcial)
+                            }
+                        }
                     }
                 }
             });
@@ -157,7 +180,7 @@ public class CotizacionController {
 
     private void mostrarError(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("No se pudo guardar");
+        alert.setTitle("Error");
         alert.setHeaderText("Revisa los datos ingresados");
         alert.setContentText(mensaje);
         alert.showAndWait();
@@ -169,7 +192,7 @@ public class CotizacionController {
 
         if (fecha != null && !fecha.isBefore(LocalDate.now())) {
             for (TurnoEvento turno : TurnoEvento.values()) {
-                if (verificarDisponibilidadTurnoUseCase.verificar(fecha, turno)) {
+                if (verificarDisponibilidadTurnoUseCase.esTurnoDisponible(fecha, turno)) {
                     turnosDisponibles.add(turno);
                 }
             }
@@ -186,6 +209,11 @@ public class CotizacionController {
             comboTurnos.setPromptText("Seleccione un turno...");
             comboTurnos.setDisable(false);
             ocultarErrorTurnos();
+            
+            String estado = verificarDisponibilidadTurnoUseCase.obtenerEstadoDisponibilidad(fecha);
+            if (estado.equals("AMARILLO")) {
+                comboTurnos.setPromptText("Día Parcial: Seleccione un turno libre");
+            }
         }
 
         comboTurnos.setConverter(new StringConverter<TurnoEvento>() {
@@ -195,11 +223,8 @@ public class CotizacionController {
                 String nombre = turno.name();
                 return nombre.substring(0, 1).toUpperCase() + nombre.substring(1).toLowerCase();
             }
-
             @Override
-            public TurnoEvento fromString(String string) {
-                return null;
-            }
+            public TurnoEvento fromString(String string) { return null; }
         });
     }
 
@@ -235,11 +260,8 @@ public class CotizacionController {
                 String telefono = cliente.getTelefono() != null ? cliente.getTelefono() : "";
                 return cliente.getNombre() + " - " + telefono;
             }
-
             @Override
-            public ClienteDTO fromString(String string) {
-                return null;
-            }
+            public ClienteDTO fromString(String string) { return null; }
         });
 
         comboClientes.setCellFactory(listView -> new ListCell<ClienteDTO>() {
@@ -251,12 +273,9 @@ public class CotizacionController {
                     setText(null);
                 } else {
                     VBox contenedor = new VBox(2);
-
                     Label lblNombre = new Label(cliente.getNombre());
                     lblNombre.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 13px;");
-
-                    String telefono = cliente.getTelefono() != null
-                            ? cliente.getTelefono() : "Sin teléfono";
+                    String telefono = cliente.getTelefono() != null ? cliente.getTelefono() : "Sin teléfono";
                     Label lblDetalles = new Label("📞 " + telefono);
                     lblDetalles.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px;");
 
@@ -266,7 +285,6 @@ public class CotizacionController {
                 }
             }
         });
-
         comboClientes.setItems(listaClientes);
     }
 
@@ -282,11 +300,8 @@ public class CotizacionController {
             public String toString(PaqueteDTO paquete) {
                 return paquete == null ? "" : paquete.getNombre();
             }
-
             @Override
-            public PaqueteDTO fromString(String string) {
-                return null;
-            }
+            public PaqueteDTO fromString(String string) { return null; }
         });
 
         comboPaquetes.setOnAction(event -> {
@@ -302,16 +317,42 @@ public class CotizacionController {
         });
     }
 
+    // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ─────────────────────────
+    private void configurarListaServiciosExtras() {
+        List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerTodosLosServicios();
+        ObservableList<ServicioDTO> items = FXCollections.observableArrayList(todosLosServicios);
+        
+        if (listaServiciosExtras != null) {
+            listaServiciosExtras.setItems(items);
+            
+            listaServiciosExtras.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+            
+            listaServiciosExtras.getSelectionModel().getSelectedItems().addListener((ListChangeListener<ServicioDTO>) c -> {
+                actualizarTotalEstimado();
+            });
+
+            listaServiciosExtras.setCellFactory(lv -> new ListCell<ServicioDTO>() {
+                @Override
+                protected void updateItem(ServicioDTO item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item.getNombre() + " (+$" + String.format("%,.2f", item.getPrecio()) + ")");
+                    }
+                }
+            });
+        }
+    }
+
     // ─── CÁLCULO DE TOTAL ESTIMADO ────────────────────────────────────────────
     private void actualizarTotalEstimado() {
-        double costoPaquete = 0.0;
         PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
-        if (paqueteSeleccionado != null) {
-            costoPaquete = paqueteSeleccionado.getCostoBase();
-        }
+        List<ServicioDTO> extras = (listaServiciosExtras != null) 
+                ? new ArrayList<>(listaServiciosExtras.getSelectionModel().getSelectedItems()) 
+                : new ArrayList<>();
 
-        // TODO: Sumar costo de servicios extras cuando se implemente esa sección
-        double total = costoPaquete;
+        Double total = calcularTotalCotizacionUseCase.ejecutar(paqueteSeleccionado, extras);
 
         if (lblTotalEstimado != null) {
             lblTotalEstimado.setText(String.format("$%,.2f", total));
@@ -336,11 +377,88 @@ public class CotizacionController {
             modalStage.setResizable(false);
             modalStage.showAndWait();
 
-            // Refrescar combo al cerrar por si se agregó un cliente nuevo
             configurarComboClientes();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // ─── ACCIÓN DEL BOTÓN AÑADIR SERVICIO AL SISTEMA ──────────────────────
+    @FXML
+    private void abrirDialogoAgregarServicio() {
+        // Creamos un Modal nativo de JavaFX
+        Dialog<ServicioDTO> dialog = new Dialog<>();
+        dialog.setTitle("Nuevo Servicio");
+        dialog.setHeaderText("Añadir un nuevo servicio al catálogo");
+
+        // Botones del modal
+        ButtonType guardarButtonType = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(guardarButtonType, ButtonType.CANCEL);
+
+        // Cuadrícula para los textos (Actualizado con Descripción)
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField txtNombre = new TextField();
+        txtNombre.setPromptText("Ej. Toro Mecánico");
+        
+        TextField txtPrecio = new TextField();
+        txtPrecio.setPromptText("Ej. 1500.00");
+        
+        TextField txtDescripcion = new TextField();
+        txtDescripcion.setPromptText("Ej. Renta por 4 horas con operador");
+
+        grid.add(new Label("Nombre del Servicio:"), 0, 0);
+        grid.add(txtNombre, 1, 0);
+        
+        grid.add(new Label("Precio (MXN):"), 0, 1);
+        grid.add(txtPrecio, 1, 1);
+        
+        grid.add(new Label("Descripción:"), 0, 2);
+        grid.add(txtDescripcion, 1, 2);
+
+        // Habilitar el botón Guardar solo si Nombre y Precio tienen texto (la descripción es opcional)
+        javafx.scene.Node guardarBtn = dialog.getDialogPane().lookupButton(guardarButtonType);
+        guardarBtn.setDisable(true);
+        
+        // Listeners para validación básica
+        txtNombre.textProperty().addListener((observable, oldValue, newValue) -> {
+            guardarBtn.setDisable(newValue.trim().isEmpty() || txtPrecio.getText().trim().isEmpty());
+        });
+        txtPrecio.textProperty().addListener((observable, oldValue, newValue) -> {
+            guardarBtn.setDisable(newValue.trim().isEmpty() || txtNombre.getText().trim().isEmpty());
+        });
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Ejecutar al hacer clic en Guardar
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == guardarButtonType) {
+                try {
+                    String nom = txtNombre.getText().trim();
+                    Double prec = Double.parseDouble(txtPrecio.getText().trim());
+                    String desc = txtDescripcion.getText().trim();
+                    
+                    // Usamos la capa de negocio para insertarlo en MySQL
+                    return consultarCatalogoUseCase.guardarNuevoServicio(nom, prec, desc);
+                } catch (NumberFormatException e) {
+                    mostrarError("El precio debe ser un número válido sin letras ni símbolos.");
+                } catch (Exception e) {
+                    mostrarError("Error al guardar en la base de datos.");
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        });
+
+        // Mostrar el modal y refrescar la lista si hubo éxito
+        dialog.showAndWait().ifPresent(nuevoServicio -> {
+            Alert exito = new Alert(Alert.AlertType.INFORMATION, "El servicio '" + nuevoServicio.getNombre() + "' fue agregado exitosamente.");
+            exito.showAndWait();
+            configurarListaServiciosExtras(); // Volvemos a cargar la lista para que se muestre el nuevo
+        });
     }
 }

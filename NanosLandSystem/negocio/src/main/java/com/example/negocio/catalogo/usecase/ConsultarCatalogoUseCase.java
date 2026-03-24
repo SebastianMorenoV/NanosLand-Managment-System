@@ -5,7 +5,9 @@
 package com.example.negocio.catalogo.usecase;
 
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.common.dtos.ServicioDTO;
 import com.mycompany.common.mapper.PaqueteMapper;
+import com.mycompany.common.mapper.ServicioMapper;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.repository.PaqueteRepository;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -29,18 +32,34 @@ public class ConsultarCatalogoUseCase {
 
     @Transactional(readOnly = true)
     public List<PaqueteDTO> obtenerTodosLosPaquetes() {
-        // 1. Buscamos en la base de datos
-        List<Paquete> paquetesDb = paqueteRepository.findAll();
-
-        // 2. Mapeamos a DTO AQUÍ ADENTRO.
-        // Como estamos dentro de @Transactional, la sesión sigue viva.
-        // Cuando PaqueteMapper llame a ServicioMapper.toDTO(), funcionará perfecto.
-        return paquetesDb.stream()
+        return paqueteRepository.findAll().stream()
                 .map(PaqueteMapper::toDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public List<Servicio> obtenerServicios() {
         return servicioRepository.findAll();
+    }
+
+    public List<ServicioDTO> obtenerTodosLosServicios() {
+        return servicioRepository.findAll().stream()
+                // AQUÍ ESTÁ LA MAGIA: Usamos 'ServicioMapper' con S mayúscula
+                .map(ServicioMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public ServicioDTO guardarNuevoServicio(String nombre, Double precio, String descripcion) {
+        com.mycompany.persistencia.dominio.Servicio entidad = new com.mycompany.persistencia.dominio.Servicio();
+        entidad.setNombre(nombre);
+        entidad.setPrecio(precio);
+        
+        // Guardamos la descripción que puso el usuario (o "Sin descripción" si la dejó en blanco)
+        entidad.setDescripcion(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin descripción"); 
+        
+        // Guardamos en MySQL
+        entidad = servicioRepository.save(entidad);
+        
+        // Retornamos el DTO para que la interfaz lo pueda usar
+        return ServicioMapper.toDTO(entidad);
     }
 }

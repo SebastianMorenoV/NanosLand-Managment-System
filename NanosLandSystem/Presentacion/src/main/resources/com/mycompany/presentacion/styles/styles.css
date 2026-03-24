@@ -643,3 +643,14 @@
     -fx-shape: " ";
     -fx-padding: 0;
 }
+
+/* Efecto hover para los botones de servicios */
+.button-add-service {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-border-radius: 5px;
+}
+.button-add-service:hover {
+    -fx-background-color: #45a049;
+    -fx-scale-x: 1.1;
+}

@@ -6,7 +6,9 @@ package com.mycompany.common.mapper;
 
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.common.dtos.ServicioDTO;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ServicioMapper {
 
     public static ServicioDTO toDTO(Servicio servicio) {
