@@ -4,6 +4,8 @@ import com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase;
 import com.example.negocio.catalogo.usecase.ConsultarCatalogoUseCase;
 import com.example.negocio.cliente.usecase.BuscarClienteUseCase;
 import com.example.negocio.cotizacion.usecase.CrearCotizacionUseCase;
+import com.example.negocio.cotizacion.usecase.GenerarComprobanteUseCase;
+import com.example.negocio.cotizacion.usecase.RegistrarAnticipoUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.ClienteDTO;
 import com.mycompany.common.dtos.CotizacionDTO;
@@ -19,6 +21,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -28,6 +33,8 @@ import lombok.RequiredArgsConstructor;
 import org.controlsfx.control.SearchableComboBox;
 import org.springframework.stereotype.Controller;
 
+import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -42,7 +49,8 @@ public class CotizacionController {
     private final VerificarDisponibilidadTurnoUseCase verificarDisponibilidadTurnoUseCase;
     private final CrearCotizacionUseCase crearCotizacionUseCase;
     private final CotizacionContext cotizacionContext;
-
+    private final RegistrarAnticipoUseCase registrarAnticipoUseCase;
+    private final GenerarComprobanteUseCase generarComprobanteUseCase;
     // ─── COMPONENTES FXML ─────────────────────────────────────────────────────
     @FXML
     private SearchableComboBox<ClienteDTO> comboClientes;
@@ -54,8 +62,6 @@ public class CotizacionController {
     private ComboBox<TurnoEvento> comboTurnos;
     @FXML
     private TextArea textAreaNotas;
-
-
     @FXML
     private Label lblNombrePaquete;
     @FXML
@@ -138,13 +144,15 @@ public class CotizacionController {
 
         try {
             CotizacionDTO resultado = crearCotizacionUseCase.crearCotizacion(dto);
+            // Suponiendo que calcular total te devuelve el desglose:
+            double subtotal = 2500.00; // Aquí sacar el costo real (ej. resultado.getTotalEstimado())
+            double cargosExtra = 300.00;
 
-            abrirModalPago();
-            //mostrarExito(resultado.getFolio());
+            abrirModalPago(resultado.getId(), subtotal, cargosExtra);
+
         } catch (CotizacionException ex) {
             mostrarError(ex.getMessage());
         } catch (Exception ex) {
-            mostrarError("Ocurrió un error inesperado al guardar la cotización. Intente de nuevo.");
             ex.printStackTrace();
         }
     }
@@ -348,34 +356,66 @@ public class CotizacionController {
         }
     }
 
-    private void abrirModalPago() {
+    private void abrirModalPago(Long cotizacionId, double subtotal, double cargosExtra) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/presentacion/views/ConfirmarPagoModal.fxml"));
-            // Ensure Spring Context handles the controller creation
             loader.setControllerFactory(ViewSwitcher.getSpringContext()::getBean);
             Parent root = loader.load();
 
             ConfirmarPagoModalController modalController = loader.getController();
-            // Pass the actual numbers you calculated in the main screen
-            modalController.setDatosCotizacion(2500.00, 300.00);
+            modalController.setDatosCotizacion(subtotal, cargosExtra);
 
             Stage stage = new Stage();
-            stage.setTitle("Confirmar Pago");
+            stage.setTitle("Confirmar Anticipo");
             stage.setScene(new Scene(root));
-            // This blocks the main window until the modal is closed
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.showAndWait();
 
-            // Check the result after the modal closes
+            // Si el usuario confirmó el modal
             if (modalController.isPagoConfirmado()) {
                 double anticipo = modalController.getMontoAnticipo();
                 MetodoPago metodo = modalController.getMetodoSeleccionado();
+                String referencia = modalController.getReferenciaPago();
 
-                System.out.println("Proceeding with payment: $" + anticipo + " via " + metodo);
-                // Call your UseCase to save the Cotizacion and the Anticipo here
+                // 1. Registramos el pago en BD y pasamos a estado VIGENTE / CONFIRMADA
+                registrarAnticipoUseCase.registrarAnticipo(cotizacionId, anticipo, metodo, referencia);
+
+                // 2. Generar el ticket / comprobante
+                byte[] pdfData = generarComprobanteUseCase.generarTicketPDF(cotizacionId);
+                mostrarPDF(pdfData);
+
+
+                mostrarExito("Anticipo registrado e impreso correctamente.");
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void mostrarPDF(byte[] data) {
+        if (data == null || data.length == 0) return;
+        try {
+            java.io.File tempFile = java.io.File.createTempFile("Ticket_NanosLand_", ".pdf");
+            java.nio.file.Files.write(tempFile.toPath(), data);
+            tempFile.deleteOnExit();
+
+            String os = System.getProperty("os.name").toLowerCase();
+
+            if (java.awt.Desktop.isDesktopSupported() && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.OPEN)) {
+                java.awt.Desktop.getDesktop().open(tempFile);
+            } else if (os.contains("win")) {
+                // Plan B para Windows
+                new ProcessBuilder("cmd", "/c", "start", tempFile.getAbsolutePath()).start();
+            } else if (os.contains("mac")) {
+                // Plan B para Mac
+                new ProcessBuilder("open", tempFile.getAbsolutePath()).start();
+            } else {
+                // Plan B para Linux
+                new ProcessBuilder("xdg-open", tempFile.getAbsolutePath()).start();
+            }
+        } catch (Exception e) {
+            System.err.println("Error abriendo el PDF: " + e.getMessage());
+            mostrarError("El PDF se generó pero no se pudo abrir automáticamente. Revisa tus aplicaciones predeterminadas.");
         }
     }
 }

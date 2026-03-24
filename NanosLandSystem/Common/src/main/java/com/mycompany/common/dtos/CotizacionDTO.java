@@ -7,10 +7,6 @@ import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- *
- * @author skyro
- */
 @Data
 @NoArgsConstructor
 public class CotizacionDTO {
@@ -20,13 +16,13 @@ public class CotizacionDTO {
     private Long clienteId;
     private String nombreCliente;
     private String nombreFestejado;
+    private String tematica;
     private double total;
     private String notas;
     private EstadoCotizacion estado;
     private TurnoEvento turno;
     private Long paqueteId;
     private String nombrePaquete;
-    private String tematica;
     private Long usuarioId;
     private List<DetalleCotizacionDTO> detalles;
 }

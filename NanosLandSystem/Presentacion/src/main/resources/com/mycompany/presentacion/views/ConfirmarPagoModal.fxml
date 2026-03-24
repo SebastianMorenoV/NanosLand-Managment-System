@@ -3,41 +3,48 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="15" stylesheets="@../styles/styles.css" styleClass="modal-fondo" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ConfirmarPagoModalController">
-    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+<VBox spacing="20" stylesheets="@../styles/styles.css" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ConfirmarPagoModalController">
+    <padding><Insets top="25" right="30" bottom="25" left="30"/></padding>
 
-    <Label text="Confirmar Pago" style="-fx-font-size: 1.5em; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+    <Label text="Confirmar Anticipo y Pago" style="-fx-font-size: 1.8em; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
     <Separator/>
 
-    <VBox spacing="5" style="-fx-background-color: #f8f9fa; -fx-padding: 10; -fx-background-radius: 5;">
-        <Label text="Resumen de Cotización" style="-fx-font-weight: bold; -fx-padding: 0 0 5 0;"/>
+    <VBox spacing="8" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
+        <Label text="Resumen de Cotización" style="-fx-font-weight: bold; -fx-font-size: 1.1em; -fx-text-fill: #495057;"/>
         <HBox spacing="10">
-            <Label text="Subtotal:" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-            <Label fx:id="lblSubtotal" text="\$0.00"/>
+            <Label text="Subtotal:" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-text-fill: #6c757d;"/>
+            <Label fx:id="lblSubtotal" text="\$0.00" style="-fx-font-weight: bold;"/>
         </HBox>
         <HBox spacing="10">
-            <Label text="Cargos Extra:" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-            <Label fx:id="lblCargosExtra" text="\$0.00"/>
+            <Label text="Cargos Extra:" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-text-fill: #6c757d;"/>
+            <Label fx:id="lblCargosExtra" text="\$0.00" style="-fx-font-weight: bold;"/>
         </HBox>
         <Separator/>
         <HBox spacing="10">
-            <Label text="Total a Pagar:" style="-fx-font-weight: bold;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-            <Label fx:id="lblTotal" text="\$0.00" style="-fx-font-weight: bold;"/>
+            <Label text="Total a Pagar:" style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #212529;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <Label fx:id="lblTotal" text="\$0.00" style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #1a82b8;"/>
         </HBox>
     </VBox>
 
     <VBox spacing="5">
-        <Label text="Monto del Anticipo"/>
-        <TextField fx:id="txtAnticipo" promptText="\$0.00" styleClass="text-field-moderno"/>
+        <Label text="Monto del Anticipo" style="-fx-font-weight: bold; -fx-text-fill: #495057;"/>
+        <TextField fx:id="txtAnticipo" promptText="Ej. 500.00" style="-fx-font-size: 1.2em; -fx-padding: 8; -fx-background-radius: 5; -fx-border-color: #ced4da; -fx-border-radius: 5;"/>
     </VBox>
 
-    <VBox spacing="5">
-        <Label text="Método de Pago"/>
-        <ComboBox fx:id="comboMetodoPago" maxWidth="Infinity" promptText="Seleccione método..." styleClass="combo-box-moderno"/>
-    </VBox>
+    <HBox spacing="15">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Método de Pago" style="-fx-font-weight: bold; -fx-text-fill: #495057;"/>
+            <ComboBox fx:id="comboMetodoPago" maxWidth="Infinity" promptText="Seleccione método..." style="-fx-padding: 4; -fx-background-radius: 5; -fx-border-color: #ced4da; -fx-border-radius: 5;"/>
+        </VBox>
 
-    <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="Cancelar" onAction="#cancelar" styleClass="boton-secundario"/>
-        <Button fx:id="btnConfirmar" text="Confirmar Pago" onAction="#confirmar" styleClass="boton-primario"/>
+        <VBox fx:id="vboxReferencia" spacing="5" HBox.hgrow="ALWAYS" visible="false" managed="false">
+            <Label text="Folio / Referencia" style="-fx-font-weight: bold; -fx-text-fill: #495057;"/>
+            <TextField fx:id="txtReferencia" promptText="Código de autorización..." style="-fx-padding: 5; -fx-background-radius: 5; -fx-border-color: #ced4da; -fx-border-radius: 5;"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+        <Button text="Cancelar" onAction="#cancelar" style="-fx-background-color: white; -fx-border-color: #6c757d; -fx-text-fill: #6c757d; -fx-padding: 8 20; -fx-background-radius: 5; -fx-border-radius: 5; -fx-cursor: hand;"/>
+        <Button fx:id="btnConfirmar" text="Confirmar y Generar Ticket" onAction="#confirmar" style="-fx-background-color: #1a82b8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 5; -fx-cursor: hand;"/>
     </HBox>
 </VBox>

@@ -7,6 +7,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Controller;
 
@@ -18,20 +19,32 @@ public class ConfirmarPagoModalController {
     @FXML private Label lblTotal;
     @FXML private TextField txtAnticipo;
     @FXML private ComboBox<MetodoPago> comboMetodoPago;
+    @FXML private TextField txtReferencia;
+    @FXML private VBox vboxReferencia;
     @FXML private Button btnConfirmar;
 
-    // Variables to store the results
     private boolean pagoConfirmado = false;
     private double montoAnticipo = 0.0;
     private MetodoPago metodoSeleccionado;
+    private String referenciaPago = "";
 
     @FXML
     public void initialize() {
-        // Populate the combo box with the enum values
         comboMetodoPago.setItems(FXCollections.observableArrayList(MetodoPago.values()));
+
+        // Listener para mostrar/ocultar el campo de referencia según el método
+        comboMetodoPago.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && (newValue == MetodoPago.TRANSFERENCIA || newValue == MetodoPago.TARJETA)) {
+                vboxReferencia.setVisible(true);
+                vboxReferencia.setManaged(true);
+            } else {
+                vboxReferencia.setVisible(false);
+                vboxReferencia.setManaged(false);
+                txtReferencia.clear();
+            }
+        });
     }
 
-    // Method to pass data from your main screen into this modal
     public void setDatosCotizacion(double subtotal, double cargosExtra) {
         double total = subtotal + cargosExtra;
         lblSubtotal.setText(String.format("$%.2f", subtotal));
@@ -42,20 +55,26 @@ public class ConfirmarPagoModalController {
     @FXML
     private void confirmar() {
         try {
-            // Clean the input and parse the number
             String input = txtAnticipo.getText().replace("$", "").replace(",", "").trim();
             montoAnticipo = Double.parseDouble(input);
             metodoSeleccionado = comboMetodoPago.getValue();
+            referenciaPago = txtReferencia.getText().trim();
 
-            // Basic validation
             if (metodoSeleccionado != null && montoAnticipo > 0) {
+                // Validación: si es tarjeta/transferencia, exigir que haya referencia
+                if ((metodoSeleccionado == MetodoPago.TRANSFERENCIA || metodoSeleccionado == MetodoPago.TARJETA)
+                        && referenciaPago.isEmpty()) {
+                    System.out.println("Debe ingresar el folio de autorización o referencia.");
+                    return;
+                }
+
                 pagoConfirmado = true;
                 cerrarModal();
             } else {
-                System.out.println("Por favor, llene todos los campos correctamente.");
+                System.out.println("Por favor, seleccione un método de pago e ingrese un monto válido.");
             }
         } catch (NumberFormatException e) {
-            System.out.println("Monto inválido.");
+            System.out.println("Monto de anticipo inválido.");
         }
     }
 
@@ -70,8 +89,8 @@ public class ConfirmarPagoModalController {
         stage.close();
     }
 
-    // Getters so the parent controller can retrieve the user's choices
     public boolean isPagoConfirmado() { return pagoConfirmado; }
     public double getMontoAnticipo() { return montoAnticipo; }
     public MetodoPago getMetodoSeleccionado() { return metodoSeleccionado; }
+    public String getReferenciaPago() { return referenciaPago; }
 }
