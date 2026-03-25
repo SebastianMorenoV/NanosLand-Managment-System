@@ -37,6 +37,7 @@ import javafx.stage.FileChooser;
 import javafx.scene.layout.GridPane; 
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -52,7 +53,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.scene.layout.Priority;
 
 @Controller
 @RequiredArgsConstructor
@@ -137,6 +137,10 @@ public class CotizacionController {
     
     // Y añade esta variable para saber en qué estado estaba la cotización que editamos
     private EstadoCotizacion estadoEdicionActual;
+    
+    // VARIABLE CLAVE: Guarda los servicios que ya agregaste a la cotización
+    private final ObservableList<ServicioDTO> serviciosSeleccionados = FXCollections.observableArrayList();
+
     // ─── INICIALIZACIÓN ───────────────────────────────────────────────────────
     private void cambiarModoInterfaz(boolean edicion) {
         if (boxBotonesNuevos != null) {
@@ -589,18 +593,21 @@ public class CotizacionController {
         txtNombreFestejado.setText(cotizacion.getNombreFestejado() != null ? cotizacion.getNombreFestejado() : "");
         txtTematica.setText(cotizacion.getTematica() != null ? cotizacion.getTematica() : "");
 
-        // Seleccionamos los extras previamente guardados
+        // Seleccionamos los extras previamente guardados y los metemos a la lista visual
         if (listaServiciosExtras != null) {
-            listaServiciosExtras.getSelectionModel().clearSelection();
+            serviciosSeleccionados.clear();
             if (cotizacion.getDetalles() != null) {
+                // Obtenemos el catálogo completo para buscar las coincidencias
+                List<ServicioDTO> catalogo = consultarCatalogoUseCase.obtenerTodosLosServicios();
+                
                 for (DetalleCotizacionDTO detalle : cotizacion.getDetalles()) {
                     if (detalle == null || detalle.getServicioId() == null) continue;
-                    ServicioDTO match = listaServiciosExtras.getItems().stream()
+                    ServicioDTO match = catalogo.stream()
                         .filter(s -> s.getId() != null && s.getId().equals(detalle.getServicioId()))
                         .findFirst()
                         .orElse(null);
                     if (match != null) {
-                        listaServiciosExtras.getSelectionModel().select(match);
+                        serviciosSeleccionados.add(match);
                     }
                 }
             }
@@ -653,7 +660,7 @@ public class CotizacionController {
         txtTematica.setText("");
 
         if (listaServiciosExtras != null) {
-            listaServiciosExtras.getSelectionModel().clearSelection();
+            serviciosSeleccionados.clear();
         }
 
         lblNombrePaquete.setText("Seleccione un paquete");
@@ -736,9 +743,7 @@ public class CotizacionController {
         dto.setEstado(estadoObjetivo);
 
         // Servicios extras seleccionados
-        List<ServicioDTO> extrasSel = listaServiciosExtras != null
-            ? new ArrayList<>(listaServiciosExtras.getSelectionModel().getSelectedItems())
-            : List.of();
+        List<ServicioDTO> extrasSel = new ArrayList<>(serviciosSeleccionados);
 
         List<DetalleCotizacionDTO> detalles = new ArrayList<>();
         for (ServicioDTO s : extrasSel) {
@@ -893,28 +898,38 @@ public class CotizacionController {
         });
     }
 
-    // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ─────────────────────────
+    // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS (Ícono de Basurita) ──────────
     private void configurarListaServiciosExtras() {
-        List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerTodosLosServicios();
-        ObservableList<ServicioDTO> items = FXCollections.observableArrayList(todosLosServicios);
-        
         if (listaServiciosExtras != null) {
-            listaServiciosExtras.setItems(items);
+            listaServiciosExtras.setItems(serviciosSeleccionados);
             
-            listaServiciosExtras.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            
-            listaServiciosExtras.getSelectionModel().getSelectedItems().addListener((ListChangeListener<ServicioDTO>) c -> {
-                actualizarTotalEstimado();
-            });
-
+            // Formato visual para agregar el ícono de basura y el texto
             listaServiciosExtras.setCellFactory(lv -> new ListCell<ServicioDTO>() {
                 @Override
                 protected void updateItem(ServicioDTO item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
+                        setGraphic(null);
                         setText(null);
                     } else {
-                        setText(item.getNombre() + " (+$" + String.format("%,.2f", item.getPrecio()) + ")");
+                        HBox hbox = new HBox(10);
+                        hbox.setAlignment(Pos.CENTER_LEFT);
+                        
+                        // Botón de basurita
+                        Button btnDelete = new Button("🗑️");
+                        btnDelete.setStyle("-fx-background-color: transparent; -fx-text-fill: #e74c3c; -fx-cursor: hand; -fx-font-size: 14px;");
+                        btnDelete.setOnAction(e -> {
+                            serviciosSeleccionados.remove(item);
+                            actualizarTotalEstimado();
+                        });
+
+                        // Texto del servicio
+                        Label lblText = new Label(item.getNombre() + " (+$" + String.format("%,.2f", item.getPrecio()) + ")");
+                        lblText.setStyle("-fx-text-fill: #2c3e50;");
+
+                        hbox.getChildren().addAll(btnDelete, lblText);
+                        setGraphic(hbox);
+                        setText(null);
                     }
                 }
             });
@@ -924,9 +939,9 @@ public class CotizacionController {
     // ─── CÁLCULO DE TOTAL ESTIMADO ────────────────────────────────────────────
     private void actualizarTotalEstimado() {
         PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
-        List<ServicioDTO> extras = (listaServiciosExtras != null) 
-                ? new ArrayList<>(listaServiciosExtras.getSelectionModel().getSelectedItems()) 
-                : new ArrayList<>();
+        
+        // El total se calcula usando los servicios que están en la lista (y se pueden repetir)
+        List<ServicioDTO> extras = new ArrayList<>(serviciosSeleccionados);
 
         Double total = calcularTotalCotizacionUseCase.ejecutar(paqueteSeleccionado, extras);
 
@@ -976,81 +991,150 @@ public class CotizacionController {
         }
     }
 
-    // ─── ACCIÓN DEL BOTÓN AÑADIR SERVICIO AL SISTEMA ──────────────────────
+    // ─── ACCIÓN DEL BOTÓN AÑADIR SERVICIO A LA COTIZACIÓN ─────────────────────
     @FXML
     private void abrirDialogoAgregarServicio() {
-        // Creamos un Modal nativo de JavaFX
-        Dialog<ServicioDTO> dialog = new Dialog<>();
-        dialog.setTitle("Nuevo Servicio");
-        dialog.setHeaderText("Añadir un nuevo servicio al catálogo");
+        List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerTodosLosServicios();
 
-        // Botones del modal
-        ButtonType guardarButtonType = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(guardarButtonType, ButtonType.CANCEL);
+        if (todosLosServicios.isEmpty()) {
+            mostrarError("No hay servicios disponibles en el catálogo.");
+            return;
+        }
 
-        // Cuadrícula para los textos (Actualizado con Descripción)
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
+        // Creamos el Dialog esperando una lista de servicios (para poder agregar varios según la 'cantidad')
+        Dialog<List<ServicioDTO>> dialog = new Dialog<>();
+        dialog.setTitle("Servicios Extras");
+        dialog.setHeaderText(null); 
 
-        TextField txtNombre = new TextField();
-        txtNombre.setPromptText("Ej. Toro Mecánico");
-        
-        TextField txtPrecio = new TextField();
-        txtPrecio.setPromptText("Ej. 1500.00");
-        
-        TextField txtDescripcion = new TextField();
-        txtDescripcion.setPromptText("Ej. Renta por 4 horas con operador");
+        ButtonType agregarButtonType = new ButtonType("Añadir Servicio Extra", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, agregarButtonType);
 
-        grid.add(new Label("Nombre del Servicio:"), 0, 0);
-        grid.add(txtNombre, 1, 0);
-        
-        grid.add(new Label("Precio (MXN):"), 0, 1);
-        grid.add(txtPrecio, 1, 1);
-        
-        grid.add(new Label("Descripción:"), 0, 2);
-        grid.add(txtDescripcion, 1, 2);
+        VBox vbox = new VBox(15);
+        vbox.setPadding(new Insets(20));
 
-        // Habilitar el botón Guardar solo si Nombre y Precio tienen texto (la descripción es opcional)
-        javafx.scene.Node guardarBtn = dialog.getDialogPane().lookupButton(guardarButtonType);
-        guardarBtn.setDisable(true);
+        // --- SECCIÓN 1: DATOS DEL COBRO ---
+        Label lblCobro = new Label("DATOS DEL COBRO:");
+        lblCobro.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
         
-        // Listeners para validación básica
-        txtNombre.textProperty().addListener((observable, oldValue, newValue) -> {
-            guardarBtn.setDisable(newValue.trim().isEmpty() || txtPrecio.getText().trim().isEmpty());
-        });
-        txtPrecio.textProperty().addListener((observable, oldValue, newValue) -> {
-            guardarBtn.setDisable(newValue.trim().isEmpty() || txtNombre.getText().trim().isEmpty());
+        GridPane gridCobro = new GridPane();
+        gridCobro.setHgap(10); 
+        gridCobro.setVgap(10);
+
+        ComboBox<ServicioDTO> comboServicio = new ComboBox<>(FXCollections.observableArrayList(todosLosServicios));
+        comboServicio.setPromptText("Seleccione un servicio...");
+        comboServicio.setPrefWidth(250);
+        comboServicio.setConverter(new StringConverter<ServicioDTO>() {
+            @Override
+            public String toString(ServicioDTO s) {
+                return s == null ? "" : s.getNombre();
+            }
+            @Override
+            public ServicioDTO fromString(String string) { return null; }
         });
 
-        dialog.getDialogPane().setContent(grid);
+        ComboBox<Integer> comboCantidad = new ComboBox<>(FXCollections.observableArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        comboCantidad.getSelectionModel().selectFirst();
+        comboCantidad.setPrefWidth(80);
 
-        // Ejecutar al hacer clic en Guardar
+        TextField txtCosto = new TextField();
+        txtCosto.setPromptText("$0.00");
+        txtCosto.setEditable(false);
+        txtCosto.setStyle("-fx-background-color: #f2f2f2; -fx-text-fill: #333333;");
+
+        gridCobro.add(new Label("Servicio del catálogo:"), 0, 0);
+        gridCobro.add(comboServicio, 1, 0);
+        gridCobro.add(new Label("Cantidad:"), 0, 1);
+        gridCobro.add(comboCantidad, 1, 1);
+        gridCobro.add(new Label("Precio Unit:"), 0, 2);
+        gridCobro.add(txtCosto, 1, 2);
+
+        // --- SECCIÓN 2: DETALLES OPERATIVOS (LOGÍSTICA) ---
+        Label lblLogistica = new Label("DETALLES OPERATIVOS (LOGÍSTICA)");
+        lblLogistica.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        
+        GridPane gridLogistica = new GridPane();
+        gridLogistica.setHgap(10); 
+        gridLogistica.setVgap(10);
+
+        TextField txtEspecificaciones = new TextField();
+        txtEspecificaciones.setPromptText("Ej. Colores, temática...");
+        
+        TextField txtDesglose = new TextField();
+        txtDesglose.setPromptText("Opcional");
+        
+        ComboBox<String> comboHora = new ComboBox<>();
+        for(int i = 0; i <= 23; i++) {
+            comboHora.getItems().add(String.format("%02d:00", i));
+            comboHora.getItems().add(String.format("%02d:30", i));
+        }
+        comboHora.setPromptText("Seleccione hora");
+
+        TextField txtUbicacion = new TextField();
+        
+        TextField txtResponsable = new TextField();
+        txtResponsable.setPromptText("Opcional");
+
+        gridLogistica.add(new Label("Especificaciones/Temática:"), 0, 0);
+        gridLogistica.add(txtEspecificaciones, 1, 0);
+        gridLogistica.add(new Label("Desglose o variedades:"), 0, 1);
+        gridLogistica.add(txtDesglose, 1, 1);
+        gridLogistica.add(new Label("Hora de entrega/inicio:"), 0, 2);
+        gridLogistica.add(comboHora, 1, 2);
+        gridLogistica.add(new Label("Ubicación en salón:"), 0, 3);
+        gridLogistica.add(txtUbicacion, 1, 3);
+        gridLogistica.add(new Label("Responsable asignado:"), 0, 4);
+        gridLogistica.add(txtResponsable, 1, 4);
+
+        vbox.getChildren().addAll(lblCobro, gridCobro, new Separator(), lblLogistica, gridLogistica);
+        dialog.getDialogPane().setContent(vbox);
+
+        // --- ESTILOS DE BOTONES ---
+        Button agregarBtn = (Button) dialog.getDialogPane().lookupButton(agregarButtonType);
+        agregarBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+        agregarBtn.setDisable(true); // Bloqueado hasta que seleccione un servicio
+        
+        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        cancelBtn.setText("Cancelar");
+        cancelBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand;");
+
+        // --- LÓGICA DE ACTUALIZACIÓN DE PRECIOS ---
+        comboServicio.valueProperty().addListener((obs, old, newVal) -> {
+            if (newVal != null) {
+                txtCosto.setText(String.format("$%,.2f", newVal.getPrecio()));
+                agregarBtn.setDisable(false);
+            } else {
+                txtCosto.setText("$0.00");
+                agregarBtn.setDisable(true);
+            }
+        });
+
+        // --- CONVERTIR RESULTADO (Se agregan los servicios X veces según la cantidad elegida) ---
         dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == guardarButtonType) {
-                try {
-                    String nom = txtNombre.getText().trim();
-                    Double prec = Double.parseDouble(txtPrecio.getText().trim());
-                    String desc = txtDescripcion.getText().trim();
+            if (dialogButton == agregarButtonType) {
+                ServicioDTO s = comboServicio.getValue();
+                if (s != null) {
+                    List<ServicioDTO> listaAEnviar = new ArrayList<>();
+                    int cant = comboCantidad.getValue() != null ? comboCantidad.getValue() : 1;
                     
-                    // Usamos la capa de negocio para insertarlo en MySQL
-                    return consultarCatalogoUseCase.guardarNuevoServicio(nom, prec, desc);
-                } catch (NumberFormatException e) {
-                    mostrarError("El precio debe ser un número válido sin letras ni símbolos.");
-                } catch (Exception e) {
-                    mostrarError("Error al guardar en la base de datos.");
-                    e.printStackTrace();
+                    // Nota: Los datos operativos (Hora, Ubicacion, etc.) se capturan en la UI
+                    // y están listos para ser usados cuando el DTO 'ServicioDTO' o 'Logistica' 
+                    // los soporte en backend. Por ahora, duplicamos el DTO para el cálculo del total.
+
+                    for(int i = 0; i < cant; i++) {
+                        listaAEnviar.add(s);
+                    }
+                    return listaAEnviar;
                 }
             }
             return null;
         });
 
-        // Mostrar el modal y refrescar la lista si hubo éxito
-        dialog.showAndWait().ifPresent(nuevoServicio -> {
-            Alert exito = new Alert(Alert.AlertType.INFORMATION, "El servicio '" + nuevoServicio.getNombre() + "' fue agregado exitosamente.");
-            exito.showAndWait();
-            configurarListaServiciosExtras(); // Volvemos a cargar la lista para que se muestre el nuevo
+        // --- APLICAR RESULTADO A LA LISTA PRINCIPAL ---
+        dialog.showAndWait().ifPresent(listaServiciosElegidos -> {
+            if (listaServiciosElegidos != null && !listaServiciosElegidos.isEmpty()) {
+                serviciosSeleccionados.addAll(listaServiciosElegidos);
+                actualizarTotalEstimado();
+            }
         });
     }
     
