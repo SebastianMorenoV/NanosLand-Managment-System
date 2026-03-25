@@ -2,7 +2,9 @@ package com.example.negocio.cotizacion.usecase;
 
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.CotizacionDTO;
+import com.mycompany.common.dtos.DetalleCotizacionDTO;
 import com.mycompany.common.mapper.CotizacionMapper;
+import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Paquete;
@@ -10,12 +12,14 @@ import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import com.mycompany.persistencia.repository.CotizacionRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
+import com.mycompany.persistencia.repository.ServicioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,6 +42,7 @@ public class CrearCotizacionUseCase {
     private final CotizacionRepository cotizacionRepository;
     private final ClienteRepository clienteRepository;
     private final PaqueteRepository paqueteRepository;
+    private final ServicioRepository servicioRepository;
 
     /**
      * Crea y persiste una cotización con estado BORRADOR.
@@ -97,26 +102,69 @@ public class CrearCotizacionUseCase {
             ));
 
         // ── 5. Validación: no duplicar turno en la misma fecha ───────────────
-        boolean turnoOcupado = cotizacionRepository.existsByFechaAndTurnoAndEstadoNotIn(
+       boolean turnoOcupado = cotizacionRepository.existsByFechaAndTurnoAndEstadoNotIn(
             dto.getFecha(),
             dto.getTurno(),
-            List.of(EstadoCotizacion.CANCELADA, EstadoCotizacion.ELIMINADA)
+            List.of(EstadoCotizacion.BORRADOR, EstadoCotizacion.CANCELADA, EstadoCotizacion.ELIMINADA)
         );
-        
+        if (turnoOcupado) {
+            throw new CotizacionException("Ya existe un evento confirmado para esta fecha y turno. Seleccione otro turno.");
+        }
 
         // ── 6. Construcción de la entidad ────────────────────────────────────
         Cotizacion cotizacion = CotizacionMapper.toEntity(dto);
         cotizacion.setCliente(cliente);
         cotizacion.setPaquete(paquete);
-        cotizacion.setEstado(EstadoCotizacion.BORRADOR);
+        EstadoCotizacion estado = dto.getEstado() != null ? dto.getEstado() : EstadoCotizacion.BORRADOR;
+        cotizacion.setEstado(estado);
 
         // ── 7. Generación de folio único COT-YYYY-NNNN ───────────────────────
         String folio = generarFolio();
         cotizacion.setFolio(folio);
 
-        // ── 8. Cálculo del total base (costo del paquete) ────────────────────
-        // Los servicios extras se añadirán en un flujo posterior.
-        cotizacion.setTotal(paquete.getCosto());
+        // ── 8. Cálculo del total base (costo del paquete) + extras ───────────
+        double total = paquete.getCosto();
+
+        // Persistimos los servicios extra (si se capturaron) y recalculamos el total.
+        List<DetalleCotizacionDTO> detallesDTO = dto.getDetalles();
+        List<DetalleCotizacion> detallesEntidad = new ArrayList<>();
+        if (detallesDTO != null && !detallesDTO.isEmpty()) {
+            for (DetalleCotizacionDTO detalleDTO : detallesDTO) {
+                if (detalleDTO == null) continue;
+                if (detalleDTO.getServicioId() == null) {
+                    throw new CotizacionException("Un servicio extra no tiene id asociado.");
+                }
+
+                var servicio = servicioRepository.findById(detalleDTO.getServicioId())
+                    .orElseThrow(() -> new CotizacionException(
+                        "El servicio con ID " + detalleDTO.getServicioId() + " no existe en el catálogo."
+                    ));
+
+                int cantidad = detalleDTO.getCantidad() > 0 ? detalleDTO.getCantidad() : 1;
+                double precioUnitario = detalleDTO.getPrecioUnitario();
+                double subtotal = detalleDTO.getSubtotal();
+                if (subtotal <= 0) {
+                    subtotal = precioUnitario * cantidad;
+                }
+
+                DetalleCotizacion detalle = new DetalleCotizacion();
+                detalle.setServicio(servicio);
+                detalle.setCotizacion(cotizacion);
+                detalle.setPrecioUnitario(precioUnitario);
+                detalle.setCantidad(cantidad);
+                detalle.setSubtotal(subtotal);
+                detalle.setHoraSugerida(detalleDTO.getHoraSugerida());
+                detalle.setEspecificacionesCliente(detalleDTO.getEspecificacionesCliente());
+                detalle.setDesgloseOpciones(detalleDTO.getDesgloseOpciones());
+                detalle.setUbicacionMontaje(detalleDTO.getUbicacionMontaje());
+
+                detallesEntidad.add(detalle);
+                total += subtotal;
+            }
+        }
+
+        cotizacion.setServiciosExtra(detallesEntidad);
+        cotizacion.setTotal(total);
 
         // ── 9. Persistencia ──────────────────────────────────────────────────
         Cotizacion guardada = cotizacionRepository.save(cotizacion);

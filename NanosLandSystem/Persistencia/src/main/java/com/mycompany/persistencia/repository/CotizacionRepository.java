@@ -26,4 +26,7 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
      * Usado para detectar conflictos de turno antes de crear una nueva cotización.
      */
     boolean existsByFechaAndTurnoAndEstadoNotIn(LocalDate fecha, TurnoEvento turno, Collection<EstadoCotizacion> estados);
+    
+    List<Cotizacion> findByFechaBetween(LocalDate inicio, LocalDate fin);
+    List<Cotizacion> findByFecha(LocalDate fecha);
 }

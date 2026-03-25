@@ -52,14 +52,23 @@ public class ConsultarCatalogoUseCase {
         com.mycompany.persistencia.dominio.Servicio entidad = new com.mycompany.persistencia.dominio.Servicio();
         entidad.setNombre(nombre);
         entidad.setPrecio(precio);
-        
+
         // Guardamos la descripción que puso el usuario (o "Sin descripción" si la dejó en blanco)
-        entidad.setDescripcion(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin descripción"); 
-        
+        entidad.setDescripcion(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin descripción");
+
         // Guardamos en MySQL
         entidad = servicioRepository.save(entidad);
-        
+
         // Retornamos el DTO para que la interfaz lo pueda usar
         return ServicioMapper.toDTO(entidad);
+    }
+
+    public PaqueteDTO guardarNuevoPaquete(String nombre, Double costoBase, String descripcion) {
+        Paquete entidad = new Paquete();
+        entidad.setNombre(nombre);
+        entidad.setCosto(costoBase);
+        entidad.setDescripcion(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin descripción");
+        entidad = paqueteRepository.save(entidad);
+        return PaqueteMapper.toDTO(entidad);
     }
 }

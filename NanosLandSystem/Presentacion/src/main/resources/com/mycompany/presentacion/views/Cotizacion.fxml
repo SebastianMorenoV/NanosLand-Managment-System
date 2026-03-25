@@ -26,8 +26,31 @@
     <!-- CUERPO PRINCIPAL -->
     <HBox spacing="16" VBox.vgrow="ALWAYS">
 
+        <!-- ── PANEL LATERAL COTIZACIONES ── -->
+        <VBox spacing="10" minWidth="260" prefWidth="280" HBox.hgrow="NEVER" styleClass="panel-cotizaciones">            
+            <Label text="COTIZACIONES" styleClass="titulo-seccion"/>
+            <TextField fx:id="txtBuscarCotizaciones"
+                       promptText="Buscar folio..."
+                       styleClass="text-field-moderno"/>
+
+            <ListView fx:id="listaCotizaciones"
+                      VBox.vgrow="ALWAYS"
+                      styleClass="lista-moderna"
+                      prefHeight="300"/>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Button fx:id="btnNuevaCotizacion" text="Nueva"
+                        styleClass="boton-azul-claro"
+                        onAction="#nuevaCotizacion"/>
+                <Button fx:id="btnEliminarCotizacion" text="Eliminar"
+                        styleClass="boton-azul"
+                        onAction="#eliminarCotizacion"
+                        disable="true"/>
+            </HBox>
+        </VBox>
+
         <!-- ── COLUMNA IZQUIERDA ── -->
-        <VBox spacing="10" prefWidth="320" HBox.hgrow="NEVER">
+        <VBox spacing="10" prefWidth="360" HBox.hgrow="NEVER">
 
             <!-- ASIGNAR CLIENTE -->
             <VBox styleClass="tarjeta-blanca" spacing="8">
@@ -56,7 +79,7 @@
                 <HBox spacing="10">
                     <VBox spacing="4" HBox.hgrow="ALWAYS">
                         <Label text="FECHA" styleClass="label-pequeno"/>
-                        <DatePicker fx:id="datePickerFecha" maxWidth="Infinity" styleClass="text-field-moderno"/>
+                        <DatePicker fx:id="datePickerFecha" maxWidth="Infinity" minWidth="150" prefWidth="160" styleClass="text-field-moderno"/>
                     </VBox>
                     <VBox spacing="4" minWidth="130" prefWidth="130">
                         <Label text="TURNO" styleClass="label-pequeno"/>
@@ -121,6 +144,7 @@
                         </graphic>
                     </Label>
                     <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Añadir Paquete" styleClass="boton-azul-claro" onAction="#abrirDialogoAgregarPaquete"/>
                     <SearchableComboBox fx:id="comboPaquetes" promptText="Seleccione un paquete..." styleClass="combo-box-base" prefWidth="230"/>
                 </HBox>
 
@@ -143,20 +167,45 @@
                         </graphic>
                     </Label>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button text="+ Añadir Servicio" styleClass="boton-azul-claro" onAction="#abrirDialogoAgregarServicio"/>
+                    <Button fx:id="btnAnadirServicio" text="+ Añadir Servicio" styleClass="boton-azul-claro" onAction="#abrirDialogoAgregarServicio"/>
                 </HBox>
 
                 <Label text="Mantén presionada la tecla Ctrl para seleccionar varios extras" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
                 <ListView fx:id="listaServiciosExtras" VBox.vgrow="ALWAYS" prefHeight="200" styleClass="lista-moderna" />
             </VBox>
-
+            <VBox fx:id="panelPagos" styleClass="tarjeta-blanca" spacing="12" visible="false" managed="false">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="PAGOS Y SALDO" styleClass="titulo-seccion" />
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="lblPagado" text="Pagado: $0.00" style="-fx-text-fill: #27ae60; -fx-font-weight: bold;"/>
+                    <Label fx:id="lblRestante" text="Restante: $0.00" style="-fx-text-fill: #e74c3c; -fx-font-weight: bold;"/>
+                </HBox>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <TextField fx:id="txtAbono" promptText="Monto a abonar..." styleClass="text-field-moderno"/>
+                    <Button text="Registrar Abono" styleClass="boton-azul" onAction="#registrarAbonoCotizacion"/>
+                </HBox>
+            </VBox>
             <!-- BOTONES DE ACCIÓN -->
-            <HBox styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20">
-                <Button text="Guardar Borrador" onAction="#guardarCotizacion"
-                        style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand; -fx-font-weight: bold;"/>
-                <Button text="Confirmar Cotización" styleClass="boton-azul" onAction="#guardarCotizacion">
+            <HBox fx:id="boxBotonesNuevos" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20">
+                <Button fx:id="btnGuardarBorrador" text="Guardar Borrador" onAction="#guardarBorrador"
+                        style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand; -fx-font-weight: bold;"
+                        minWidth="-Infinity"/>
+                <Button fx:id="btnConfirmarCotizacion" text="Confirmar Cotización" styleClass="boton-azul" onAction="#confirmarCotizacion"
+                        minWidth="-Infinity">
                     <graphic>
                         <SVGPath content="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="WHITE"/>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <HBox fx:id="boxBotonesEdicion" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20" visible="false" managed="false">
+                <Button fx:id="btnDescartarCambios" text="Descartar Cambios" onAction="#nuevaCotizacion"
+                        style="-fx-background-color: transparent; -fx-text-fill: #e74c3c; -fx-cursor: hand; -fx-font-weight: bold;"
+                        minWidth="-Infinity"/>
+                <Button fx:id="btnGuardarCambios" text="Guardar Cambios" styleClass="boton-azul" onAction="#guardarCambios"
+                        minWidth="-Infinity">
+                    <graphic>
+                        <SVGPath content="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="WHITE"/>
                     </graphic>
                 </Button>
             </HBox>

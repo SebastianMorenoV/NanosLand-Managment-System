@@ -16,7 +16,7 @@
 
     <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="15">
         <HBox spacing="10" alignment="CENTER_LEFT">
-            <TextField promptText="Buscar por nombre, teléfono o correo..." HBox.hgrow="ALWAYS" styleClass="text-field-moderno"/>
+            <TextField fx:id="txtBuscar" promptText="Buscar por nombre, teléfono o correo..." HBox.hgrow="ALWAYS" styleClass="text-field-moderno"/>
             <Button text="Buscar" styleClass="boton-azul-claro"/>
         </HBox>
 
@@ -25,11 +25,11 @@
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
             </columnResizePolicy>
             <columns>
-                <TableColumn text="ID" prefWidth="50" maxWidth="80" />
-                <TableColumn text="Nombre Completo" prefWidth="250" />
-                <TableColumn text="Teléfono" prefWidth="150" />
-                <TableColumn text="Correo Electrónico" prefWidth="200" />
-                <TableColumn text="Último Evento" prefWidth="150" />
+                <TableColumn fx:id="colId" text="ID" prefWidth="50" maxWidth="80" />
+                <TableColumn fx:id="colNombre" text="Nombre Completo" prefWidth="250" />
+                <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="150" />
+                <TableColumn fx:id="colCorreo" text="Correo Electrónico" prefWidth="200" />
+                <TableColumn fx:id="colUltimoEvento" text="Último Evento" prefWidth="150" />
             </columns>
         </TableView>
     </VBox>

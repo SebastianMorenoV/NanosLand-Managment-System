@@ -1,8 +1,9 @@
 package com.mycompany.presentacion.controllers;
 
-
 import com.example.negocio.agenda.usecase.ConsultarAgendaUseCase;
+import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
+import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 
 import java.time.LocalDate;
@@ -18,8 +19,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-
-import java.time.LocalTime;
 
 @Controller
 @RequiredArgsConstructor
@@ -37,7 +36,8 @@ public class SeleccionarFechaController {
     @FXML
     private Button btnContinuar;
 
-    @FXML private Button btnMesAnterior;
+    @FXML
+    private Button btnMesAnterior;
 
     private YearMonth mesActual = YearMonth.now();
     private LocalDate fechaSeleccionada = null;
@@ -96,9 +96,7 @@ public class SeleccionarFechaController {
         headerRow.setVgrow(Priority.NEVER);
         gridCalendario.getRowConstraints().add(headerRow);
 
-        List<Evento> eventos = consultarAgendaUseCase
-                .obtenerMesCompleto(mesActual.getYear(), mesActual.getMonthValue());
-
+        List<Evento> eventos = consultarAgendaUseCase.obtenerMesCompleto(mesActual.getYear(), mesActual.getMonthValue());
         int primerDia = mesActual.atDay(1).getDayOfWeek().getValue();
         int totalDias = mesActual.lengthOfMonth();
 
@@ -133,24 +131,20 @@ public class SeleccionarFechaController {
 
     private VBox crearCelda(LocalDate fecha, List<Evento> eventos) {
         List<Evento> eventosDelDia = eventos.stream()
-                .filter(e -> e.getFecha().equals(fecha))
+                .filter(e -> e.getFecha() != null && e.getFecha().equals(fecha))
                 .toList();
 
         int turnosDisponibles = 0;
 
-        LocalTime inicioMatutino = LocalTime.of(9, 0);
-        LocalTime finMatutino = LocalTime.of(14, 0);
-        boolean matutinoOcupado = eventosDelDia.stream().anyMatch(e ->
-                inicioMatutino.isBefore(e.getHoraFin()) && finMatutino.isAfter(e.getHoraInicio())
-        );
-        if (!matutinoOcupado) turnosDisponibles++;
+        boolean matutinoOcupado = eventosDelDia.stream().anyMatch(e -> e.getTurno() == TurnoEvento.MATUTINO);
+        if (!matutinoOcupado) {
+            turnosDisponibles++;
+        }
 
-        LocalTime inicioVespertino = LocalTime.of(15, 0);
-        LocalTime finVespertino = LocalTime.of(20, 0);
-        boolean vespertinoOcupado = eventosDelDia.stream().anyMatch(e ->
-                inicioVespertino.isBefore(e.getHoraFin()) && finVespertino.isAfter(e.getHoraInicio())
-        );
-        if (!vespertinoOcupado) turnosDisponibles++;
+        boolean vespertinoOcupado = eventosDelDia.stream().anyMatch(e -> e.getTurno() == TurnoEvento.VESPERTINO);
+        if (!vespertinoOcupado) {
+            turnosDisponibles++;
+        }
 
         boolean esHoy = fecha.equals(LocalDate.now());
         boolean esPasado = fecha.isBefore(LocalDate.now());
@@ -204,7 +198,7 @@ public class SeleccionarFechaController {
     }
 
     private void seleccionarFecha(LocalDate fecha, VBox celdaSeleccionada,
-                                  Label lblNumero, Label lblDisp) {
+            Label lblNumero, Label lblDisp) {
         fechaSeleccionada = fecha;
 
         gridCalendario.getChildren().forEach(node -> {
@@ -253,7 +247,6 @@ public class SeleccionarFechaController {
     public LocalDate getFechaSeleccionada() {
         return fechaSeleccionada;
     }
-
 
     @FXML
     private void continuar() {

@@ -1,5 +1,8 @@
 package com.mycompany.presentacion.controllers;
 
+import com.example.negocio.exception.CotizacionException;
+import com.example.negocio.cliente.usecase.RegistrarClienteUseCase;
+import com.mycompany.common.dtos.ClienteDTO;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
@@ -11,12 +14,17 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 public class NuevoClienteModalController {
 
-    // TODO: Inyectar aquí tu UseCase para guardar en la base de datos
-    // private final GuardarClienteUseCase guardarClienteUseCase;
+    private final RegistrarClienteUseCase registrarClienteUseCase;
+
+    private ClienteDTO clienteCreado;
 
     @FXML private TextField txtNombre;
     @FXML private TextField txtTelefono;
     @FXML private TextField txtCorreo;
+
+    public ClienteDTO getClienteCreado() {
+        return clienteCreado;
+    }
 
     @FXML
     private void guardarCliente() {
@@ -30,14 +38,15 @@ public class NuevoClienteModalController {
             return;
         }
 
-        // 2. Aquí llamarás a tu UseCase para guardar en MySQL
-        // Cliente nuevoCliente = new Cliente();
-        // nuevoCliente.setNombre(nombre);
-        // nuevoCliente.setTelefono(telefono);
-        // guardarClienteUseCase.guardar(nuevoCliente);
-
-        // 3. Cerramos la ventana una vez guardado
-        cerrarModal();
+        try {
+            clienteCreado = registrarClienteUseCase.registrarCliente(nombre, telefono, correo);
+            // Cerramos la ventana una vez guardado
+            cerrarModal();
+        } catch (CotizacionException ex) {
+            mostrarAlerta("Error", ex.getMessage());
+        } catch (Exception ex) {
+            mostrarAlerta("Error", "Ocurrió un error inesperado al guardar el cliente. Intente de nuevo.");
+        }
     }
 
     @FXML

@@ -11,10 +11,10 @@ public class ClienteMapper {
     public static ClienteDTO toDTO(Cliente cliente) {
         if (cliente == null) return null;
         ClienteDTO dto = new ClienteDTO();
-        dto.setId(cliente.getId());
-        dto.setNombre(cliente.getNombre());
-        dto.setTelefono(cliente.getTelefono());
-        dto.setCorreo(cliente.getCorreo());
+        dto.setId(cliente.getId()); 
+        dto.setNombre(cliente.getNombre()); 
+        dto.setTelefono(cliente.getTelefono()); 
+        dto.setCorreo(cliente.getCorreo()); 
         return dto;
     }
 
