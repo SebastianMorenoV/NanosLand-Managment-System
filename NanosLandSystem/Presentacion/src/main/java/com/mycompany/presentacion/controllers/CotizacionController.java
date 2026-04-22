@@ -261,44 +261,58 @@ public class CotizacionController {
         } else {
             r = guardarOActualizarCotizacion(estadoEdicionActual);
         }
-        
-        // 2. Si 'r' es null, significa que faltaron datos y ya se mostró un error. 
+
+        // 2. Si 'r' es null, significa que faltaron datos y ya se mostró un error.
         // DETENEMOS el flujo para que no salga el diálogo del abono.
         if (r == null) {
             return;
         }
-        
-        // 3. Si todo está correcto, procedemos con los pagos
+
+        // 3. Siempre mostramos el modal de pago para registrar el anticipo de confirmación
         double pagado = registrarAnticipoUseCase.obtenerTotalAbonado(cotizacionEnEdicionId);
-        if (pagado >= 3000) {
-            guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
-            Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado (Fechas bloqueadas).");
-            ok.showAndWait();
+        boolean yaCubierto = pagado >= 3000;
+
+        TextInputDialog dialog = new TextInputDialog(yaCubierto ? "0" : "3000");
+        dialog.setTitle("Confirmar Cotización");
+        if (yaCubierto) {
+            dialog.setHeaderText("Ya cuenta con $" + String.format("%,.2f", pagado) + " pagados. Ingrese un monto adicional o 0 para confirmar.");
         } else {
-            TextInputDialog dialog = new TextInputDialog("3000");
-            dialog.setTitle("Confirmar Cotización");
-            dialog.setHeaderText("Mínimo $3,000 para confirmar y bloquear la fecha.");
-            dialog.setContentText("Ingrese el monto a pagar:");
-            
-            dialog.showAndWait().ifPresent(montoStr -> {
-                try {
-                    double monto = Double.parseDouble(montoStr);
-                    if (pagado + monto < 3000) {
-                        mostrarError("El pago total no alcanza los $3,000 requeridos.");
-                        return;
-                    }
-                    registrarAnticipoUseCase.registrarAnticipo(cotizacionEnEdicionId, monto, MetodoPago.EFECTIVO);
-                    guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
-                    actualizarPagosUI();
-                    imprimirComprobante(cotizacionEnEdicionId);
-                    
-                    Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado exitosamente.");
-                    ok.showAndWait();
-                } catch(Exception e) {
-                    mostrarError(e.getMessage());
-                }
-            });
+            dialog.setHeaderText("Mínimo $3,000 de anticipo para confirmar y bloquear la fecha.");
         }
+        dialog.setContentText("Ingrese el monto a pagar:");
+
+        dialog.showAndWait().ifPresent(montoStr -> {
+            try {
+                double monto = Double.parseDouble(montoStr.trim());
+                if (!yaCubierto && monto < 3000) {
+                    mostrarError("El anticipo mínimo para confirmar la cotización es de $3,000.");
+                    return;
+                }
+                if (yaCubierto && monto < 0) {
+                    mostrarError("El monto no puede ser negativo.");
+                    return;
+                }
+                if (monto > 0) {
+                    registrarAnticipoUseCase.registrarAnticipo(cotizacionEnEdicionId, monto, MetodoPago.EFECTIVO);
+                }
+                guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
+                actualizarPagosUI();
+                if (monto > 0) {
+                    imprimirComprobante(cotizacionEnEdicionId);
+                }
+
+                Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado exitosamente.");
+                ok.showAndWait();
+
+                // Limpiar el panel de venta para evitar dobles confirmaciones
+                cotizacionContext.limpiar();
+                nuevaCotizacion();
+            } catch(NumberFormatException e) {
+                mostrarError("Monto inválido.");
+            } catch(Exception e) {
+                mostrarError(e.getMessage());
+            }
+        });
     }
 
     private CotizacionDTO guardarOActualizarCotizacion(EstadoCotizacion estadoObjetivo) {

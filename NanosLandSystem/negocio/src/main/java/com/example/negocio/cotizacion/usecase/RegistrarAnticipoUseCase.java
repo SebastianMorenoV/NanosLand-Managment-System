@@ -35,6 +35,11 @@ public class RegistrarAnticipoUseCase {
         Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
             .orElseThrow(() -> new CotizacionException("No existe la cotización indicada."));
 
+        // Mientras la cotización no esté confirmada (VIGENTE), cada anticipo debe ser >= $3,000
+        if (cotizacion.getEstado() != EstadoCotizacion.VIGENTE && cantidad < 3000.0) {
+            throw new CotizacionException("El anticipo mínimo para confirmar la cotización es de $3,000.");
+        }
+
         List<Pago> pagosExistentes = pagoRepository.findByCotizacionId(cotizacionId);
         double anticipoExistente = pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(Pago::getCantidad).sum();
 
