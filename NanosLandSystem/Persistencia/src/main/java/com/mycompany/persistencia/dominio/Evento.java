@@ -32,6 +32,7 @@ public class Evento {
     @Enumerated(EnumType.STRING)
     private TurnoEvento turno;
 
+    @Column(length = 2000)
     private String notas;
 
     @ToString.Exclude

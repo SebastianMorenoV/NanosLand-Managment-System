@@ -36,6 +36,8 @@ public class Cotizacion {
 
     private String nombreFestejado;
     private double total;
+
+    @Column(length = 255)
     private String notas;
 
     @Enumerated(EnumType.STRING)
