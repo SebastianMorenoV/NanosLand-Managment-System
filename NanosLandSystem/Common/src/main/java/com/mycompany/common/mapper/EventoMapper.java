@@ -25,6 +25,10 @@ public class EventoMapper {
         if (evento.getCotizacion() != null) {
             dto.setCotizacionId(evento.getCotizacion().getId());
             dto.setFolioCotizacion(evento.getCotizacion().getFolio());
+            dto.setClienteNombre(evento.getCotizacion().getCliente() != null ? evento.getCotizacion().getCliente().getNombre() : "Desconocido");
+            dto.setPaqueteNombre(evento.getCotizacion().getPaquete() != null ? evento.getCotizacion().getPaquete().getNombre() : "Personalizado");
+            dto.setEstadoCotizacion(evento.getCotizacion().getEstado());
+            dto.setTotalCotizacion(evento.getCotizacion().getTotal());
         }
         return dto;
     }
@@ -39,5 +43,19 @@ public class EventoMapper {
         evento.setTurno(dto.getTurno());
         evento.setNotas(dto.getNotas());
         return evento;
+    }
+
+    public static java.util.List<EventoDTO> toDTOList(java.util.List<Evento> eventos) {
+        if (eventos == null) return null;
+        return eventos.stream()
+                .map(EventoMapper::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public static java.util.List<Evento> toEntityList(java.util.List<EventoDTO> dtos) {
+        if (dtos == null) return null;
+        return dtos.stream()
+                .map(EventoMapper::toEntity)
+                .collect(java.util.stream.Collectors.toList());
     }
 }

@@ -25,4 +25,8 @@ public class EventoDTO {
     private String notas;
     private Long cotizacionId;
     private String folioCotizacion;
+    private String clienteNombre;
+    private String paqueteNombre;
+    private com.mycompany.persistencia.enums.EstadoCotizacion estadoCotizacion;
+    private double totalCotizacion;
 }

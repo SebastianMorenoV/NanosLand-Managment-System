@@ -6,6 +6,7 @@ package com.mycompany.persistencia.repository;
 
 import com.mycompany.persistencia.dominio.Paquete;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
 /**
  *
@@ -13,4 +14,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface PaqueteRepository extends JpaRepository<Paquete, Long>{
     
+    /**
+     * Obtiene todos los paquetes que no han sido eliminados lógicamente.
+     */
+    List<Paquete> findByActivoTrue();
 }

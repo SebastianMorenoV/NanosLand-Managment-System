@@ -14,9 +14,16 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class ClienteDTO {
-    
-    private Long id;
+
+    private Long   id;
     private String nombre;
     private String telefono;
     private String correo;
+
+    // ── Dirección (campos planos — corresponden a @Embedded Direccion) ────────
+    private String calle;
+    private String colonia;
+    private String ciudad;
+    private String codigoPostal;
 }
+

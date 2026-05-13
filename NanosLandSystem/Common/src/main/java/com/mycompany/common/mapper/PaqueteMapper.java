@@ -24,7 +24,14 @@ public class PaqueteMapper {
         dto.setCostoBase(paquete.getCosto());
         if (paquete.getServicios() != null) {
             dto.setServicios(paquete.getServicios().stream()
-                .map(ps -> ServicioMapper.toDTO(ps.getServicio()))
+                .map(ps -> {
+                    com.mycompany.common.dtos.PaqueteServicioDTO psDTO = new com.mycompany.common.dtos.PaqueteServicioDTO();
+                    psDTO.setId(ps.getId());
+                    psDTO.setCantidad(ps.getCantidad());
+                    psDTO.setSubtotal(ps.getSubtotal());
+                    psDTO.setServicio(ServicioMapper.toDTO(ps.getServicio()));
+                    return psDTO;
+                })
                 .collect(Collectors.toList()));
         }
         return dto;

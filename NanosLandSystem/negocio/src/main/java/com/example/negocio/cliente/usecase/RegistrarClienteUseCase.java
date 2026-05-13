@@ -16,25 +16,29 @@ public class RegistrarClienteUseCase {
     private final ClienteRepository clienteRepository;
 
     @Transactional
-    public ClienteDTO registrarCliente(String nombre, String telefono, String correo) {
-        if (nombre == null || nombre.trim().isEmpty()) {
+    public ClienteDTO registrarCliente(ClienteDTO dto) {
+        if (dto.getNombre() == null || dto.getNombre().trim().isEmpty()) {
             throw new CotizacionException("El nombre del cliente es obligatorio.");
         }
-        if (telefono == null || telefono.trim().isEmpty()) {
+        if (dto.getTelefono() == null || dto.getTelefono().trim().isEmpty()) {
             throw new CotizacionException("El teléfono del cliente es obligatorio.");
         }
 
-        String nombreTrim = nombre.trim();
-        String telefonoTrim = telefono.trim();
+        String nombreTrim = dto.getNombre().trim();
+        String telefonoTrim = dto.getTelefono().trim();
         if (telefonoTrim.length() > 10) {
             throw new CotizacionException("El teléfono no puede exceder 10 caracteres.");
         }
 
-        Cliente cliente = new Cliente();
-        cliente.setNombre(nombreTrim);
-        cliente.setTelefono(telefonoTrim);
-        cliente.setCorreo(correo != null && !correo.trim().isEmpty() ? correo.trim() : null);
+        dto.setNombre(nombreTrim);
+        dto.setTelefono(telefonoTrim);
+        if (dto.getCorreo() != null && !dto.getCorreo().trim().isEmpty()) {
+            dto.setCorreo(dto.getCorreo().trim());
+        } else {
+            dto.setCorreo(null);
+        }
 
+        Cliente cliente = ClienteMapper.toEntity(dto);
         Cliente guardado = clienteRepository.save(cliente);
         return ClienteMapper.toDTO(guardado);
     }

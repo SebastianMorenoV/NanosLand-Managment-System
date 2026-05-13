@@ -16,8 +16,8 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
         </processorPath>
         <module name="Persistencia" />
-        <module name="negocio" />
         <module name="Negocio" />
+        <module name="negocio" />
         <module name="Presentacion" />
         <module name="Common" />
       </profile>
@@ -25,7 +25,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="negocio" options="" />
+      <module name="negocio" options="-Xlint" />
     </option>
   </component>
 </project>

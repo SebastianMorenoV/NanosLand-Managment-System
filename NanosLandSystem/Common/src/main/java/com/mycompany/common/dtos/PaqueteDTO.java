@@ -19,6 +19,6 @@ public class PaqueteDTO {
     private String nombre;
     private String descripcion;
     private double costoBase;
-    private List<ServicioDTO> servicios;
+    private List<PaqueteServicioDTO> servicios;
     
 }

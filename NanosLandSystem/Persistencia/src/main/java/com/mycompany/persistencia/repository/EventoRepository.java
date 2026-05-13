@@ -25,4 +25,26 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
     Optional<Evento> findByCotizacionId(Long cotizacionId);
     
     List<Evento> findByFechaBetween(LocalDate inicio, LocalDate fin);
+
+    /**
+     * Consulta base para generar el reporte de eventos (CU-07).
+     * Aplica filtros opcionales de turno y estado, asegurando recuperar los datos
+     * relacionados (cotización, cliente, paquete) en una sola consulta.
+     */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT e FROM Evento e " +
+        "JOIN FETCH e.cotizacion c " +
+        "JOIN FETCH c.cliente cl " +
+        "JOIN FETCH c.paquete p " +
+        "WHERE e.fecha BETWEEN :inicio AND :fin " +
+        "AND (:turno IS NULL OR e.turno = :turno) " +
+        "AND (:estado IS NULL OR c.estado = :estado) " +
+        "ORDER BY e.fecha ASC"
+    )
+    List<Evento> findReporteEventos(
+        @org.springframework.data.repository.query.Param("inicio") LocalDate inicio,
+        @org.springframework.data.repository.query.Param("fin") LocalDate fin,
+        @org.springframework.data.repository.query.Param("turno") TurnoEvento turno,
+        @org.springframework.data.repository.query.Param("estado") com.mycompany.persistencia.enums.EstadoCotizacion estado
+    );
 }

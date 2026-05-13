@@ -26,6 +26,15 @@ public class Paquete {
     private String descripcion;
 
     private double costo;
+    
+    /**
+     * Indica si el paquete está activo.
+     * Se usa para eliminación lógica (Flujo 2.2.3 del CU-06) para no 
+     * afectar cotizaciones históricas que hayan usado este paquete.
+     */
+    @Column(nullable = false)
+    private boolean activo = true;
+
     @ToString.Exclude
     @OneToMany(mappedBy = "paquete", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PaqueteServicio> servicios;

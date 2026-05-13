@@ -26,7 +26,8 @@ public class PaqueteServicio {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "paquete_id")
     private Paquete paquete;
-    @ManyToOne(fetch = FetchType.LAZY)
+    
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "servicio_id")
     private Servicio servicio;
 

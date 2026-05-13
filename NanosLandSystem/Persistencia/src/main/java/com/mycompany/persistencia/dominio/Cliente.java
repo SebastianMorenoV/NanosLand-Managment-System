@@ -30,4 +30,12 @@ public class Cliente {
 
     private String correo;
 
+    /**
+     * Dirección del cliente embebida en la misma tabla.
+     * Los campos calle/colonia/ciudad/codigo_postal se almacenan como
+     * columnas directas en "clientes" — no se crea ninguna tabla extra.
+     */
+    @Embedded
+    private Direccion direccion;
 }
+
