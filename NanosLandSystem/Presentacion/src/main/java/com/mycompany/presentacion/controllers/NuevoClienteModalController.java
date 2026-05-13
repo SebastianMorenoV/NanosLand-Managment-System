@@ -39,7 +39,12 @@ public class NuevoClienteModalController {
         }
 
         try {
-            clienteCreado = registrarClienteUseCase.registrarCliente(nombre, telefono, correo);
+            ClienteDTO dto = new ClienteDTO();
+            dto.setNombre(nombre);
+            dto.setTelefono(telefono);
+            dto.setCorreo(correo);
+            clienteCreado = registrarClienteUseCase.registrarCliente(dto);
+            
             // Cerramos la ventana una vez guardado
             cerrarModal();
         } catch (CotizacionException ex) {
