@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ReporteEventos" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="e6d1c815-46b5-412e-8356-9d62d03a1163">
+    <property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+    
+    <parameter name="TituloReporte" class="java.lang.String"/>
+    <parameter name="Periodo" class="java.lang.String"/>
+    <parameter name="TotalEventos" class="java.lang.String"/>
+    <parameter name="TotalIngresos" class="java.lang.String"/>
+    <parameter name="TicketPromedio" class="java.lang.String"/>
+    
+    <field name="fecha" class="java.lang.Object"/>
+    <field name="turno" class="java.lang.Object"/>
+    <field name="clienteNombre" class="java.lang.String"/>
+    <field name="paqueteNombre" class="java.lang.String"/>
+    <field name="estadoCotizacion" class="java.lang.Object"/>
+    <field name="totalCotizacion" class="java.lang.Double"/>
+    
+    <!-- Title -->
+    <title>
+        <band height="140" splitType="Stretch">
+            <!-- Header Background -->
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#1A82B8" x="0" y="0" width="555" height="50" uuid="11111111-1111-1111-1111-111111111111"/>
+                <text><![CDATA[]]></text>
+            </staticText>
+            
+            <textField>
+                <reportElement x="20" y="10" width="300" height="30" forecolor="#FFFFFF" uuid="60f06573-0ff7-4638-b7a4-0c20a84d4b1a"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="20" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TituloReporte}]]></textFieldExpression>
+            </textField>
+            
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement x="430" y="15" width="105" height="20" forecolor="#FFFFFF" uuid="88432a1e-1f81-420d-b8d2-432d5e3c79a1"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+
+            <!-- KPIs Box -->
+            <rectangle>
+                <reportElement x="0" y="60" width="555" height="60" backcolor="#F8F9FA" uuid="22222222-2222-2222-2222-222222222222"/>
+                <graphicElement>
+                    <pen lineColor="#E0E0E0"/>
+                </graphicElement>
+            </rectangle>
+
+            <!-- Periodo -->
+            <staticText>
+                <reportElement x="10" y="65" width="60" height="20" forecolor="#2C3E50" uuid="33333333-3333-3333-3333-333333333333"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Periodo:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="70" y="65" width="200" height="20" uuid="44444444-4444-4444-4444-444444444444"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$P{Periodo}]]></textFieldExpression>
+            </textField>
+
+            <!-- Total Eventos -->
+            <staticText>
+                <reportElement x="10" y="90" width="80" height="20" forecolor="#2C3E50" uuid="55555555-5555-5555-5555-555555555555"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Total Eventos:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="90" y="90" width="100" height="20" uuid="66666666-6666-6666-6666-666666666666"/>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$P{TotalEventos}]]></textFieldExpression>
+            </textField>
+
+            <!-- Ingresos Totales -->
+            <staticText>
+                <reportElement x="280" y="65" width="90" height="20" forecolor="#2C3E50" uuid="77777777-7777-7777-7777-777777777777"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Ingresos Totales:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="370" y="65" width="170" height="20" forecolor="#27AE60" uuid="88888888-8888-8888-8888-888888888888"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="11"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TotalIngresos}]]></textFieldExpression>
+            </textField>
+
+            <!-- Ticket Promedio -->
+            <staticText>
+                <reportElement x="280" y="90" width="90" height="20" forecolor="#2C3E50" uuid="99999999-9999-9999-9999-999999999999"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Ticket Promedio:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="370" y="90" width="170" height="20" forecolor="#E74C3C" uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="11"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TicketPromedio}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+    
+    <!-- Column Header -->
+    <columnHeader>
+        <band height="30" splitType="Stretch">
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="0" y="0" width="80" height="30" uuid="2a56c21f-827c-4e8c-a1d2-00561ea90885"/>
+                <box><pen lineWidth="0.5" lineColor="#2C3E50"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Fecha]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="80" y="0" width="80" height="30" uuid="40a97cce-5d2a-4a25-83e9-a03be8c44b36"/>
+                <box><pen lineWidth="0.5" lineColor="#2C3E50"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Turno]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="160" y="0" width="130" height="30" uuid="96707ab0-c971-4770-98d6-6815d7e52709"/>
+                <box><pen lineWidth="0.5" lineColor="#2C3E50"/></box>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[ Cliente]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="290" y="0" width="120" height="30" uuid="8b590eab-eb5a-47d3-8ea8-cf2dcf4432db"/>
+                <box><pen lineWidth="0.5" lineColor="#2C3E50"/></box>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[ Paquete]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="410" y="0" width="70" height="30" uuid="7c3b1a80-00d3-49ef-ba4c-0062a4bdfa37"/>
+                <box><pen lineWidth="0.5" lineColor="#2C3E50"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Estado]]></text>
+            </staticText>
+            <staticText>
+                <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="480" y="0" width="75" height="30" uuid="a659ccae-2900-4b2a-89a3-5ec9c1d1b914"/>
+                <box><pen lineWidth="0.5" lineColor="#2C3E50"/></box>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Total ]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+    
+    <!-- Detail -->
+    <detail>
+        <band height="25" splitType="Stretch">
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="0" y="0" width="80" height="25" uuid="55152a55-3253-4877-bb89-70dc1de6fb11"/>
+                <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{fecha} != null ? $F{fecha}.toString() : ""]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="80" y="0" width="80" height="25" uuid="66133a8a-e55d-4f7f-a18d-6e540502cc60"/>
+                <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{turno} != null ? $F{turno}.toString() : ""]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="160" y="0" width="130" height="25" uuid="3d21396f-c1f6-4ef1-be61-b541315fcb2a"/>
+                <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[" " + $F{clienteNombre}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="290" y="0" width="120" height="25" uuid="6c25d804-97ea-43fa-b054-d4b967963d41"/>
+                <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
+                <textElement textAlignment="Left" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[" " + $F{paqueteNombre}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="410" y="0" width="70" height="25" uuid="e32a6881-80a5-43ea-98a0-2f1cd8f8fccb"/>
+                <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{estadoCotizacion} != null ? $F{estadoCotizacion}.toString() : ""]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" pattern="¤#,##0.00;¤-#,##0.00" isBlankWhenNull="true">
+                <reportElement x="480" y="0" width="75" height="25" uuid="c24a64d1-03db-4e2f-b441-df0a8fc5a01f"/>
+                <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{totalCotizacion}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+    
+    <!-- Page Footer -->
+    <pageFooter>
+        <band height="30" splitType="Stretch">
+            <textField>
+                <reportElement x="227" y="10" width="100" height="20" forecolor="#7F8C8D" uuid="7ab548d8-7b98-44fb-8a5e-13c544d6735a"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="10" width="150" height="20" forecolor="#7F8C8D" uuid="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8"/>
+                </textElement>
+                <text><![CDATA[NanosLand Management System]]></text>
+            </staticText>
+        </band>
+    </pageFooter>
+</jasperReport>

@@ -2,7 +2,6 @@ package com.example.negocio.catalogo.usecase;
 
 import com.mycompany.common.dtos.ServicioDTO;
 import com.mycompany.common.mapper.ServicioMapper;
-import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.repository.ServicioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

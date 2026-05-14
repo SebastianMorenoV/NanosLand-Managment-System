@@ -7,7 +7,6 @@ import com.example.negocio.cliente.usecase.RegistrarClienteUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.ClienteDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
+
+<HBox spacing="30" stylesheets="@../styles/styles.css" style="-fx-background-color: #ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.PaqueteModalController">
+    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+    <!-- Columna Izquierda: Datos del Paquete -->
+    <VBox spacing="15" prefWidth="350">
+        <Label fx:id="lblTitulo" text="Nuevo Paquete" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        <Label text="Ingresa o edita la información básica del paquete." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+
+        <VBox spacing="5">
+            <Label text="Nombre" styleClass="label-pequeno"/>
+            <TextField fx:id="txtNombre" promptText="Ej: Paquete Básico" styleClass="text-field-moderno"/>
+        </VBox>
+
+        <VBox spacing="5">
+            <Label text="Costo del Paquete" styleClass="label-pequeno"/>
+            <TextField fx:id="txtPrecio" promptText="Ej: 1500.00" styleClass="text-field-moderno"/>
+        </VBox>
+
+        <VBox spacing="5" VBox.vgrow="ALWAYS">
+            <Label text="Descripción" styleClass="label-pequeno"/>
+            <TextArea fx:id="txtDescripcion" promptText="Detalles del paquete..." prefRowCount="4" wrapText="true" styleClass="text-area-notas" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </VBox>
+
+    <!-- Separador -->
+    <Separator orientation="VERTICAL"/>
+
+    <!-- Columna Derecha: Gestión de Servicios -->
+    <VBox spacing="15" prefWidth="550" VBox.vgrow="ALWAYS">
+        <Label text="Servicios Incluidos" styleClass="titulo-seccion"/>
+        
+        <!-- Formulario para agregar servicio -->
+        <HBox spacing="10" alignment="BOTTOM_LEFT">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Seleccionar Servicio" styleClass="label-pequeno"/>
+                <ComboBox fx:id="cmbServicios" promptText="Elija un servicio..." maxWidth="Infinity" styleClass="combo-box-base"/>
+            </VBox>
+            <VBox spacing="5" prefWidth="100">
+                <Label text="Cantidad" styleClass="label-pequeno"/>
+                <TextField fx:id="txtCantidad" promptText="1" styleClass="text-field-moderno"/>
+            </VBox>
+            <Button text="Añadir" styleClass="boton-azul-claro" onAction="#agregarServicio"/>
+        </HBox>
+
+        <!-- Tabla de Servicios -->
+        <TableView fx:id="tablaServicios" VBox.vgrow="ALWAYS" prefHeight="250" style="-fx-background-color: transparent; -fx-border-color: #ccd4db; -fx-border-radius: 5px;">
+            <columns>
+                <TableColumn fx:id="colServicioNombre" text="Servicio" prefWidth="200" />
+                <TableColumn fx:id="colPrecioUnitario" text="Precio Unit." prefWidth="90" />
+                <TableColumn fx:id="colCantidad" text="Cantidad" prefWidth="70" />
+                <TableColumn fx:id="colSubtotal" text="Subtotal" prefWidth="90" />
+                <TableColumn fx:id="colEliminar" text="" prefWidth="60" style="-fx-alignment: CENTER;" />
+            </columns>
+        </TableView>
+        
+        <!-- Botones -->
+        <HBox alignment="CENTER_RIGHT" spacing="20">
+            <Button text="Cancelar" style="-fx-background-color: #e8f4fa; -fx-text-fill: #1a82b8; -fx-font-weight: bold; -fx-background-radius: 0.5em; -fx-cursor: hand; -fx-padding: 0.8em 1.5em;" onAction="#cerrarModal"/>
+            <Button text="Guardar Paquete" styleClass="boton-azul" onAction="#guardarPaquete"/>
+        </HBox>
+    </VBox>
+</HBox>

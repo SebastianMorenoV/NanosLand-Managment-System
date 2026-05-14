@@ -5,8 +5,7 @@
 package com.mycompany.common.mapper;
 
 
-import com.mycompany.common.dtos.ClienteDTO;
-import com.mycompany.persistencia.dominio.Cliente;
+
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.common.dtos.PaqueteDTO;
 

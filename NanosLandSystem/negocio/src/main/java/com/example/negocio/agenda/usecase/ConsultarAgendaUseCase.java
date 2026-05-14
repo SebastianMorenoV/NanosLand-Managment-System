@@ -4,11 +4,8 @@
  */
 package com.example.negocio.agenda.usecase;
 
-import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
-import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.TurnoEvento;
-import com.mycompany.persistencia.repository.CotizacionRepository;
 import com.mycompany.persistencia.repository.EventoRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;

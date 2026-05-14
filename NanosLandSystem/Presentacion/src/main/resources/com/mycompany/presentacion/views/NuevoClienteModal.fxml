@@ -15,22 +15,53 @@
         <Label text="Ingrese los datos de contacto." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
     </VBox>
 
-    <VBox spacing="15">
-        <VBox spacing="5">
-            <Label text="NOMBRE COMPLETO" styleClass="label-pequeno"/>
-            <TextField fx:id="txtNombre" promptText="Ej. Juan Pérez Gómez" styleClass="text-field-moderno"/>
+    <HBox spacing="30">
+        <!-- Columna Izquierda: Contacto -->
+        <VBox spacing="15" prefWidth="280">
+            <Label text="DATOS DE CONTACTO" styleClass="titulo-seccion"/>
+            <VBox spacing="5">
+                <Label text="NOMBRE COMPLETO" styleClass="label-pequeno"/>
+                <TextField fx:id="txtNombre" promptText="Ej. Juan Pérez Gómez" styleClass="text-field-moderno"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="TELÉFONO" styleClass="label-pequeno"/>
+                <TextField fx:id="txtTelefono" promptText="Ej. 6441234567" styleClass="text-field-moderno"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="CORREO ELECTRÓNICO (Opcional)" styleClass="label-pequeno"/>
+                <TextField fx:id="txtCorreo" promptText="Ej. cliente@correo.com" styleClass="text-field-moderno"/>
+            </VBox>
         </VBox>
 
-        <VBox spacing="5">
-            <Label text="TELÉFONO" styleClass="label-pequeno"/>
-            <TextField fx:id="txtTelefono" promptText="Ej. 6441234567" styleClass="text-field-moderno"/>
-        </VBox>
+        <Separator orientation="VERTICAL"/>
 
-        <VBox spacing="5">
-            <Label text="CORREO ELECTRÓNICO (Opcional)" styleClass="label-pequeno"/>
-            <TextField fx:id="txtCorreo" promptText="Ej. cliente@correo.com" styleClass="text-field-moderno"/>
+        <!-- Columna Derecha: Dirección -->
+        <VBox spacing="15" prefWidth="280">
+            <Label text="DIRECCIÓN (Opcional)" styleClass="titulo-seccion"/>
+            <VBox spacing="5">
+                <Label text="CALLE Y NÚMERO" styleClass="label-pequeno"/>
+                <TextField fx:id="txtCalle" promptText="Ej. Av. Principal 123" styleClass="text-field-moderno"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="COLONIA" styleClass="label-pequeno"/>
+                <TextField fx:id="txtColonia" promptText="Ej. Centro" styleClass="text-field-moderno"/>
+            </VBox>
+
+            <HBox spacing="10">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label text="CIUDAD" styleClass="label-pequeno"/>
+                    <TextField fx:id="txtCiudad" promptText="Ej. Cajeme" styleClass="text-field-moderno"/>
+                </VBox>
+                <VBox spacing="5" prefWidth="100">
+                    <Label text="C.P." styleClass="label-pequeno"/>
+                    <TextField fx:id="txtCodigoPostal" promptText="85000" styleClass="text-field-moderno"/>
+                </VBox>
+            </HBox>
         </VBox>
-    </VBox>
+    </HBox>
 
     <HBox alignment="CENTER_RIGHT" spacing="15" style="-fx-padding: 10 0 0 0;">
         <Button text="Cancelar" style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand;" onAction="#cerrarModal"/>

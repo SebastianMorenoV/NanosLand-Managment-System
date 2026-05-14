@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ReportesController">
+    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Reporte de Eventos" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label text="Consulta y exporta el historial de eventos." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+    </HBox>
+
+    <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="15">
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <VBox spacing="5">
+                <Label text="Fecha Inicio" styleClass="label-pequeno"/>
+                <DatePicker fx:id="dpInicio" promptText="Seleccionar fecha" styleClass="date-picker"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Fecha Fin" styleClass="label-pequeno"/>
+                <DatePicker fx:id="dpFin" promptText="Seleccionar fecha" styleClass="date-picker"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Turno" styleClass="label-pequeno"/>
+                <ComboBox fx:id="cmbTurno" promptText="Todos" styleClass="combo-box-base"/>
+            </VBox>
+            <VBox spacing="5">
+                <Label text="Estado" styleClass="label-pequeno"/>
+                <ComboBox fx:id="cmbEstado" promptText="Todos" styleClass="combo-box-base"/>
+            </VBox>
+            <VBox alignment="BOTTOM_CENTER" spacing="5">
+                <Label text="" styleClass="label-pequeno"/> <!-- Espaciador alineado -->
+                <Button text="Generar Reporte" styleClass="boton-azul" onAction="#generarReporte"/>
+            </VBox>
+            <VBox alignment="BOTTOM_CENTER" spacing="5">
+                <Label text="" styleClass="label-pequeno"/>
+                <Button fx:id="btnExportar" text="Exportar a PDF" disable="true" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 0.5em; -fx-cursor: hand; -fx-padding: 0.8em 1.5em;" onAction="#exportarPDF"/>
+            </VBox>
+        </HBox>
+
+        <TableView fx:id="tablaReporte" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #ccd4db; -fx-border-radius: 5px;">
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
+            <columns>
+                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="100" />
+                <TableColumn fx:id="colTurno" text="Turno" prefWidth="100" />
+                <TableColumn fx:id="colCliente" text="Cliente" prefWidth="200" />
+                <TableColumn fx:id="colPaquete" text="Paquete" prefWidth="150" />
+                <TableColumn fx:id="colEstado" text="Estado" prefWidth="120" />
+                <TableColumn fx:id="colTotal" text="Total" prefWidth="100" />
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

@@ -2,6 +2,7 @@ package com.mycompany.presentacion.controllers;
 
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.cliente.usecase.RegistrarClienteUseCase;
+import com.example.negocio.cliente.usecase.ActualizarClienteUseCase;
 import com.mycompany.common.dtos.ClienteDTO;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -15,15 +16,34 @@ import org.springframework.stereotype.Controller;
 public class NuevoClienteModalController {
 
     private final RegistrarClienteUseCase registrarClienteUseCase;
+    private final ActualizarClienteUseCase actualizarClienteUseCase;
 
     private ClienteDTO clienteCreado;
+    private ClienteDTO clienteAEditar;
 
     @FXML private TextField txtNombre;
     @FXML private TextField txtTelefono;
     @FXML private TextField txtCorreo;
+    @FXML private TextField txtCalle;
+    @FXML private TextField txtColonia;
+    @FXML private TextField txtCiudad;
+    @FXML private TextField txtCodigoPostal;
 
     public ClienteDTO getClienteCreado() {
         return clienteCreado;
+    }
+
+    public void setClienteAEditar(ClienteDTO clienteAEditar) {
+        this.clienteAEditar = clienteAEditar;
+        if (clienteAEditar != null) {
+            txtNombre.setText(clienteAEditar.getNombre());
+            txtTelefono.setText(clienteAEditar.getTelefono());
+            txtCorreo.setText(clienteAEditar.getCorreo());
+            txtCalle.setText(clienteAEditar.getCalle());
+            txtColonia.setText(clienteAEditar.getColonia());
+            txtCiudad.setText(clienteAEditar.getCiudad());
+            txtCodigoPostal.setText(clienteAEditar.getCodigoPostal());
+        }
     }
 
     @FXML
@@ -31,6 +51,10 @@ public class NuevoClienteModalController {
         String nombre = txtNombre.getText().trim();
         String telefono = txtTelefono.getText().trim();
         String correo = txtCorreo.getText().trim();
+        String calle = txtCalle.getText().trim();
+        String colonia = txtColonia.getText().trim();
+        String ciudad = txtCiudad.getText().trim();
+        String cp = txtCodigoPostal.getText().trim();
 
         // 1. Validar campos obligatorios
         if (nombre.isEmpty() || telefono.isEmpty()) {
@@ -39,11 +63,26 @@ public class NuevoClienteModalController {
         }
 
         try {
-            ClienteDTO dto = new ClienteDTO();
-            dto.setNombre(nombre);
-            dto.setTelefono(telefono);
-            dto.setCorreo(correo);
-            clienteCreado = registrarClienteUseCase.registrarCliente(dto);
+            if (clienteAEditar == null) {
+                ClienteDTO dto = new ClienteDTO();
+                dto.setNombre(nombre);
+                dto.setTelefono(telefono);
+                dto.setCorreo(correo);
+                dto.setCalle(calle);
+                dto.setColonia(colonia);
+                dto.setCiudad(ciudad);
+                dto.setCodigoPostal(cp);
+                clienteCreado = registrarClienteUseCase.registrarCliente(dto);
+            } else {
+                clienteAEditar.setNombre(nombre);
+                clienteAEditar.setTelefono(telefono);
+                clienteAEditar.setCorreo(correo);
+                clienteAEditar.setCalle(calle);
+                clienteAEditar.setColonia(colonia);
+                clienteAEditar.setCiudad(ciudad);
+                clienteAEditar.setCodigoPostal(cp);
+                clienteCreado = actualizarClienteUseCase.actualizarCliente(clienteAEditar);
+            }
             
             // Cerramos la ventana una vez guardado
             cerrarModal();
