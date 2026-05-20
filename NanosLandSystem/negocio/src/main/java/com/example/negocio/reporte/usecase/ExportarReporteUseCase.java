@@ -33,9 +33,16 @@ public class ExportarReporteUseCase {
 
         // Formatear periodo
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String strInicio = (inicio != null) ? inicio.format(formatter) : "Inicio";
-        String strFin = (fin != null) ? fin.format(formatter) : "Fin";
-        String periodo = "Del: " + strInicio + " Al: " + strFin;
+        String periodo;
+        if (inicio == null && fin == null) {
+            periodo = "Todos los eventos (máx. 20 más recientes)";
+        } else if (inicio != null && fin == null) {
+            periodo = "Desde: " + inicio.format(formatter);
+        } else if (inicio == null && fin != null) {
+            periodo = "Hasta: " + fin.format(formatter);
+        } else {
+            periodo = "Del: " + inicio.format(formatter) + " Al: " + fin.format(formatter);
+        }
 
         // Crear el DataSource a partir de la lista de DTOs
         JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(eventos);

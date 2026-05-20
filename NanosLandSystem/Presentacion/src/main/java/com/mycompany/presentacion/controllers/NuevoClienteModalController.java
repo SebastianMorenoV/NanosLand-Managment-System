@@ -50,7 +50,7 @@ public class NuevoClienteModalController {
     private void guardarCliente() {
         String nombre = txtNombre.getText().trim();
         String telefono = txtTelefono.getText().trim();
-        String correo = txtCorreo.getText().trim();
+        String correo = txtCorreo.getText() != null ? txtCorreo.getText().trim() : "";
         String calle = txtCalle.getText().trim();
         String colonia = txtColonia.getText().trim();
         String ciudad = txtCiudad.getText().trim();

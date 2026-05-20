@@ -134,8 +134,8 @@ public class ReporteEventosMenuMain {
             writer.println("=================================================");
             writer.println("Fecha de generación: " + LocalDate.now());
             writer.println("Criterios de filtrado:");
-            writer.println("  - Desde  : " + inicio);
-            writer.println("  - Hasta  : " + fin);
+            writer.println("  - Desde  : " + (inicio == null ? "Inicio" : inicio));
+            writer.println("  - Hasta  : " + (fin == null ? "Fin" : fin));
             writer.println("  - Turno  : " + (turno == null ? "Todos" : turno.name()));
             writer.println("  - Estado : " + (estado == null ? "Todos" : estado.name()));
             writer.println("-------------------------------------------------");
@@ -169,8 +169,7 @@ public class ReporteEventosMenuMain {
             System.out.print(prompt);
             String input = sc.nextLine().trim();
             if (input.isBlank()) {
-                System.out.println("  ✗ La fecha es obligatoria.");
-                continue;
+                return null;
             }
             try { return LocalDate.parse(input, formatter); } 
             catch (DateTimeParseException e) { System.out.println("  ✗ Formato de fecha inválido. Usa YYYY-MM-DD."); }

@@ -23,7 +23,16 @@ public class GenerarReporteEventosUseCase {
             throw new IllegalArgumentException("La fecha de inicio no puede ser posterior a la fecha de fin.");
         }
 
-        List<Evento> eventos = eventoRepository.findReporteEventos(inicio, fin, turno, estado);
+        List<Evento> eventos;
+        if (inicio == null && fin == null) {
+            eventos = eventoRepository.findReporteEventosMasRecientes(
+                turno, 
+                estado, 
+                org.springframework.data.domain.PageRequest.of(0, 20)
+            );
+        } else {
+            eventos = eventoRepository.findReporteEventos(inicio, fin, turno, estado);
+        }
         return EventoMapper.toDTOList(eventos);
     }
 }

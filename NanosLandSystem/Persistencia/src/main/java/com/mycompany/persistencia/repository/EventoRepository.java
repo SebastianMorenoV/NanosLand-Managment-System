@@ -36,7 +36,8 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
         "JOIN FETCH e.cotizacion c " +
         "JOIN FETCH c.cliente cl " +
         "JOIN FETCH c.paquete p " +
-        "WHERE e.fecha BETWEEN :inicio AND :fin " +
+        "WHERE (:inicio IS NULL OR e.fecha >= :inicio) " +
+        "AND (:fin IS NULL OR e.fecha <= :fin) " +
         "AND (:turno IS NULL OR e.turno = :turno) " +
         "AND (:estado IS NULL OR c.estado = :estado) " +
         "ORDER BY e.fecha ASC"
@@ -46,5 +47,20 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
         @org.springframework.data.repository.query.Param("fin") LocalDate fin,
         @org.springframework.data.repository.query.Param("turno") TurnoEvento turno,
         @org.springframework.data.repository.query.Param("estado") com.mycompany.persistencia.enums.EstadoCotizacion estado
+    );
+
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT e FROM Evento e " +
+        "JOIN FETCH e.cotizacion c " +
+        "JOIN FETCH c.cliente cl " +
+        "JOIN FETCH c.paquete p " +
+        "WHERE (:turno IS NULL OR e.turno = :turno) " +
+        "AND (:estado IS NULL OR c.estado = :estado) " +
+        "ORDER BY e.fecha DESC"
+    )
+    List<Evento> findReporteEventosMasRecientes(
+        @org.springframework.data.repository.query.Param("turno") TurnoEvento turno,
+        @org.springframework.data.repository.query.Param("estado") com.mycompany.persistencia.enums.EstadoCotizacion estado,
+        org.springframework.data.domain.Pageable pageable
     );
 }
