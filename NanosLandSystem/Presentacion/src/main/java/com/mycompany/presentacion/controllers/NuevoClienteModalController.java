@@ -29,6 +29,20 @@ public class NuevoClienteModalController {
     @FXML private TextField txtCiudad;
     @FXML private TextField txtCodigoPostal;
 
+    @FXML
+    public void initialize() {
+        // Reset singleton state so a new modal open starts clean
+        clienteCreado = null;
+        clienteAEditar = null;
+        txtNombre.setText("");
+        txtTelefono.setText("");
+        txtCorreo.setText("");
+        txtCalle.setText("");
+        txtColonia.setText("");
+        txtCiudad.setText("");
+        txtCodigoPostal.setText("");
+    }
+
     public ClienteDTO getClienteCreado() {
         return clienteCreado;
     }
