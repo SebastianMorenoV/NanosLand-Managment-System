@@ -230,7 +230,12 @@ public class SeleccionarFechaController {
         GridPane.setHgrow(celda, Priority.ALWAYS);
 
         if (turnosDisponibles > 0 && !esPasado) {
-            celda.setOnMouseClicked(e -> seleccionarFecha(fecha, celda, lblNumero, lblDisp));
+            celda.setOnMouseClicked(e -> {
+                seleccionarFecha(fecha, celda, lblNumero, lblDisp);
+                if (e.getClickCount() == 2) {
+                    continuar();
+                }
+            });
         }
 
         return celda;

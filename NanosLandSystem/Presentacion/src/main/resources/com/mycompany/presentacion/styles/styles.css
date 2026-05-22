@@ -746,7 +746,7 @@
     -fx-text-fill: #4e5b69;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
-    -fx-alignment: CENTER_LEFT;
+    -fx-alignment: CENTER;
 }
 
 .table-row-cell {

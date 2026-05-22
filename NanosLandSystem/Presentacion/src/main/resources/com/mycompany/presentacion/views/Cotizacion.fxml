@@ -17,10 +17,6 @@
             <Label text="Nueva Cotización" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
             <Label text="Llene los datos. Los cambios se calculan automáticamente." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
         </VBox>
-        <VBox alignment="CENTER_RIGHT">
-            <Label text="TOTAL ESTIMADO" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
-            <Label fx:id="lblTotalEstimado" text=" $0.00" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
-        </VBox>
     </HBox>
 
     <!-- CUERPO PRINCIPAL -->
@@ -171,6 +167,13 @@
 
                 <Label text="Mantén presionada la tecla Ctrl para seleccionar varios extras" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
                 <ListView fx:id="listaServiciosExtras" VBox.vgrow="ALWAYS" prefHeight="200" styleClass="lista-moderna" />
+                <HBox alignment="BOTTOM_RIGHT" spacing="20">
+                    <Label fx:id="lblSubtotalExtras" text="Subtotal Extras: $0.00" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                    <VBox alignment="CENTER_RIGHT">
+                        <Label text="TOTAL ESTIMADO" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
+                        <Label fx:id="lblTotalEstimado" text=" $0.00" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+                    </VBox>
+                </HBox>
             </VBox>
             <VBox fx:id="panelPagos" styleClass="tarjeta-blanca" spacing="12" visible="false" managed="false">
                 <HBox alignment="CENTER_LEFT" spacing="10">

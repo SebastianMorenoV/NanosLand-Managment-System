@@ -39,6 +39,7 @@ public class ReportesController {
     @FXML private ComboBox<TurnoEvento> cmbTurno;
     @FXML private ComboBox<EstadoEvento> cmbEstado;
     @FXML private Button btnExportar;
+    @FXML private javafx.scene.control.Label lblAvisoFiltro;
     
     @FXML private TableView<EventoDTO> tablaReporte;
     @FXML private TableColumn<EventoDTO, LocalDate> colFecha;
@@ -70,6 +71,14 @@ public class ReportesController {
 
         paginacion.setPageCount(1);
         paginacion.setPageFactory(this::crearPagina);
+
+        dpInicio.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
+        dpFin.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
+        cmbTurno.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
+        cmbEstado.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
+
+        // Cargar los datos iniciales
+        generarReporte();
     }
 
     private Node crearPagina(int pageIndex) {
@@ -98,20 +107,27 @@ public class ReportesController {
                 masterData.addAll(resultados);
             }
             
-            btnExportar.setDisable(masterData.isEmpty());
+            boolean tieneFiltros = (inicio != null || fin != null || turno != null || estado != null);
+            
+            if (tieneFiltros && !masterData.isEmpty()) {
+                btnExportar.setDisable(false);
+                if (lblAvisoFiltro != null) {
+                    lblAvisoFiltro.setVisible(false);
+                    lblAvisoFiltro.setManaged(false);
+                }
+            } else {
+                btnExportar.setDisable(true);
+                if (lblAvisoFiltro != null) {
+                    boolean showAviso = !tieneFiltros;
+                    lblAvisoFiltro.setVisible(showAviso);
+                    lblAvisoFiltro.setManaged(showAviso);
+                }
+            }
             
             int pageCount = (int) Math.ceil((double) masterData.size() / ITEMS_POR_PAGINA);
             paginacion.setPageCount(pageCount == 0 ? 1 : pageCount);
             paginacion.setCurrentPageIndex(0);
             crearPagina(0); // Forzar actualización de tabla
-            
-            if (masterData.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Reporte");
-                alert.setHeaderText(null);
-                alert.setContentText("No se encontraron eventos para los filtros seleccionados.");
-                alert.showAndWait();
-            }
         } catch (IllegalArgumentException e) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Filtro Inválido");
@@ -142,13 +158,8 @@ public class ReportesController {
         File archivo = fileChooser.showSaveDialog(stage);
 
         if (archivo != null) {
-            try (
-                // Fix #5: try-with-resources garantiza que el InputStream se cierre
-                // correctamente incluso si ocurre una excepción durante la exportación.
-                InputStream reporteStream = getClass().getResourceAsStream(
-                    "/com/mycompany/presentacion/reports/ReporteEventos.jrxml")
-            ) {
-                exportarReporteUseCase.exportarPDF(masterData, reporteStream,
+            try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
+                exportarReporteUseCase.exportarPDF(masterData, logoStream,
                     archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);

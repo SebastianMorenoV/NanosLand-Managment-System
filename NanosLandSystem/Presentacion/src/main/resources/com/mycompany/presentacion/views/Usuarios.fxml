@@ -33,12 +33,14 @@
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
                 </columnResizePolicy>
                 <columns>
-                    <TableColumn fx:id="colId" text="ID" prefWidth="50" maxWidth="80" />
-                    <TableColumn fx:id="colNombre" text="Nombre Completo" prefWidth="250" />
-                    <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120" />
-                    <TableColumn fx:id="colCorreo" text="Correo Electrónico" prefWidth="180" />
-                    <TableColumn fx:id="colCiudad" text="Ciudad" prefWidth="120" />
-                    <TableColumn fx:id="colColonia" text="Colonia" prefWidth="150" />
+                    <TableColumn fx:id="colId" text="ID" prefWidth="50" maxWidth="80" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colNombre" text="Nombre Completo" prefWidth="250" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCorreo" text="Correo Electrónico" prefWidth="180" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCiudad" text="Ciudad" prefWidth="120" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colColonia" text="Colonia" prefWidth="150" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCalle" text="Calle" prefWidth="150" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCodigoPostal" text="C.P." prefWidth="80" style="-fx-alignment: CENTER;"/>
                 </columns>
             </TableView>
         </fx:define>

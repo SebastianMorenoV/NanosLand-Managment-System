@@ -27,12 +27,12 @@ public class CalcularTotalCotizacionUseCase {
      * @return El total calculado en formato Double.
      */
     public Double ejecutar(PaqueteDTO paquete, List<ServicioDTO> serviciosExtras) {
-        if (paquete == null) {
-            return 0.0;
+        double total = 0.0;
+        
+        // Sumamos el costo base del paquete si existe
+        if (paquete != null) {
+            total += paquete.getCostoBase();
         }
-
-        // Iniciamos con el costo base del paquete
-        double total = paquete.getCostoBase();
 
         // Sumamos cada servicio extra (Flujo 2.2.3 / 2.2.4)
         if (serviciosExtras != null && !serviciosExtras.isEmpty()) {

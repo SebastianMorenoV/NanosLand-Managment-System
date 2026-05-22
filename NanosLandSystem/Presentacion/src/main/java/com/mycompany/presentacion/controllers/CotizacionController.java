@@ -102,6 +102,10 @@ public class CotizacionController {
     @FXML private Label lblPagado;
     @FXML private Label lblRestante;
     @FXML private TextField txtAbono;
+    
+    @FXML private ListView<ServicioAgrupado> listaServiciosExtras;
+    @FXML private Label lblSubtotalExtras;
+
     // ─── PANEL LATERAL COTIZACIONES ─────────────────────────────────────
     @FXML
     private TextField txtBuscarCotizaciones;
@@ -112,20 +116,12 @@ public class CotizacionController {
     @FXML
     private Button btnEliminarCotizacion;
 
-    // Elementos para Servicios Extras (Flujo 2.2.3 y 2.2.4)
-    @FXML
-    private ListView<ServicioDTO> listaServiciosExtras;
-
     @FXML
     private Button btnAnadirServicio;
     @FXML
     private Button btnGuardarBorrador;
     @FXML
     private Button btnConfirmarCotizacion;
-
-    // ─── ESTADO UI (EDICIÓN) — Fix #7: estado de negocio centralizado en CotizacionContext ──
-    // Accede a cotizacionContext.isModoEdicion(), .getCotizacionEnEdicionId(), etc.
-    // para resetear todo con un solo limpiar().
 
     private final ObservableList<CotizacionDTO> cotizacionesPanel = FXCollections.observableArrayList();
     private FilteredList<CotizacionDTO> cotizacionesFiltradas;
@@ -134,17 +130,21 @@ public class CotizacionController {
     @FXML private Button btnGuardarCambios;
     @FXML private Button btnDescartarCambios;
 
-    // Lista observable de servicios extras seleccionados en el formulario actual
     private final ObservableList<ServicioDTO> serviciosSeleccionados = FXCollections.observableArrayList();
+    private final ObservableList<ServicioAgrupado> serviciosAgrupados = FXCollections.observableArrayList();
 
-    // ─── Helpers de estado delegados al contexto (Fix #7) ───────────────────────────
+    public static class ServicioAgrupado {
+        public ServicioDTO servicio;
+        public int cantidad;
+        public ServicioAgrupado(ServicioDTO s, int c) { this.servicio = s; this.cantidad = c; }
+    }
+
     private boolean isModoEdicion()              { return cotizacionContext.isModoEdicion(); }
     private Long getCotizacionEnEdicionId()       { return cotizacionContext.getCotizacionEnEdicionId(); }
     private EstadoCotizacion getEstadoEdicion()   { return cotizacionContext.getEstadoEdicionActual(); }
     private LocalDate getFechaEdicion()           { return cotizacionContext.getFechaEdicionActual(); }
     private TurnoEvento getTurnoEdicion()         { return cotizacionContext.getTurnoEdicionActual(); }
 
-    // ─── INICIALIZACIÓN ───────────────────────────────────────────────────────
     private void cambiarModoInterfaz(boolean edicion) {
         if (boxBotonesNuevos != null) {
             boxBotonesNuevos.setVisible(!edicion);
@@ -158,7 +158,6 @@ public class CotizacionController {
     
     @FXML
     private void guardarCambios() {
-        // Fix #7: leer estado desde contexto centralizado
         EstadoCotizacion estado = getEstadoEdicion();
         if (estado == null) estado = EstadoCotizacion.BORRADOR;
 
@@ -166,16 +165,35 @@ public class CotizacionController {
         if (r != null) {
             Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cambios guardados exitosamente.");
             ok.showAndWait();
-            nuevaCotizacion(); // Vuelve el formulario a su estado en blanco
+            nuevaCotizacion();
         }
     }
     @FXML
     public void initialize() {
         configurarComboClientes();
+        configurarComboPaquetes();
+        configurarListaServiciosExtras();
+
+        serviciosSeleccionados.addListener((javafx.collections.ListChangeListener.Change<? extends ServicioDTO> c) -> {
+            java.util.Map<Long, java.util.List<ServicioDTO>> map = serviciosSeleccionados.stream()
+                .collect(java.util.stream.Collectors.groupingBy(ServicioDTO::getId));
+            serviciosAgrupados.clear();
+            for (java.util.List<ServicioDTO> group : map.values()) {
+                serviciosAgrupados.add(new ServicioAgrupado(group.get(0), group.size()));
+            }
+            
+            double subtotalExtras = serviciosSeleccionados.stream().mapToDouble(ServicioDTO::getPrecio).sum();
+            if (lblSubtotalExtras != null) {
+                lblSubtotalExtras.setText(String.format("Subtotal Extras: $%,.2f", subtotalExtras));
+            }
+        });
+
+        serviciosSeleccionados.clear();
+        
+        cambiarModoInterfaz(false);
 
         boolean catalogoDisponible = true;
         try {
-            configurarComboPaquetes();
             configurarListaServiciosExtras();
         } catch (Exception ex) {
             catalogoDisponible = false;
@@ -233,10 +251,18 @@ public class CotizacionController {
                     comboTurnos.getItems().clear();
                     ocultarErrorTurnos();
                 }
+                validarFormularioCompleto();
             });
         }
 
+        comboClientes.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        comboPaquetes.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        comboTurnos.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        if (txtNombreFestejado != null) txtNombreFestejado.textProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        if (txtTematica != null) txtTematica.textProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+
         actualizarTotalEstimado();
+        validarFormularioCompleto();
         btnEliminarCotizacion.setDisable(true);
         if (!catalogoDisponible) {
             // Garantizamos cancelación del flujo 2.2.8
@@ -515,8 +541,25 @@ public class CotizacionController {
                 Label total = new Label(String.format("$%,.2f", item.getTotal()));
                 total.setStyle("-fx-font-weight: bold; -fx-text-fill: #1a82b8;");
 
+                // Lógica de fechas
+                boolean esPasada = item.getFecha() != null && item.getFecha().isBefore(LocalDate.now());
+                boolean esBorrador = (item.getEstado() == EstadoCotizacion.BORRADOR);
+                boolean esVigenteFutura = (item.getEstado() == EstadoCotizacion.VIGENTE && !esPasada);
+                boolean esEditable = esBorrador || esVigenteFutura;
+
+                // Estilo para pasadas
+                if (esPasada) {
+                    folio.setStyle("-fx-font-weight: bold; -fx-text-fill: #95a5a6;");
+                    cliente.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 11px;");
+                    fecha.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 10px;");
+                    Label lblPasada = new Label("[Pasada]");
+                    lblPasada.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 10px; -fx-font-weight: bold;");
+                    folio.setGraphic(lblPasada);
+                    folio.setContentDisplay(ContentDisplay.RIGHT);
+                }
+
                 // NUEVO BOTÓN EDITAR EN CADA CELDA
-                Button btnEditar = new Button(item.getEstado() == EstadoCotizacion.BORRADOR ? "Editar" : "Ver");
+                Button btnEditar = new Button(esEditable ? "Editar" : "Ver");
                 btnEditar.setStyle("-fx-font-size: 10px; -fx-background-color: #ecf0f1; -fx-cursor: hand;");
                 btnEditar.setOnAction(e -> {
                     cotizacionContext.setModoEdicion(true);
@@ -529,13 +572,16 @@ public class CotizacionController {
                     cargarCotizacionEnFormulario(item);
                     cambiarModoInterfaz(true); // Mostrar botones de Guardar/Descartar
 
-                    // Si no es borrador, dejar en modo de solo lectura (ocultando guardado y bloqueando campos)
-                    boolean esBorrador = (item.getEstado() == EstadoCotizacion.BORRADOR);
-                    if (btnGuardarCambios != null) btnGuardarCambios.setDisable(!esBorrador);
-                    if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(!esBorrador);
-                    if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(!esBorrador);
+                    // Si no es editable, dejar en modo de solo lectura (ocultando guardado y bloqueando campos)
+                    boolean esBorradorLocal = (item.getEstado() == EstadoCotizacion.BORRADOR);
+                    boolean esVigenteFuturaLocal = (item.getEstado() == EstadoCotizacion.VIGENTE && item.getFecha() != null && !item.getFecha().isBefore(LocalDate.now()));
+                    boolean esEditableLocal = esBorradorLocal || esVigenteFuturaLocal;
+
+                    if (btnGuardarCambios != null) btnGuardarCambios.setDisable(!esEditableLocal);
+                    if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(!esBorradorLocal);
+                    if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(!esBorradorLocal);
                     
-                    setSoloLectura(!esBorrador);
+                    setSoloLectura(!esEditableLocal);
                 });
 
                 VBox left = new VBox(4, folio, cliente, fecha);
@@ -583,7 +629,21 @@ public class CotizacionController {
         };
         task.setOnSucceeded(e -> {
             java.util.List<CotizacionDTO> lista = new java.util.ArrayList<>(task.getValue());
-            lista.sort((c1, c2) -> Long.compare(c2.getId(), c1.getId()));
+            LocalDate hoy = LocalDate.now();
+            lista.sort((c1, c2) -> {
+                LocalDate f1 = c1.getFecha() != null ? c1.getFecha() : LocalDate.MIN;
+                LocalDate f2 = c2.getFecha() != null ? c2.getFecha() : LocalDate.MIN;
+                boolean f1Futura = !f1.isBefore(hoy);
+                boolean f2Futura = !f2.isBefore(hoy);
+                
+                if (f1Futura && !f2Futura) return -1;
+                if (!f1Futura && f2Futura) return 1;
+                if (f1Futura && f2Futura) {
+                    return f1.compareTo(f2); // Mas cercana a hoy primero (ascendente)
+                } else {
+                    return f2.compareTo(f1); // Mas reciente primero (descendente)
+                }
+            });
             cotizacionesPanel.setAll(lista);
         });
         task.setOnFailed(e -> System.err.println("[CotizacionController] Error cargando panel: "
@@ -699,10 +759,9 @@ public class CotizacionController {
 
         // Restaurar botones por si se había abierto una en solo lectura
         if (btnGuardarCambios != null) btnGuardarCambios.setDisable(false);
-        if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(false);
-        if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(false);
         
         setSoloLectura(false);
+        validarFormularioCompleto();
     }
 
     private void setSoloLectura(boolean soloLectura) {
@@ -721,6 +780,20 @@ public class CotizacionController {
         if (txtTematica != null) txtTematica.setDisable(soloLectura);
         if (btnAnadirServicio != null) btnAnadirServicio.setDisable(soloLectura);
         if (listaServiciosExtras != null) listaServiciosExtras.setDisable(soloLectura);
+    }
+
+    private void validarFormularioCompleto() {
+        boolean incompleto = comboClientes == null || comboClientes.getValue() == null ||
+                             comboPaquetes == null || comboPaquetes.getValue() == null ||
+                             datePickerFecha == null || datePickerFecha.getValue() == null ||
+                             comboTurnos == null || comboTurnos.getValue() == null ||
+                             txtNombreFestejado == null || txtNombreFestejado.getText() == null || txtNombreFestejado.getText().trim().isEmpty() ||
+                             txtTematica == null || txtTematica.getText() == null || txtTematica.getText().trim().isEmpty();
+                             
+        if (!isModoEdicion()) {
+            if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(incompleto);
+            if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(incompleto);
+        }
     }
 
     // ─── ELIMINAR COTIZACIÓN (Flujo 2.2.7) ────────────────────────────────
@@ -952,15 +1025,15 @@ public class CotizacionController {
         });
     }
 
-    // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS (Ícono de Basurita) ──────────
+    // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ──────────
     private void configurarListaServiciosExtras() {
         if (listaServiciosExtras != null) {
-            listaServiciosExtras.setItems(serviciosSeleccionados);
+            listaServiciosExtras.setItems(serviciosAgrupados);
             
             // Formato visual para agregar el ícono de basura y el texto
-            listaServiciosExtras.setCellFactory(lv -> new ListCell<ServicioDTO>() {
+            listaServiciosExtras.setCellFactory(lv -> new ListCell<ServicioAgrupado>() {
                 @Override
-                protected void updateItem(ServicioDTO item, boolean empty) {
+                protected void updateItem(ServicioAgrupado item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setGraphic(null);
@@ -970,15 +1043,27 @@ public class CotizacionController {
                         hbox.setAlignment(Pos.CENTER_LEFT);
                         
                         // Botón de basurita
-                        Button btnDelete = new Button("🗑️");
-                        btnDelete.setStyle("-fx-background-color: transparent; -fx-text-fill: #e74c3c; -fx-cursor: hand; -fx-font-size: 14px;");
+                        Button btnDelete = new Button();
+                        javafx.scene.shape.SVGPath trashIcon = new javafx.scene.shape.SVGPath();
+                        trashIcon.setContent("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z");
+                        trashIcon.setFill(javafx.scene.paint.Color.web("#e74c3c"));
+                        btnDelete.setGraphic(trashIcon);
+                        btnDelete.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
                         btnDelete.setOnAction(e -> {
-                            serviciosSeleccionados.remove(item);
+                            serviciosSeleccionados.removeIf(s -> s.getId().equals(item.servicio.getId()));
                             actualizarTotalEstimado();
                         });
 
                         // Texto del servicio
-                        Label lblText = new Label(item.getNombre() + " (+$" + String.format("%,.2f", item.getPrecio()) + ")");
+                        double subtotalItem = item.servicio.getPrecio() * item.cantidad;
+                        Label lblText;
+                        if (item.cantidad > 1) {
+                            lblText = new Label(String.format("%s ($%,.2f) * %d = $%,.2f", 
+                                item.servicio.getNombre(), item.servicio.getPrecio(), item.cantidad, subtotalItem));
+                        } else {
+                            lblText = new Label(String.format("%s (+$%,.2f)", 
+                                item.servicio.getNombre(), item.servicio.getPrecio()));
+                        }
                         lblText.setStyle("-fx-text-fill: #2c3e50;");
 
                         hbox.getChildren().addAll(btnDelete, lblText);

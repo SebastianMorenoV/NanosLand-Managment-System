@@ -49,6 +49,8 @@ public class UsuariosController {
     @FXML private TableColumn<ClienteDTO, String> colCorreo;
     @FXML private TableColumn<ClienteDTO, String> colCiudad; 
     @FXML private TableColumn<ClienteDTO, String> colColonia;
+    @FXML private TableColumn<ClienteDTO, String> colCalle;
+    @FXML private TableColumn<ClienteDTO, String> colCodigoPostal;
     @FXML private Pagination paginacion;
 
     private static final int ITEMS_POR_PAGINA = 20;
@@ -78,6 +80,8 @@ public class UsuariosController {
         colCorreo.setCellValueFactory(new PropertyValueFactory<>("correo"));
         colCiudad.setCellValueFactory(new PropertyValueFactory<>("ciudad"));
         colColonia.setCellValueFactory(new PropertyValueFactory<>("colonia"));
+        colCalle.setCellValueFactory(new PropertyValueFactory<>("calle"));
+        colCodigoPostal.setCellValueFactory(new PropertyValueFactory<>("codigoPostal"));
 
         // 2. Configurar la barra de búsqueda en tiempo real y paginación
         configurarBuscadorYPaginacion();

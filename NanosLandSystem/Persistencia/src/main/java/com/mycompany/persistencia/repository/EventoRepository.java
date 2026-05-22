@@ -43,7 +43,7 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
         "AND (:fin IS NULL OR e.fecha <= :fin) " +
         "AND (:turno IS NULL OR e.turno = :turno) " +
         "AND (:estado IS NULL OR e.estado = :estado) " +
-        "ORDER BY e.fecha ASC"
+        "ORDER BY e.fecha DESC"
     )
     List<Evento> findReporteEventos(
         @org.springframework.data.repository.query.Param("inicio") LocalDate inicio,

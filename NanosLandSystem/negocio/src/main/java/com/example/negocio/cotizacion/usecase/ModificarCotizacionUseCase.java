@@ -19,6 +19,7 @@ import com.mycompany.persistencia.repository.ClienteRepository;
 import com.mycompany.persistencia.repository.CotizacionRepository;
 import com.mycompany.persistencia.repository.EventoRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
+import com.mycompany.persistencia.repository.PagoRepository;
 import com.mycompany.persistencia.repository.ServicioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class ModificarCotizacionUseCase {
     private final PaqueteRepository paqueteRepository;
     private final ServicioRepository servicioRepository;
     private final EventoRepository eventoRepository;
+    private final PagoRepository pagoRepository;
 
     @Transactional
     public CotizacionDTO modificarCotizacion(Long cotizacionId, CotizacionDTO dto) {
@@ -169,6 +171,17 @@ public class ModificarCotizacionUseCase {
             existente.getServiciosExtra().addAll(detallesEntidad);
         } else {
             existente.setServiciosExtra(detallesEntidad);
+        }
+        
+        // Validación para cotizaciones Vigentes (que no baje del anticipo mínimo ni de lo ya abonado)
+        if (existente.getEstado() == EstadoCotizacion.VIGENTE) {
+            List<com.mycompany.persistencia.dominio.Pago> pagosExistentes = pagoRepository.findByCotizacionId(cotizacionId);
+            double anticipoExistente = pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(com.mycompany.persistencia.dominio.Pago::getCantidad).sum();
+            
+            double minimoRequerido = Math.max(3000.0, anticipoExistente);
+            if (total < minimoRequerido) {
+                throw new CotizacionException(String.format("El nuevo total de la cotización ($%,.2f) no puede ser menor al monto ya abonado o requerido ($%,.2f).", total, minimoRequerido));
+            }
         }
         
         existente.setTotal(total);

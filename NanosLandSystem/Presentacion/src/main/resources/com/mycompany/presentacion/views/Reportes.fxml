@@ -32,14 +32,11 @@
                 <ComboBox fx:id="cmbEstado" promptText="Todos" styleClass="combo-box-base"/>
             </VBox>
             <VBox alignment="BOTTOM_CENTER" spacing="5">
-                <Label text="" styleClass="label-pequeno"/> <!-- Espaciador alineado -->
-                <Button text="Generar Reporte" styleClass="boton-azul" onAction="#generarReporte"/>
-            </VBox>
-            <VBox alignment="BOTTOM_CENTER" spacing="5">
                 <Label text="" styleClass="label-pequeno"/>
                 <Button fx:id="btnExportar" text="Exportar a PDF" disable="true" styleClass="boton-verde" onAction="#exportarPDF"/>
             </VBox>
         </HBox>
+        <Label fx:id="lblAvisoFiltro" text="Seleccione filtros (ej. rango de fechas) para habilitar la exportación del reporte." style="-fx-text-fill: #e67e22; -fx-font-weight: bold;"/>
 
         <fx:define>
             <TableView fx:id="tablaReporte">
