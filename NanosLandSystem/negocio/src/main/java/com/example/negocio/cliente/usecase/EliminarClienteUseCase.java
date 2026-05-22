@@ -62,7 +62,12 @@ public class EliminarClienteUseCase {
             );
         }
 
-        // ── 4. Eliminar físicamente el registro ──────────────────────────────
-        clienteRepository.deleteById(id);
+        // ── 4. Eliminación lógica (soft-delete) ─────────────────────────────────
+        // Fix #12: Se usa soft-delete en lugar de deleteById() para:
+        // a) Preservar el historial de cotizaciones donde aparece este cliente.
+        // b) Evitar DataIntegrityViolationException si la BD tiene FK constraints.
+        // c) Mantener consistencia con el patrón ya usado en Paquete.activo.
+        cliente.setActivo(false);
+        clienteRepository.save(cliente);
     }
 }

@@ -7,8 +7,10 @@ import com.mycompany.common.mapper.CotizacionMapper;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.dominio.Cotizacion;
+import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import com.mycompany.persistencia.repository.CotizacionRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
@@ -43,6 +45,7 @@ public class CrearCotizacionUseCase {
     private final ClienteRepository clienteRepository;
     private final PaqueteRepository paqueteRepository;
     private final ServicioRepository servicioRepository;
+    private final com.mycompany.persistencia.repository.EventoRepository eventoRepository;
 
     /**
      * Crea y persiste una cotización con estado BORRADOR.
@@ -102,10 +105,11 @@ public class CrearCotizacionUseCase {
             ));
 
         // ── 5. Validación: no duplicar turno en la misma fecha ───────────────
-       boolean turnoOcupado = cotizacionRepository.existsByFechaAndTurnoAndEstadoNotIn(
+        // Usamos EventoRepository en lugar de CotizacionRepository ya que la fecha vive en Evento.
+       boolean turnoOcupado = eventoRepository.existsByFechaAndTurnoAndEstadoNot(
             dto.getFecha(),
             dto.getTurno(),
-            List.of(EstadoCotizacion.BORRADOR, EstadoCotizacion.CANCELADA, EstadoCotizacion.ELIMINADA)
+            EstadoEvento.CANCELADO
         );
         if (turnoOcupado) {
             throw new CotizacionException("Ya existe un evento confirmado para esta fecha y turno. Seleccione otro turno.");
@@ -117,6 +121,15 @@ public class CrearCotizacionUseCase {
         cotizacion.setPaquete(paquete);
         EstadoCotizacion estado = dto.getEstado() != null ? dto.getEstado() : EstadoCotizacion.BORRADOR;
         cotizacion.setEstado(estado);
+
+        Evento evento = new Evento();
+        evento.setFecha(dto.getFecha());
+        evento.setTurno(dto.getTurno());
+        evento.setNombreFestejado(dto.getNombreFestejado());
+        evento.setTematica(dto.getTematica());
+        evento.setEstado(EstadoEvento.TENTATIVO);
+        evento.setCotizacion(cotizacion);
+        cotizacion.setEvento(evento);
 
         // ── 7. Generación de folio único COT-YYYY-NNNN ───────────────────────
         String folio = generarFolio();

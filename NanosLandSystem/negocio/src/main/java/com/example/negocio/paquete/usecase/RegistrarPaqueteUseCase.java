@@ -12,7 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 public class RegistrarPaqueteUseCase {
 
     @Autowired
@@ -36,7 +39,8 @@ public class RegistrarPaqueteUseCase {
                 ps.setPaquete(p);
                 ps.setServicio(ServicioMapper.toEntity(psDTO.getServicio()));
                 ps.setCantidad(psDTO.getCantidad());
-                ps.setSubtotal(0); // Regla de negocio: costo base no suma subtotales
+                double precioSvc = psDTO.getServicio() != null ? psDTO.getServicio().getPrecio() : 0.0;
+                ps.setSubtotal(precioSvc * psDTO.getCantidad()); // Mostrar el valor real del subtotal en la base de datos
                 p.getServicios().add(ps);
             }
         }

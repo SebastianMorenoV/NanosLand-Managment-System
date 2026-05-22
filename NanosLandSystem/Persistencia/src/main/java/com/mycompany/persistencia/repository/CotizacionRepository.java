@@ -19,14 +19,10 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
     Optional<Cotizacion> findByFolio(String folio);
     List<Cotizacion> findByClienteId(Long clienteId);
     List<Cotizacion> findByEstado(EstadoCotizacion estado);
+    boolean existsByPaqueteIdAndEstadoIn(Long paqueteId, Collection<EstadoCotizacion> estados);
 
     /**
-     * Verifica si ya existe una cotización para una fecha y turno dados,
-     * excluyendo los estados indicados (ej. CANCELADA, ELIMINADA).
-     * Usado para detectar conflictos de turno antes de crear una nueva cotización.
+     * NOTA: Las consultas de disponibilidad por fecha y turno han sido
+     * movidas a EventoRepository, ya que Evento ahora es la entidad dueña de la fecha.
      */
-    boolean existsByFechaAndTurnoAndEstadoNotIn(LocalDate fecha, TurnoEvento turno, Collection<EstadoCotizacion> estados);
-    
-    List<Cotizacion> findByFechaBetween(LocalDate inicio, LocalDate fin);
-    List<Cotizacion> findByFecha(LocalDate fecha);
 }

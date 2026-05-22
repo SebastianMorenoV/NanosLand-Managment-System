@@ -32,9 +32,16 @@ public class ConsultarCatalogoUseCase {
 
     @Transactional(readOnly = true)
     public List<PaqueteDTO> obtenerTodosLosPaquetes() {
-        return paqueteRepository.findAll().stream()
+        return paqueteRepository.findByActivoTrue().stream()
                 .map(PaqueteMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PaqueteDTO obtenerPaquetePorId(Long id) {
+        return paqueteRepository.findById(id)
+                .map(PaqueteMapper::toDTO)
+                .orElse(null);
     }
 
     public List<Servicio> obtenerServicios() {

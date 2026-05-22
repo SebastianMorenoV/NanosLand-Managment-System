@@ -11,6 +11,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
@@ -48,9 +49,16 @@ public class UsuariosController {
     @FXML private TableColumn<ClienteDTO, String> colCorreo;
     @FXML private TableColumn<ClienteDTO, String> colCiudad; 
     @FXML private TableColumn<ClienteDTO, String> colColonia;
+    @FXML private TableColumn<ClienteDTO, String> colCalle;
+    @FXML private TableColumn<ClienteDTO, String> colCodigoPostal;
+    @FXML private Pagination paginacion;
+
+    private static final int ITEMS_POR_PAGINA = 20;
 
     // Lista maestra donde guardaremos todos los clientes traídos de la BD
     private final ObservableList<ClienteDTO> masterData = FXCollections.observableArrayList();
+    private FilteredList<ClienteDTO> filteredData;
+    private SortedList<ClienteDTO> sortedData;
 
     @FXML
     public void initialize() {
@@ -72,12 +80,14 @@ public class UsuariosController {
         colCorreo.setCellValueFactory(new PropertyValueFactory<>("correo"));
         colCiudad.setCellValueFactory(new PropertyValueFactory<>("ciudad"));
         colColonia.setCellValueFactory(new PropertyValueFactory<>("colonia"));
+        colCalle.setCellValueFactory(new PropertyValueFactory<>("calle"));
+        colCodigoPostal.setCellValueFactory(new PropertyValueFactory<>("codigoPostal"));
 
-        // 2. Cargar los datos desde la BD
+        // 2. Configurar la barra de búsqueda en tiempo real y paginación
+        configurarBuscadorYPaginacion();
+
+        // 3. Cargar los datos desde la BD
         cargarClientes();
-
-        // 3. Configurar la barra de búsqueda en tiempo real
-        configurarBuscador();
     }
 
     private void cargarClientes() {
@@ -90,9 +100,9 @@ public class UsuariosController {
         }
     }
 
-    private void configurarBuscador() {
+    private void configurarBuscadorYPaginacion() {
         // Envolvemos la ObservableList en una FilteredList
-        FilteredList<ClienteDTO> filteredData = new FilteredList<>(masterData, p -> true);
+        filteredData = new FilteredList<>(masterData, p -> true);
 
         // Agregamos un "listener" (escuchador) al cuadro de texto de búsqueda
         txtBuscar.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -119,11 +129,34 @@ public class UsuariosController {
         });
 
         // Envolvemos la FilteredList en una SortedList para mantener la capacidad de ordenar las columnas dando clic en ellas
-        SortedList<ClienteDTO> sortedData = new SortedList<>(filteredData);
+        sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tablaUsuarios.comparatorProperty());
         
-        // Metemos la lista final ordenada y filtrada a la tabla
-        tablaUsuarios.setItems(sortedData);
+        filteredData.addListener((javafx.collections.ListChangeListener.Change<? extends ClienteDTO> c) -> {
+            actualizarPaginacion();
+        });
+
+        paginacion.setPageCount(1);
+        paginacion.setPageFactory(this::crearPagina);
+    }
+
+    private javafx.scene.Node crearPagina(int pageIndex) {
+        int fromIndex = pageIndex * ITEMS_POR_PAGINA;
+        int toIndex = Math.min(fromIndex + ITEMS_POR_PAGINA, sortedData.size());
+        
+        if (fromIndex < sortedData.size() && fromIndex <= toIndex) {
+            tablaUsuarios.setItems(FXCollections.observableArrayList(sortedData.subList(fromIndex, toIndex)));
+        } else {
+            tablaUsuarios.setItems(FXCollections.observableArrayList());
+        }
+        return tablaUsuarios;
+    }
+
+    private void actualizarPaginacion() {
+        int pageCount = (int) Math.ceil((double) sortedData.size() / ITEMS_POR_PAGINA);
+        paginacion.setPageCount(pageCount == 0 ? 1 : pageCount);
+        paginacion.setCurrentPageIndex(0);
+        crearPagina(0);
     }
 
     @FXML

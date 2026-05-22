@@ -85,6 +85,58 @@
     -fx-padding: 0.5em 1em;
 }
 
+.boton-rojo {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 0.5em;
+    -fx-cursor: hand;
+    -fx-padding: 0.8em 1.5em;
+}
+
+.boton-rojo:hover {
+    -fx-background-color: #c0392b;
+}
+
+.boton-verde {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 0.5em;
+    -fx-cursor: hand;
+    -fx-padding: 0.8em 1.5em;
+}
+
+.boton-verde:hover {
+    -fx-background-color: #219653;
+}
+
+.boton-texto-gris {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.boton-texto-gris:hover {
+    -fx-text-fill: #2c3e50;
+    -fx-background-color: #f0f4f8;
+    -fx-background-radius: 0.5em;
+}
+
+.boton-texto-rojo {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e74c3c;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.boton-texto-rojo:hover {
+    -fx-text-fill: #c0392b;
+    -fx-background-color: #fdf0f0;
+    -fx-background-radius: 0.5em;
+}
+
 /* Botón cuadrado de icono (ej. el "+" de añadir cliente) */
 .boton-cuadrado-icono {
     -fx-background-color: #1a82b8;
@@ -694,7 +746,7 @@
     -fx-text-fill: #4e5b69;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
-    -fx-alignment: CENTER_LEFT;
+    -fx-alignment: CENTER;
 }
 
 .table-row-cell {
@@ -727,4 +779,68 @@
 
 .table-row-cell:selected .cell {
     -fx-text-fill: white;
+}
+
+/* =================================================== */
+/* 15. PAGINACIÓN                                      */
+/* =================================================== */
+.pagination {
+    -fx-page-information-visible: false;
+}
+
+.pagination .control-box {
+    -fx-background-color: transparent;
+    -fx-padding: 10px 0 0 0;
+}
+
+.pagination .number-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+    -fx-border-color: #ccd4db;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-padding: 0;
+}
+
+.pagination .number-button:hover {
+    -fx-background-color: #f0f4f8;
+    -fx-text-fill: #1a82b8;
+    -fx-border-color: #1a82b8;
+}
+
+.pagination .number-button:selected {
+    -fx-background-color: #1a82b8;
+    -fx-text-fill: white;
+    -fx-border-color: #156994;
+}
+
+.pagination .left-arrow-button,
+.pagination .right-arrow-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #ccd4db;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+}
+
+.pagination .left-arrow-button:hover,
+.pagination .right-arrow-button:hover {
+    -fx-background-color: #f0f4f8;
+    -fx-border-color: #1a82b8;
+}
+
+.pagination .left-arrow-button .left-arrow,
+.pagination .right-arrow-button .right-arrow {
+    -fx-background-color: #7f8c8d;
+}
+
+.pagination .left-arrow-button:hover .left-arrow,
+.pagination .right-arrow-button:hover .right-arrow {
+    -fx-background-color: #1a82b8;
 }

@@ -56,7 +56,29 @@ public class PaqueteModalController {
 
     @FXML
     public void initialize() {
-        // Cargar catálogo de servicios
+        if (txtPrecio != null) {
+            txtPrecio.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) return change;
+                return null;
+            }));
+        }
+        if (txtCantidad != null) {
+            txtCantidad.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d*")) return change;
+                return null;
+            }));
+        }
+        // Reset singleton state so a new modal open starts clean
+        paqueteAEditar = null;
+        paqueteCreado = null;
+        txtNombre.setText("");
+        txtPrecio.setText("");
+        txtDescripcion.setText("");
+        lblTitulo.setText("Nuevo Paquete");
+        listaServicios.clear();
+
+        // Cargar catálogo de servicios (clear first to avoid duplicates)
+        catalogoServicios.clear();
         List<ServicioDTO> servicios = consultarServiciosUseCase.obtenerTodos();
         if (servicios != null) {
             catalogoServicios.addAll(servicios);

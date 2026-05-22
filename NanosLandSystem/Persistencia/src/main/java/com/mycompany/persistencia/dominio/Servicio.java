@@ -28,4 +28,7 @@ public class Servicio {
     @Lob
     private byte[] imagen;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean activo = true;
+
 }

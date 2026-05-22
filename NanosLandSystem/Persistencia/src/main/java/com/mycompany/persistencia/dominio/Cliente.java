@@ -37,5 +37,13 @@ public class Cliente {
      */
     @Embedded
     private Direccion direccion;
+
+    /**
+     * Indica si el cliente está activo en el sistema.
+     * Se usa para eliminación lógica (soft-delete) preservando el historial
+     * de cotizaciones asociadas al cliente sin violar restricciones de FK.
+     */
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean activo = true;
 }
 

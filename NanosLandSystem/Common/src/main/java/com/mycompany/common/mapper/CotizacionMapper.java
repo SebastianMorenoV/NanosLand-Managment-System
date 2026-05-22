@@ -16,17 +16,19 @@ public class CotizacionMapper {
         CotizacionDTO dto = new CotizacionDTO();
         dto.setId(cotizacion.getId());
         dto.setFolio(cotizacion.getFolio());
-        dto.setFecha(cotizacion.getFecha());
+        if (cotizacion.getEvento() != null) {
+            dto.setFecha(cotizacion.getEvento().getFecha());
+            dto.setTurno(cotizacion.getEvento().getTurno());
+            dto.setNombreFestejado(cotizacion.getEvento().getNombreFestejado());
+            dto.setTematica(cotizacion.getEvento().getTematica());
+        }
         if (cotizacion.getCliente() != null) {
             dto.setClienteId(cotizacion.getCliente().getId());
             dto.setNombreCliente(cotizacion.getCliente().getNombre());
         }
-        dto.setNombreFestejado(cotizacion.getNombreFestejado());
         dto.setTotal(cotizacion.getTotal());
         dto.setNotas(cotizacion.getNotas());
         dto.setEstado(cotizacion.getEstado());
-        dto.setTurno(cotizacion.getTurno());
-        dto.setTematica(cotizacion.getTematica());
         if (cotizacion.getPaquete() != null) {
             dto.setPaqueteId(cotizacion.getPaquete().getId());
             dto.setNombrePaquete(cotizacion.getPaquete().getNombre());
@@ -44,13 +46,9 @@ public class CotizacionMapper {
         Cotizacion cotizacion = new Cotizacion();
         cotizacion.setId(dto.getId());
         cotizacion.setFolio(dto.getFolio());
-        cotizacion.setFecha(dto.getFecha());
-        cotizacion.setNombreFestejado(dto.getNombreFestejado());
         cotizacion.setTotal(dto.getTotal());
         cotizacion.setNotas(dto.getNotas());
         cotizacion.setEstado(dto.getEstado());
-        cotizacion.setTurno(dto.getTurno());
-        cotizacion.setTematica(dto.getTematica());
         return cotizacion;
     }
 }

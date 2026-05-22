@@ -21,14 +21,24 @@ public class EventoMapper {
         dto.setHoraInicio(evento.getHoraInicio());
         dto.setHoraFin(evento.getHoraFin());
         dto.setTurno(evento.getTurno());
+        dto.setNombreFestejado(evento.getNombreFestejado());
+        dto.setTematica(evento.getTematica());
         dto.setNotas(evento.getNotas());
         if (evento.getCotizacion() != null) {
             dto.setCotizacionId(evento.getCotizacion().getId());
             dto.setFolioCotizacion(evento.getCotizacion().getFolio());
             dto.setClienteNombre(evento.getCotizacion().getCliente() != null ? evento.getCotizacion().getCliente().getNombre() : "Desconocido");
             dto.setPaqueteNombre(evento.getCotizacion().getPaquete() != null ? evento.getCotizacion().getPaquete().getNombre() : "Personalizado");
-            dto.setEstadoCotizacion(evento.getCotizacion().getEstado());
+            dto.setEstadoEvento(evento.getEstado());
             dto.setTotalCotizacion(evento.getCotizacion().getTotal());
+        }
+        if (evento.getCargosExtras() != null) {
+            double totalExtras = evento.getCargosExtras().stream()
+                .mapToDouble(com.mycompany.persistencia.dominio.CargoExtra::getSubtotal)
+                .sum();
+            dto.setTotalCargosExtras(totalExtras);
+        } else {
+            dto.setTotalCargosExtras(0.0);
         }
         return dto;
     }
@@ -41,6 +51,8 @@ public class EventoMapper {
         evento.setHoraInicio(dto.getHoraInicio());
         evento.setHoraFin(dto.getHoraFin());
         evento.setTurno(dto.getTurno());
+        evento.setNombreFestejado(dto.getNombreFestejado());
+        evento.setTematica(dto.getTematica());
         evento.setNotas(dto.getNotas());
         return evento;
     }

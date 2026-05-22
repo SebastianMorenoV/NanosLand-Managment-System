@@ -6,6 +6,7 @@ import com.example.negocio.cliente.usecase.ActualizarClienteUseCase;
 import com.mycompany.common.dtos.ClienteDTO;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class NuevoClienteModalController {
     private ClienteDTO clienteCreado;
     private ClienteDTO clienteAEditar;
 
+    @FXML private Label lblTitulo;
     @FXML private TextField txtNombre;
     @FXML private TextField txtTelefono;
     @FXML private TextField txtCorreo;
@@ -29,6 +31,33 @@ public class NuevoClienteModalController {
     @FXML private TextField txtCiudad;
     @FXML private TextField txtCodigoPostal;
 
+    @FXML
+    public void initialize() {
+        if (txtTelefono != null) {
+            txtTelefono.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d{0,10}")) return change;
+                return null;
+            }));
+        }
+        if (txtCodigoPostal != null) {
+            txtCodigoPostal.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d{0,5}")) return change;
+                return null;
+            }));
+        }
+        // Reset singleton state so a new modal open starts clean
+        clienteCreado = null;
+        clienteAEditar = null;
+        txtNombre.setText("");
+        lblTitulo.setText("Registrar Nuevo Cliente");
+        txtTelefono.setText("");
+        txtCorreo.setText("");
+        txtCalle.setText("");
+        txtColonia.setText("");
+        txtCiudad.setText("");
+        txtCodigoPostal.setText("");
+    }
+
     public ClienteDTO getClienteCreado() {
         return clienteCreado;
     }
@@ -36,6 +65,7 @@ public class NuevoClienteModalController {
     public void setClienteAEditar(ClienteDTO clienteAEditar) {
         this.clienteAEditar = clienteAEditar;
         if (clienteAEditar != null) {
+            lblTitulo.setText("Editar Cliente");
             txtNombre.setText(clienteAEditar.getNombre());
             txtTelefono.setText(clienteAEditar.getTelefono());
             txtCorreo.setText(clienteAEditar.getCorreo());

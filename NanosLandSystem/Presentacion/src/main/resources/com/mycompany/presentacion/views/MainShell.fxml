@@ -3,6 +3,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.image.ImageView?>
 
 <BorderPane fx:id="rootPane" stylesheets="@../styles/styles.css" styleClass="raiz-fondo" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.MainShellController">
     <fx:define>
@@ -11,7 +12,9 @@
     <left>
         <VBox styleClass="sidebar" prefWidth="250" spacing="10">
             <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-            <Label text="NANOS LAND" style="-fx-font-size: 1.7em; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+            <HBox alignment="CENTER">
+                <ImageView fx:id="imgLogo" fitWidth="120" preserveRatio="true"/>
+            </HBox>
             <Separator />
             <ToggleButton fx:id="btnCotizacion" text="Nueva Cotización" styleClass="boton-menu" prefWidth="210" toggleGroup="$navGroup" onAction="#navCotizacion">
                 <graphic><SVGPath content="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="#1a82b8" scaleX="0.8" scaleY="0.8"/></graphic>
@@ -25,6 +28,13 @@
             <ToggleButton fx:id="btnReportes" text="Reportes" styleClass="boton-menu" prefWidth="210" toggleGroup="$navGroup" onAction="#navReportes">
                 <graphic><SVGPath content="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="#1a82b8" scaleX="0.8" scaleY="0.8"/></graphic>
             </ToggleButton>
+            
+            <Region VBox.vgrow="ALWAYS"/>
+            <VBox spacing="5" alignment="CENTER_LEFT" style="-fx-padding: 10 0 0 0;">
+                <Label text="📍 Sucursal Principal" style="-fx-font-weight: bold; -fx-text-fill: #1a82b8; -fx-font-size: 13px;"/>
+                <Label fx:id="lblReloj" text="Cargando..." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+                <Label text="F11: Pantalla completa" style="-fx-text-fill: #b2b2b2; -fx-font-size: 10px;"/>
+            </VBox>
         </VBox>
     </left>
 </BorderPane>

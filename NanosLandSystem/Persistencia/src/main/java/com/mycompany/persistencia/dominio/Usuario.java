@@ -32,4 +32,7 @@ public class Usuario {
     @Column(nullable = false)
     private RolUsuario rol;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean activo = true;
+
 }

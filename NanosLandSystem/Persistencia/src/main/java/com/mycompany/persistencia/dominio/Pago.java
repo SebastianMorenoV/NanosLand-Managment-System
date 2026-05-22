@@ -31,6 +31,7 @@ public class Pago {
     @JoinColumn(name = "cotizacion_id")
     private Cotizacion cotizacion;
 
+    @Column(name = "folio_pago", unique = true, nullable = false)
     private String folioPago;
 
 }

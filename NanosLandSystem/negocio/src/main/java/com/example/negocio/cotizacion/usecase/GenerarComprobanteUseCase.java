@@ -91,12 +91,13 @@ public class GenerarComprobanteUseCase {
             datos.setWidthPercentage(100);
             datos.setWidths(new int[]{1, 2});
 
+            var evento = cotizacion.getEvento();
             addRow(datos, "FOLIO:", folio != null ? folio : "-", boldFont, normalFont);
-            addRow(datos, "FECHA:", cotizacion.getFecha() != null ? cotizacion.getFecha().format(fmt) : "-", boldFont, normalFont);
+            addRow(datos, "FECHA:", evento != null && evento.getFecha() != null ? evento.getFecha().format(fmt) : "-", boldFont, normalFont);
             addRow(datos, "ESTADO:", cotizacion.getEstado() != null ? cotizacion.getEstado().name() : "-", boldFont, normalFont);
             addRow(datos, "CLIENTE:", cliente != null ? cliente.getNombre() : "-", boldFont, normalFont);
-            addRow(datos, "TURNO:", cotizacion.getTurno() != null ? cotizacion.getTurno().name() : "-", boldFont, normalFont);
-            addRow(datos, "FESTEJADO:", cotizacion.getNombreFestejado() != null ? cotizacion.getNombreFestejado() : "-", boldFont, normalFont);
+            addRow(datos, "TURNO:", evento != null && evento.getTurno() != null ? evento.getTurno().name() : "-", boldFont, normalFont);
+            addRow(datos, "FESTEJADO:", evento != null && evento.getNombreFestejado() != null ? evento.getNombreFestejado() : "-", boldFont, normalFont);
             addRow(datos, "PAQUETE:", paquete != null ? paquete.getNombre() : "-", boldFont, normalFont);
 
             document.add(datos);

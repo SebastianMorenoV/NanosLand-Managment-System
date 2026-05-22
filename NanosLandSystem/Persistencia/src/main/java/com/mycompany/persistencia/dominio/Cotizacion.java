@@ -27,22 +27,16 @@ public class Cotizacion {
     @Column(nullable = false, unique = true)
     private String folio;
 
-    private LocalDate fecha;
-
     @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    private String nombreFestejado;
     private double total;
     private String notas;
 
     @Enumerated(EnumType.STRING)
     private EstadoCotizacion estado;
-
-    @Enumerated(EnumType.STRING)
-    private TurnoEvento turno;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
@@ -52,7 +46,9 @@ public class Cotizacion {
     @JoinColumn(name = "paquete_id")
     private Paquete paquete;
 
-    private String tematica;
+    @ToString.Exclude
+    @OneToOne(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Evento evento;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)

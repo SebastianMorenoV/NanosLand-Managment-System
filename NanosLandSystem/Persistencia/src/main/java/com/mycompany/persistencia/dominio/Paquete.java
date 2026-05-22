@@ -36,7 +36,7 @@ public class Paquete {
     private boolean activo = true;
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "paquete", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "paquete", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<PaqueteServicio> servicios;
 
 }
