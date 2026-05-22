@@ -2,7 +2,7 @@ package com.example.negocio.cli;
 
 import com.example.negocio.reporte.usecase.GenerarReporteEventosUseCase;
 import com.mycompany.common.dtos.EventoDTO;
-import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -72,7 +72,7 @@ public class ReporteEventosMenuMain {
         LocalDate fechaFin = leerFecha("  Fecha Fin    (YYYY-MM-DD): ");
 
         TurnoEvento turnoSel = leerTurno();
-        EstadoCotizacion estadoSel = leerEstado();
+        EstadoEvento estadoSel = leerEstado();
 
         System.out.println("\n  Generando reporte...\n");
 
@@ -108,7 +108,7 @@ public class ReporteEventosMenuMain {
             String folio = e.getFolioCotizacion() != null ? e.getFolioCotizacion() : "-";
             String cliente = e.getClienteNombre() != null ? e.getClienteNombre() : "Desconocido";
             String paquete = e.getPaqueteNombre() != null ? e.getPaqueteNombre() : "Personalizado";
-            String estado = e.getEstadoCotizacion() != null ? e.getEstadoCotizacion().name() : "-";
+            String estado = e.getEstadoEvento() != null ? e.getEstadoEvento().name() : "-";
             double total = e.getTotalCotizacion();
 
             totalPeriodo += total;
@@ -125,7 +125,7 @@ public class ReporteEventosMenuMain {
         System.out.printf("  %-78s $%-11.2f%n", "TOTAL COBRADO EN EL PERIODO:", totalPeriodo);
     }
 
-    private void exportarReporteArchivo(List<EventoDTO> resultados, LocalDate inicio, LocalDate fin, TurnoEvento turno, EstadoCotizacion estado) {
+    private void exportarReporteArchivo(List<EventoDTO> resultados, LocalDate inicio, LocalDate fin, TurnoEvento turno, EstadoEvento estado) {
         String desktopPath = Paths.get(System.getProperty("user.home"), "Desktop", "Reporte_Eventos.txt").toString();
         
         try (PrintWriter writer = new PrintWriter(new FileWriter(desktopPath))) {
@@ -147,7 +147,7 @@ public class ReporteEventosMenuMain {
             for (EventoDTO e : resultados) {
                 String folio = e.getFolioCotizacion() != null ? e.getFolioCotizacion() : "-";
                 String cliente = e.getClienteNombre() != null ? e.getClienteNombre() : "Desconocido";
-                String st = e.getEstadoCotizacion() != null ? e.getEstadoCotizacion().name() : "-";
+                String st = e.getEstadoEvento() != null ? e.getEstadoEvento().name() : "-";
                 double total = e.getTotalCotizacion();
                 granTotal += total;
 
@@ -187,17 +187,20 @@ public class ReporteEventosMenuMain {
         return null;
     }
 
-    private EstadoCotizacion leerEstado() {
+    private EstadoEvento leerEstado() {
         System.out.println("  Seleccione el Estado:");
         System.out.println("    [0] Todos");
-        System.out.println("    [1] Vigente");
-        System.out.println("    [2] Confirmada");
-        System.out.println("    [3] Cancelada");
-        System.out.println("    [4] Borrador");
+        System.out.println("    [1] Tentativo");
+        System.out.println("    [2] Confirmado");
+        System.out.println("    [3] En Curso");
+        System.out.println("    [4] Finalizado");
+        System.out.println("    [5] Cancelado");
         int op = leerInt("  Opción: ");
-        if (op == 1 || op == 2) return EstadoCotizacion.VIGENTE;
-        if (op == 3) return EstadoCotizacion.CANCELADA;
-        if (op == 4) return EstadoCotizacion.BORRADOR;
+        if (op == 1) return EstadoEvento.TENTATIVO;
+        if (op == 2) return EstadoEvento.CONFIRMADO;
+        if (op == 3) return EstadoEvento.EN_CURSO;
+        if (op == 4) return EstadoEvento.FINALIZADO;
+        if (op == 5) return EstadoEvento.CANCELADO;
         return null; 
     }
 

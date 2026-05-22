@@ -14,6 +14,7 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class ConsultarAgendaUseCase {
     private final EventoRepository eventoRepository;
 
+    @Transactional(readOnly = true)  // Fix #11: evita dirty-checking innecesario
     public List<Evento> obtenerMesCompleto(int anio, int mes) {
         LocalDate inicio = YearMonth.of(anio, mes).atDay(1);
         LocalDate fin = YearMonth.of(anio, mes).atEndOfMonth();
@@ -31,6 +33,7 @@ public class ConsultarAgendaUseCase {
     }
 
 
+    @Transactional(readOnly = true)  // Fix #11
     public boolean verificarTurnoDisponible(LocalDate fecha, TurnoEvento turno) {
         List<Evento> eventos = eventoRepository.findByFecha(fecha);
         if (eventos.isEmpty()) {

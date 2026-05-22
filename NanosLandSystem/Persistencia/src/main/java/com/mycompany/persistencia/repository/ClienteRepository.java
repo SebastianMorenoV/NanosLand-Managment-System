@@ -29,4 +29,15 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     List<Cliente> findByNombreContainingIgnoreCaseOrTelefonoContainingIgnoreCaseOrCorreoContainingIgnoreCase(
             String nombre, String telefono, String correo);
 
+    /**
+     * Devuelve solo los clientes activos (no eliminados lógicamente).
+     * Usado por BuscarClienteUseCase para ocultar clientes con soft-delete.
+     */
+    List<Cliente> findByActivoTrue();
+
+    /**
+     * Busca clientes activos por nombre, teléfono o correo.
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT c FROM Cliente c WHERE c.activo = true AND (LOWER(c.nombre) LIKE LOWER(CONCAT('%', :filtro, '%')) OR LOWER(c.telefono) LIKE LOWER(CONCAT('%', :filtro, '%')) OR LOWER(c.correo) LIKE LOWER(CONCAT('%', :filtro, '%')))")
+    List<Cliente> buscarClientesActivos(@org.springframework.data.repository.query.Param("filtro") String filtro);
 }

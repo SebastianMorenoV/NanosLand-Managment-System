@@ -7,17 +7,25 @@
     <parameter name="TotalEventos" class="java.lang.String"/>
     <parameter name="TotalIngresos" class="java.lang.String"/>
     <parameter name="TicketPromedio" class="java.lang.String"/>
+    <parameter name="TasaCierre" class="java.lang.String"/>
+    <parameter name="PaqueteEstrella" class="java.lang.String"/>
+    <parameter name="OcupacionTurnos" class="java.lang.String"/>
+    <parameter name="IngresosExtras" class="java.lang.String"/>
     
     <field name="fecha" class="java.lang.Object"/>
     <field name="turno" class="java.lang.Object"/>
     <field name="clienteNombre" class="java.lang.String"/>
     <field name="paqueteNombre" class="java.lang.String"/>
-    <field name="estadoCotizacion" class="java.lang.Object"/>
+    <field name="estadoEvento" class="java.lang.Object"/>
     <field name="totalCotizacion" class="java.lang.Double"/>
+    <field name="nombreFestejado" class="java.lang.String"/>
+    <field name="tematica" class="java.lang.String"/>
+    <field name="horaInicio" class="java.time.LocalTime"/>
+    <field name="horaFin" class="java.time.LocalTime"/>
     
     <!-- Title -->
     <title>
-        <band height="140" splitType="Stretch">
+        <band height="165" splitType="Stretch">
             <!-- Header Background -->
             <staticText>
                 <reportElement mode="Opaque" backcolor="#1A82B8" x="0" y="0" width="555" height="50" uuid="11111111-1111-1111-1111-111111111111"/>
@@ -42,12 +50,13 @@
 
             <!-- KPIs Box -->
             <rectangle>
-                <reportElement x="0" y="60" width="555" height="60" backcolor="#F8F9FA" uuid="22222222-2222-2222-2222-222222222222"/>
+                <reportElement x="0" y="60" width="555" height="90" backcolor="#F8F9FA" uuid="22222222-2222-2222-2222-222222222222"/>
                 <graphicElement>
                     <pen lineColor="#E0E0E0"/>
                 </graphicElement>
             </rectangle>
 
+            <!-- === COLUMN 1 === -->
             <!-- Periodo -->
             <staticText>
                 <reportElement x="10" y="65" width="60" height="20" forecolor="#2C3E50" uuid="33333333-3333-3333-3333-333333333333"/>
@@ -57,8 +66,10 @@
                 <text><![CDATA[Periodo:]]></text>
             </staticText>
             <textField>
-                <reportElement x="70" y="65" width="200" height="20" uuid="44444444-4444-4444-4444-444444444444"/>
-                <textElement verticalAlignment="Middle"/>
+                <reportElement x="70" y="65" width="120" height="20" uuid="44444444-4444-4444-4444-444444444444"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
                 <textFieldExpression><![CDATA[$P{Periodo}]]></textFieldExpression>
             </textField>
 
@@ -72,41 +83,112 @@
             </staticText>
             <textField>
                 <reportElement x="90" y="90" width="100" height="20" uuid="66666666-6666-6666-6666-666666666666"/>
-                <textElement verticalAlignment="Middle"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
                 <textFieldExpression><![CDATA[$P{TotalEventos}]]></textFieldExpression>
             </textField>
 
+            <!-- Tasa Cierre -->
+            <staticText>
+                <reportElement x="10" y="115" width="70" height="20" forecolor="#2C3E50" uuid="a1111111-1111-1111-1111-111111111111"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Tasa Cierre:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="80" y="115" width="110" height="20" uuid="a2222222-2222-2222-2222-222222222222"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TasaCierre}]]></textFieldExpression>
+            </textField>
+
+
+            <!-- === COLUMN 2 === -->
+            <!-- Paquete Estrella -->
+            <staticText>
+                <reportElement x="200" y="65" width="90" height="20" forecolor="#2C3E50" uuid="b1111111-1111-1111-1111-111111111111"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Top Paquete:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="290" y="65" width="100" height="20" forecolor="#2980B9" uuid="b2222222-2222-2222-2222-222222222222"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{PaqueteEstrella}]]></textFieldExpression>
+            </textField>
+
+            <!-- Ocupacion -->
+            <staticText>
+                <reportElement x="200" y="90" width="60" height="20" forecolor="#2C3E50" uuid="c1111111-1111-1111-1111-111111111111"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Ocupación:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="260" y="90" width="130" height="20" uuid="c2222222-2222-2222-2222-222222222222"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{OcupacionTurnos}]]></textFieldExpression>
+            </textField>
+
+
+            <!-- === COLUMN 3 === -->
             <!-- Ingresos Totales -->
             <staticText>
-                <reportElement x="280" y="65" width="90" height="20" forecolor="#2C3E50" uuid="77777777-7777-7777-7777-777777777777"/>
+                <reportElement x="400" y="65" width="90" height="20" forecolor="#2C3E50" uuid="77777777-7777-7777-7777-777777777777"/>
                 <textElement verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Ingresos Totales:]]></text>
             </staticText>
             <textField>
-                <reportElement x="370" y="65" width="170" height="20" forecolor="#27AE60" uuid="88888888-8888-8888-8888-888888888888"/>
+                <reportElement x="490" y="65" width="60" height="20" forecolor="#27AE60" uuid="88888888-8888-8888-8888-888888888888"/>
                 <textElement verticalAlignment="Middle">
-                    <font isBold="true" size="11"/>
+                    <font isBold="true" size="10"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{TotalIngresos}]]></textFieldExpression>
             </textField>
 
             <!-- Ticket Promedio -->
             <staticText>
-                <reportElement x="280" y="90" width="90" height="20" forecolor="#2C3E50" uuid="99999999-9999-9999-9999-999999999999"/>
+                <reportElement x="400" y="90" width="90" height="20" forecolor="#2C3E50" uuid="99999999-9999-9999-9999-999999999999"/>
                 <textElement verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Ticket Promedio:]]></text>
             </staticText>
             <textField>
-                <reportElement x="370" y="90" width="170" height="20" forecolor="#E74C3C" uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"/>
+                <reportElement x="490" y="90" width="60" height="20" forecolor="#E74C3C" uuid="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"/>
                 <textElement verticalAlignment="Middle">
-                    <font isBold="true" size="11"/>
+                    <font isBold="true" size="10"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{TicketPromedio}]]></textFieldExpression>
             </textField>
+
+            <!-- Ingresos Extras -->
+            <staticText>
+                <reportElement x="400" y="115" width="90" height="20" forecolor="#2C3E50" uuid="d1111111-1111-1111-1111-111111111111"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Ingresos Extras:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="490" y="115" width="60" height="20" forecolor="#8E44AD" uuid="d2222222-2222-2222-2222-222222222222"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{IngresosExtras}]]></textFieldExpression>
+            </textField>
+
         </band>
     </title>
     
@@ -127,7 +209,7 @@
                 <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
-                <text><![CDATA[Turno]]></text>
+                <text><![CDATA[Horario]]></text>
             </staticText>
             <staticText>
                 <reportElement mode="Opaque" backcolor="#2C3E50" forecolor="#FFFFFF" x="160" y="0" width="130" height="30" uuid="96707ab0-c971-4770-98d6-6815d7e52709"/>
@@ -177,7 +259,7 @@
                 <reportElement x="80" y="0" width="80" height="25" uuid="66133a8a-e55d-4f7f-a18d-6e540502cc60"/>
                 <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <textFieldExpression><![CDATA[$F{turno} != null ? $F{turno}.toString() : ""]]></textFieldExpression>
+                <textFieldExpression><![CDATA[($F{horaInicio} != null && $F{horaFin} != null) ? ($F{horaInicio}.toString() + " - " + $F{horaFin}.toString()) : ($F{turno} != null ? $F{turno}.toString() : "")]]></textFieldExpression>
             </textField>
             <textField textAdjust="StretchHeight" isBlankWhenNull="true">
                 <reportElement x="160" y="0" width="130" height="25" uuid="3d21396f-c1f6-4ef1-be61-b541315fcb2a"/>
@@ -195,7 +277,7 @@
                 <reportElement x="410" y="0" width="70" height="25" uuid="e32a6881-80a5-43ea-98a0-2f1cd8f8fccb"/>
                 <box><bottomPen lineWidth="0.5" lineColor="#E0E0E0"/></box>
                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
-                <textFieldExpression><![CDATA[$F{estadoCotizacion} != null ? $F{estadoCotizacion}.toString() : ""]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$F{estadoEvento} != null ? $F{estadoEvento}.toString() : ""]]></textFieldExpression>
             </textField>
             <textField textAdjust="StretchHeight" pattern="¤#,##0.00;¤-#,##0.00" isBlankWhenNull="true">
                 <reportElement x="480" y="0" width="75" height="25" uuid="c24a64d1-03db-4e2f-b441-df0a8fc5a01f"/>

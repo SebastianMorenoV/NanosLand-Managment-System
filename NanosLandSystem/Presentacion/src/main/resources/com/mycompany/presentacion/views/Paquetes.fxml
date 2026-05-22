@@ -13,7 +13,7 @@
         </VBox>
         <HBox spacing="10">
             <Button fx:id="btnEditar" text="Editar" styleClass="boton-azul-claro" disable="true" onAction="#editarPaquete"/>
-            <Button fx:id="btnEliminar" text="Eliminar" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 0.5em; -fx-cursor: hand; -fx-padding: 0.8em 1.5em;" disable="true" onAction="#eliminarPaquete"/>
+            <Button fx:id="btnEliminar" text="Eliminar" styleClass="boton-rojo" disable="true" onAction="#eliminarPaquete"/>
             <Button text="+ Nuevo Paquete" styleClass="boton-azul" onAction="#nuevoPaquete"/>
         </HBox>
     </HBox>
@@ -24,17 +24,21 @@
             <Button text="Buscar" styleClass="boton-azul-claro"/>
         </HBox>
 
-        <TableView fx:id="tablaPaquetes" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-border-color: #ccd4db; -fx-border-radius: 5px;">
-            <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-            </columnResizePolicy>
-            <columns>
-                <TableColumn fx:id="colId" text="ID" prefWidth="50" maxWidth="80" />
-                <TableColumn fx:id="colNombre" text="Nombre del Paquete" prefWidth="250" />
-                <TableColumn fx:id="colPrecio" text="Costo Base" prefWidth="120" />
-                <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="300" />
-                <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="120" style="-fx-alignment: CENTER;" />
-            </columns>
-        </TableView>
+        <fx:define>
+            <TableView fx:id="tablaPaquetes">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+                <columns>
+                    <TableColumn fx:id="colId" text="ID" prefWidth="50" maxWidth="80" />
+                    <TableColumn fx:id="colNombre" text="Nombre del Paquete" prefWidth="250" />
+                    <TableColumn fx:id="colPrecio" text="Costo Base" prefWidth="120" />
+                    <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="300" />
+                    <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="120" style="-fx-alignment: CENTER;" />
+                </columns>
+            </TableView>
+        </fx:define>
+        
+        <Pagination fx:id="paginacion" VBox.vgrow="ALWAYS" maxPageIndicatorCount="7" />
     </VBox>
 </VBox>

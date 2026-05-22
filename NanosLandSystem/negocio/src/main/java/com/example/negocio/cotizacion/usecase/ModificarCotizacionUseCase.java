@@ -13,9 +13,11 @@ import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import com.mycompany.persistencia.repository.CotizacionRepository;
+import com.mycompany.persistencia.repository.EventoRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
 import com.mycompany.persistencia.repository.ServicioRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class ModificarCotizacionUseCase {
     private final ClienteRepository clienteRepository;
     private final PaqueteRepository paqueteRepository;
     private final ServicioRepository servicioRepository;
+    private final EventoRepository eventoRepository;
 
     @Transactional
     public CotizacionDTO modificarCotizacion(Long cotizacionId, CotizacionDTO dto) {
@@ -82,18 +85,25 @@ public class ModificarCotizacionUseCase {
         // ── Validación: no duplicar turno (excluyendo la cotización actual) ─
         LocalDate fechaNueva = dto.getFecha();
         TurnoEvento turnoNuevo = dto.getTurno();
-        boolean cambioFechaTurno = existente.getFecha() == null
-            || existente.getTurno() == null
-            || !existente.getFecha().equals(fechaNueva)
-            || !existente.getTurno().equals(turnoNuevo);
+        
+        var eventoExistente = existente.getEvento();
+        if (eventoExistente == null) {
+            throw new CotizacionException("La cotización no tiene un evento asociado válido.");
+        }
+
+        boolean cambioFechaTurno = eventoExistente.getFecha() == null
+            || eventoExistente.getTurno() == null
+            || !eventoExistente.getFecha().equals(fechaNueva)
+            || !eventoExistente.getTurno().equals(turnoNuevo);
 
         if (cambioFechaTurno) {
-            // Solo bloqueamos si la nueva fecha/turno ya tiene un evento VIGENTE
-            boolean turnoOcupado = cotizacionRepository.existsByFechaAndTurnoAndEstadoNotIn(
-                fechaNueva,
-                turnoNuevo,
-                List.of(EstadoCotizacion.BORRADOR, EstadoCotizacion.CANCELADA, EstadoCotizacion.ELIMINADA)
-            );
+            // Solo bloqueamos si la nueva fecha/turno ya tiene un evento que no esté cancelado
+            // Obtenemos los eventos para la fecha y turno
+            List<com.mycompany.persistencia.dominio.Evento> eventosEnTurno = eventoRepository.findByFechaAndTurno(fechaNueva, turnoNuevo);
+            
+            boolean turnoOcupado = eventosEnTurno.stream()
+                .anyMatch(e -> !e.getId().equals(eventoExistente.getId()) && e.getEstado() != EstadoEvento.CANCELADO);
+                
             if (turnoOcupado) {
                 throw new CotizacionException("Ya existe un evento confirmado para esta fecha y turno. Seleccione otro turno.");
             }
@@ -101,11 +111,13 @@ public class ModificarCotizacionUseCase {
         // ── Actualización de campos base ───────────────────────────────────
         existente.setCliente(cliente);
         existente.setPaquete(paquete);
-        existente.setFecha(dto.getFecha());
-        existente.setTurno(dto.getTurno());
+        
+        eventoExistente.setFecha(dto.getFecha());
+        eventoExistente.setTurno(dto.getTurno());
+        eventoExistente.setNombreFestejado(dto.getNombreFestejado());
+        eventoExistente.setTematica(dto.getTematica());
+        
         existente.setNotas(dto.getNotas());
-        existente.setNombreFestejado(dto.getNombreFestejado());
-        existente.setTematica(dto.getTematica());
 
         if (dto.getEstado() != null) {
             existente.setEstado(dto.getEstado());

@@ -5,6 +5,7 @@
 package com.mycompany.persistencia.repository;
 
 import com.mycompany.persistencia.dominio.Servicio;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -12,5 +13,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * @author skyro
  */
 public interface ServicioRepository extends JpaRepository<Servicio, Long>{
+    List<Servicio> findByActivoTrue();
     
 }

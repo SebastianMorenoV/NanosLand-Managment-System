@@ -26,5 +26,18 @@ public class ListarCotizacionesUseCase {
             .map(CotizacionMapper::toDTO)
             .collect(Collectors.toList());
     }
+
+    /**
+     * Busca una cotización por su ID y la retorna como DTO.
+     * Fix #3: usado por actualizarPagosUI() del controlador para obtener el total
+     * directamente de la BD en lugar de parsear el texto de un Label de la UI.
+     */
+    @Transactional(readOnly = true)
+    public CotizacionDTO obtenerPorId(Long id) {
+        if (id == null) return null;
+        return cotizacionRepository.findById(id)
+            .map(CotizacionMapper::toDTO)
+            .orElse(null);
+    }
 }
 

@@ -22,11 +22,14 @@ public class EventoDTO {
     private LocalTime horaInicio;
     private LocalTime horaFin;
     private TurnoEvento turno;
+    private String nombreFestejado;
+    private String tematica;
     private String notas;
     private Long cotizacionId;
     private String folioCotizacion;
     private String clienteNombre;
     private String paqueteNombre;
-    private com.mycompany.persistencia.enums.EstadoCotizacion estadoCotizacion;
+    private com.mycompany.persistencia.enums.EstadoEvento estadoEvento;
     private double totalCotizacion;
+    private double totalCargosExtras;
 }

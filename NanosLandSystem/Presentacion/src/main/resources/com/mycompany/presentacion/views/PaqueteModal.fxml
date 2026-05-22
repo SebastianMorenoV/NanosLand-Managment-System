@@ -49,7 +49,7 @@
         </HBox>
 
         <!-- Tabla de Servicios -->
-        <TableView fx:id="tablaServicios" VBox.vgrow="ALWAYS" prefHeight="250" style="-fx-background-color: transparent; -fx-border-color: #ccd4db; -fx-border-radius: 5px;">
+        <TableView fx:id="tablaServicios" VBox.vgrow="ALWAYS" prefHeight="250">
             <columns>
                 <TableColumn fx:id="colServicioNombre" text="Servicio" prefWidth="200" />
                 <TableColumn fx:id="colPrecioUnitario" text="Precio Unit." prefWidth="90" />
@@ -61,7 +61,7 @@
         
         <!-- Botones -->
         <HBox alignment="CENTER_RIGHT" spacing="20">
-            <Button text="Cancelar" style="-fx-background-color: #e8f4fa; -fx-text-fill: #1a82b8; -fx-font-weight: bold; -fx-background-radius: 0.5em; -fx-cursor: hand; -fx-padding: 0.8em 1.5em;" onAction="#cerrarModal"/>
+            <Button text="Cancelar" styleClass="boton-azul-claro" onAction="#cerrarModal"/>
             <Button text="Guardar Paquete" styleClass="boton-azul" onAction="#guardarPaquete"/>
         </HBox>
     </VBox>

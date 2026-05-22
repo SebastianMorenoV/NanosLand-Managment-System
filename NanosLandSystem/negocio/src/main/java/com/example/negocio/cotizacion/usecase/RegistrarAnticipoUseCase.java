@@ -5,6 +5,7 @@ import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.dominio.Pago;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.persistencia.repository.CotizacionRepository;
@@ -52,26 +53,23 @@ public class RegistrarAnticipoUseCase {
 
         Pago pagoGuardado = pagoRepository.save(pago);
 
-        // Si la suma de pagos alcanza o supera los $3,000, Confirmamos y creamos el Evento
+        // Si la suma de pagos alcanza o supera los $3,000, Confirmamos la Cotizacion y el Evento
         double totalAbonado = anticipoExistente + cantidad;
         if (totalAbonado >= 3000.0 && cotizacion.getEstado() != EstadoCotizacion.VIGENTE) {
             cotizacion.setEstado(EstadoCotizacion.VIGENTE);
             cotizacionRepository.save(cotizacion);
 
-            if (eventoRepository.findByCotizacionId(cotizacion.getId()).isEmpty()) {
-                Evento evento = new Evento();
-                evento.setCotizacion(cotizacion);
-                evento.setFecha(cotizacion.getFecha());
-                evento.setTurno(cotizacion.getTurno());
-                evento.setNotas(cotizacion.getNotas());
+            Evento evento = cotizacion.getEvento();
+            if (evento != null && evento.getEstado() == EstadoEvento.TENTATIVO) {
+                evento.setEstado(EstadoEvento.CONFIRMADO);
                 
-                // Asignar horarios por defecto del turno
-                if (cotizacion.getTurno() == TurnoEvento.MATUTINO) {
-                    evento.setHoraInicio(LocalTime.of(9, 0));
-                    evento.setHoraFin(LocalTime.of(14, 0));
-                } else {
-                    evento.setHoraInicio(LocalTime.of(15, 0));
-                    evento.setHoraFin(LocalTime.of(20, 0));
+                // Asignar horarios por defecto del turno si no los tiene
+                if (evento.getTurno() == TurnoEvento.MATUTINO) {
+                    if (evento.getHoraInicio() == null) evento.setHoraInicio(LocalTime.of(9, 0));
+                    if (evento.getHoraFin() == null) evento.setHoraFin(LocalTime.of(14, 0));
+                } else if (evento.getTurno() == TurnoEvento.VESPERTINO) {
+                    if (evento.getHoraInicio() == null) evento.setHoraInicio(LocalTime.of(15, 0));
+                    if (evento.getHoraFin() == null) evento.setHoraFin(LocalTime.of(20, 0));
                 }
                 eventoRepository.save(evento);
             }
@@ -84,9 +82,22 @@ public class RegistrarAnticipoUseCase {
         return pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(Pago::getCantidad).sum();
     }
 
+    /**
+     * Genera un folio de pago único con formato PAY-YYYY-NNNN.
+     *
+     * Fix #2 — Implementación segura ante race conditions:
+     * - Usa conteo por año (no COUNT global) para evitar colisiones al cruzar el año nuevo.
+     * - Verifica unicidad con do-while (mismo patrón que folios de cotización).
+     * - El constraint UNIQUE en Pago.folioPago actuará como barrera final en BD.
+     */
     private String generarFolioPago() {
         int anio = Year.now().getValue();
-        long base = pagoRepository.count() + 1;
-        return String.format("PAY-%d-%04d", anio, base);
+        long base = pagoRepository.contarPagosPorAnio(anio) + 1;
+        String folio;
+        do {
+            folio = String.format("PAY-%d-%04d", anio, base);
+            base++;
+        } while (pagoRepository.existsByFolioPago(folio));
+        return folio;
     }
 }

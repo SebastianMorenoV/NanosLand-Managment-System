@@ -110,7 +110,7 @@
                style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"
                HBox.hgrow="ALWAYS"/>
         <Button text="Cancelar"
-                style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand; -fx-font-weight: bold;"
+                styleClass="boton-texto-gris"
                 onAction="#cancelar"/>
         <Button fx:id="btnContinuar"
                 text="Continuar &#8594;"

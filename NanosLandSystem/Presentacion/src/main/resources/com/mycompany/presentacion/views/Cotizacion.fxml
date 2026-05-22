@@ -86,7 +86,7 @@
                         <ComboBox fx:id="comboTurnos" promptText="Turno..." maxWidth="Infinity" styleClass="text-field-moderno"/>
                     </VBox>
                 </HBox>
-                <Label fx:id="lblErrorTurnos" text="No hay turnos disponibles para esta fecha." style="-fx-text-fill: #e74c3c; -fx-font-size: 11px; -fx-font-weight: bold;" visible="false" managed="false">
+                <Label fx:id="lblErrorTurnos" text="No hay turnos disponibles para esta fecha." styleClass="boton-texto-rojo" visible="false" managed="false">
                     <graphic>
                         <SVGPath content="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="#e74c3c" scaleX="0.7" scaleY="0.7"/>
                     </graphic>
@@ -188,7 +188,7 @@
             <!-- BOTONES DE ACCIÓN -->
             <HBox fx:id="boxBotonesNuevos" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20">
                 <Button fx:id="btnGuardarBorrador" text="Guardar Borrador" onAction="#guardarBorrador"
-                        style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand; -fx-font-weight: bold;"
+                        styleClass="boton-texto-gris"
                         minWidth="-Infinity"/>
                 <Button fx:id="btnConfirmarCotizacion" text="Confirmar Cotización" styleClass="boton-azul" onAction="#confirmarCotizacion"
                         minWidth="-Infinity">
@@ -200,7 +200,7 @@
 
             <HBox fx:id="boxBotonesEdicion" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20" visible="false" managed="false">
                 <Button fx:id="btnDescartarCambios" text="Descartar Cambios" onAction="#nuevaCotizacion"
-                        style="-fx-background-color: transparent; -fx-text-fill: #e74c3c; -fx-cursor: hand; -fx-font-weight: bold;"
+                        styleClass="boton-texto-rojo"
                         minWidth="-Infinity"/>
                 <Button fx:id="btnGuardarCambios" text="Guardar Cambios" styleClass="boton-azul" onAction="#guardarCambios"
                         minWidth="-Infinity">

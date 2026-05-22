@@ -6,6 +6,8 @@ package com.mycompany.persistencia.repository;
 
 import com.mycompany.persistencia.dominio.Pago;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,4 +18,18 @@ import java.util.List;
 public interface PagoRepository extends JpaRepository<Pago, Long>{
 
     List<Pago> findByCotizacionId(Long cotizacionId);
+
+    /**
+     * Verifica si ya existe un pago con el folio dado.
+     * Usado en generarFolioPago() para garantizar unicidad ante race conditions.
+     */
+    boolean existsByFolioPago(String folioPago);
+
+    /**
+     * Cuenta los pagos cuyo folio pertenece al año indicado.
+     * Permite inicializar la secuencia por año sin depender del COUNT global,
+     * evitando colisiones al cruzar el año nuevo.
+     */
+    @Query("SELECT COUNT(p) FROM Pago p WHERE p.folioPago LIKE CONCAT('PAY-', :anio, '-%')")
+    long contarPagosPorAnio(@Param("anio") int anio);
 }

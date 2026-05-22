@@ -25,16 +25,6 @@ public class ActualizarClienteUseCase {
 
     private final ClienteRepository clienteRepository;
 
-    /**
-     * Actualiza el nombre, teléfono y correo de un cliente identificado por su ID.
-     *
-     * @param id       ID del cliente a actualizar. No puede ser nulo.
-     * @param nombre   Nuevo nombre completo. Campo obligatorio.
-     * @param telefono Nuevo teléfono. Obligatorio, máximo 10 caracteres.
-     * @param correo   Nuevo correo electrónico. Opcional; si está vacío se almacena como null.
-     * @return ClienteDTO con los datos ya actualizados.
-     * @throws CotizacionException si alguna validación falla o el cliente no existe.
-     */
     @Transactional
     public ClienteDTO actualizarCliente(ClienteDTO dto) {
 

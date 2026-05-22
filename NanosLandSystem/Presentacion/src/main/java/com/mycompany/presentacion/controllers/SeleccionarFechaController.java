@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 
 import com.mycompany.presentacion.utils.ViewSwitcher;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -77,7 +78,15 @@ public class SeleccionarFechaController {
         renderizarCalendario();
     }
 
+    /**
+     * Fix #8 — renderizarCalendario asincrónico.
+     * La query a BD (consultarAgendaUseCase.obtenerMesCompleto) se mueve a un
+     * Task de fondo. El usuario ya no verá la UI congelada al navegar meses.
+     * El método actualiza la cabecera inmediatamente (sin BD) y luego espera
+     * el resultado asincrónico para poblar las celdas del calendario.
+     */
     private void renderizarCalendario() {
+        // Actualizar cabecera inmediatamente (no requiere BD)
         String nombreMes = mesActual.getMonth()
                 .getDisplayName(TextStyle.FULL, new Locale("es", "MX"));
         String titulo = nombreMes.substring(0, 1).toUpperCase()
@@ -85,6 +94,42 @@ public class SeleccionarFechaController {
                 + " " + mesActual.getYear();
         lblMesAnio.setText(titulo);
 
+        // Deshabilitar navegación mientras carga para evitar peticiones duplicadas
+        if (btnMesAnterior != null) btnMesAnterior.setDisable(true);
+
+        // Fix #8: ejecutar la query de BD en hilo de fondo
+        final YearMonth mesAConstruir = mesActual;  // captura inmutable para el Task
+        Task<List<Evento>> task = new Task<>() {
+            @Override
+            protected List<Evento> call() {
+                return consultarAgendaUseCase.obtenerMesCompleto(
+                        mesAConstruir.getYear(), mesAConstruir.getMonthValue());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            // Poblar celdas en el FX Thread (setOnSucceeded ya corre en FX Thread)
+            List<Evento> eventos = task.getValue();
+            poblarCeldasCalendario(mesAConstruir, eventos);
+            // Restaurar botón de navegación
+            if (btnMesAnterior != null) {
+                btnMesAnterior.setDisable(!mesAConstruir.isAfter(YearMonth.now()));
+            }
+        });
+        task.setOnFailed(e -> {
+            System.err.println("[SeleccionarFecha] Error cargando agenda: " + task.getException().getMessage());
+            if (btnMesAnterior != null) {
+                btnMesAnterior.setDisable(!mesActual.isAfter(YearMonth.now()));
+            }
+        });
+        new Thread(task, "hilo-carga-agenda").start();
+    }
+
+    /**
+     * Pobla las celdas del GridPane con los datos ya cargados.
+     * SIEMPRE se llama desde el FX Thread (via Task.setOnSucceeded).
+     */
+    private void poblarCeldasCalendario(YearMonth mes, List<Evento> eventos) {
         gridCalendario.getChildren().removeIf(node -> {
             Integer rowIndex = GridPane.getRowIndex(node);
             return rowIndex != null && rowIndex > 0;
@@ -96,16 +141,15 @@ public class SeleccionarFechaController {
         headerRow.setVgrow(Priority.NEVER);
         gridCalendario.getRowConstraints().add(headerRow);
 
-        List<Evento> eventos = consultarAgendaUseCase.obtenerMesCompleto(mesActual.getYear(), mesActual.getMonthValue());
-        int primerDia = mesActual.atDay(1).getDayOfWeek().getValue();
-        int totalDias = mesActual.lengthOfMonth();
+        int primerDia = mes.atDay(1).getDayOfWeek().getValue();
+        int totalDias = mes.lengthOfMonth();
 
         int col = primerDia - 1;
         int row = 1;
         int ultimaFila = 1;
 
         for (int dia = 1; dia <= totalDias; dia++) {
-            LocalDate fecha = mesActual.atDay(dia);
+            LocalDate fecha = mes.atDay(dia);
             VBox celda = crearCelda(fecha, eventos);
             gridCalendario.add(celda, col, row);
             ultimaFila = row;
@@ -121,11 +165,6 @@ public class SeleccionarFechaController {
             rc.setVgrow(Priority.ALWAYS);
             rc.setFillHeight(true);
             gridCalendario.getRowConstraints().add(rc);
-        }
-
-        if (btnMesAnterior != null) {
-            // El botón se deshabilita si el mes mostrado NO es mayor al mes real
-            btnMesAnterior.setDisable(!mesActual.isAfter(YearMonth.now()));
         }
     }
 

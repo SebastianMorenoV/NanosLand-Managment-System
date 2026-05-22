@@ -2,7 +2,7 @@ package com.mycompany.presentacion.controllers;
 
 import com.example.negocio.reporte.usecase.GenerarReporteEventosUseCase;
 import com.mycompany.common.dtos.EventoDTO;
-import com.mycompany.persistencia.enums.EstadoCotizacion;
+import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,7 +11,10 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TableView;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.stage.FileChooser;
@@ -34,7 +37,7 @@ public class ReportesController {
     @FXML private DatePicker dpInicio;
     @FXML private DatePicker dpFin;
     @FXML private ComboBox<TurnoEvento> cmbTurno;
-    @FXML private ComboBox<EstadoCotizacion> cmbEstado;
+    @FXML private ComboBox<EstadoEvento> cmbEstado;
     @FXML private Button btnExportar;
     
     @FXML private TableView<EventoDTO> tablaReporte;
@@ -42,9 +45,11 @@ public class ReportesController {
     @FXML private TableColumn<EventoDTO, TurnoEvento> colTurno;
     @FXML private TableColumn<EventoDTO, String> colCliente;
     @FXML private TableColumn<EventoDTO, String> colPaquete;
-    @FXML private TableColumn<EventoDTO, EstadoCotizacion> colEstado;
+    @FXML private TableColumn<EventoDTO, EstadoEvento> colEstado;
     @FXML private TableColumn<EventoDTO, Double> colTotal;
+    @FXML private Pagination paginacion;
 
+    private static final int ITEMS_POR_PAGINA = 20;
     private final ObservableList<EventoDTO> masterData = FXCollections.observableArrayList();
 
     @FXML
@@ -57,13 +62,26 @@ public class ReportesController {
         colTurno.setCellValueFactory(new PropertyValueFactory<>("turno"));
         colCliente.setCellValueFactory(new PropertyValueFactory<>("clienteNombre"));
         colPaquete.setCellValueFactory(new PropertyValueFactory<>("paqueteNombre"));
-        colEstado.setCellValueFactory(new PropertyValueFactory<>("estadoCotizacion"));
+        colEstado.setCellValueFactory(new PropertyValueFactory<>("estadoEvento"));
         colTotal.setCellValueFactory(new PropertyValueFactory<>("totalCotizacion"));
 
         cmbTurno.setItems(FXCollections.observableArrayList(TurnoEvento.values()));
-        cmbEstado.setItems(FXCollections.observableArrayList(EstadoCotizacion.values()));
+        cmbEstado.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
 
-        tablaReporte.setItems(masterData);
+        paginacion.setPageCount(1);
+        paginacion.setPageFactory(this::crearPagina);
+    }
+
+    private Node crearPagina(int pageIndex) {
+        int fromIndex = pageIndex * ITEMS_POR_PAGINA;
+        int toIndex = Math.min(fromIndex + ITEMS_POR_PAGINA, masterData.size());
+        
+        if (fromIndex < masterData.size() && fromIndex <= toIndex) {
+            tablaReporte.setItems(FXCollections.observableArrayList(masterData.subList(fromIndex, toIndex)));
+        } else {
+            tablaReporte.setItems(FXCollections.observableArrayList());
+        }
+        return tablaReporte;
     }
 
     @FXML
@@ -71,7 +89,7 @@ public class ReportesController {
         LocalDate inicio = dpInicio.getValue();
         LocalDate fin = dpFin.getValue();
         TurnoEvento turno = cmbTurno.getValue();
-        EstadoCotizacion estado = cmbEstado.getValue();
+        EstadoEvento estado = cmbEstado.getValue();
 
         try {
             List<EventoDTO> resultados = generarReporteEventosUseCase.generarReporte(inicio, fin, turno, estado);
@@ -81,6 +99,11 @@ public class ReportesController {
             }
             
             btnExportar.setDisable(masterData.isEmpty());
+            
+            int pageCount = (int) Math.ceil((double) masterData.size() / ITEMS_POR_PAGINA);
+            paginacion.setPageCount(pageCount == 0 ? 1 : pageCount);
+            paginacion.setCurrentPageIndex(0);
+            crearPagina(0); // Forzar actualización de tabla
             
             if (masterData.isEmpty()) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -119,10 +142,15 @@ public class ReportesController {
         File archivo = fileChooser.showSaveDialog(stage);
 
         if (archivo != null) {
-            try {
-                InputStream reporteStream = getClass().getResourceAsStream("/com/mycompany/presentacion/reports/ReporteEventos.jrxml");
-                exportarReporteUseCase.exportarPDF(masterData, reporteStream, archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
-                
+            try (
+                // Fix #5: try-with-resources garantiza que el InputStream se cierre
+                // correctamente incluso si ocurre una excepción durante la exportación.
+                InputStream reporteStream = getClass().getResourceAsStream(
+                    "/com/mycompany/presentacion/reports/ReporteEventos.jrxml")
+            ) {
+                exportarReporteUseCase.exportarPDF(masterData, reporteStream,
+                    archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
+
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Éxito");
                 alert.setHeaderText(null);

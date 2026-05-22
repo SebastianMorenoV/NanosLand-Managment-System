@@ -11,6 +11,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
@@ -48,8 +49,13 @@ public class PaquetesController {
     @FXML private TableColumn<PaqueteDTO, Double> colPrecio;
     @FXML private TableColumn<PaqueteDTO, String> colDescripcion;
     @FXML private TableColumn<PaqueteDTO, Void> colAcciones;
+    @FXML private Pagination paginacion;
+
+    private static final int ITEMS_POR_PAGINA = 20;
 
     private final ObservableList<PaqueteDTO> masterData = FXCollections.observableArrayList();
+    private FilteredList<PaqueteDTO> filteredData;
+    private SortedList<PaqueteDTO> sortedData;
 
     @FXML
     public void initialize() {
@@ -69,8 +75,8 @@ public class PaquetesController {
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         configurarColumnaAcciones();
 
+        configurarBuscadorYPaginacion();
         cargarPaquetes();
-        configurarBuscador();
     }
 
     private void configurarColumnaAcciones() {
@@ -112,8 +118,8 @@ public class PaquetesController {
         }
     }
 
-    private void configurarBuscador() {
-        FilteredList<PaqueteDTO> filteredData = new FilteredList<>(masterData, p -> true);
+    private void configurarBuscadorYPaginacion() {
+        filteredData = new FilteredList<>(masterData, p -> true);
 
         txtBuscar.textProperty().addListener((observable, oldValue, newValue) -> {
             filteredData.setPredicate(paquete -> {
@@ -133,10 +139,34 @@ public class PaquetesController {
             });
         });
 
-        SortedList<PaqueteDTO> sortedData = new SortedList<>(filteredData);
+        sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tablaPaquetes.comparatorProperty());
         
-        tablaPaquetes.setItems(sortedData);
+        filteredData.addListener((javafx.collections.ListChangeListener.Change<? extends PaqueteDTO> c) -> {
+            actualizarPaginacion();
+        });
+
+        paginacion.setPageCount(1);
+        paginacion.setPageFactory(this::crearPagina);
+    }
+
+    private javafx.scene.Node crearPagina(int pageIndex) {
+        int fromIndex = pageIndex * ITEMS_POR_PAGINA;
+        int toIndex = Math.min(fromIndex + ITEMS_POR_PAGINA, sortedData.size());
+        
+        if (fromIndex < sortedData.size() && fromIndex <= toIndex) {
+            tablaPaquetes.setItems(FXCollections.observableArrayList(sortedData.subList(fromIndex, toIndex)));
+        } else {
+            tablaPaquetes.setItems(FXCollections.observableArrayList());
+        }
+        return tablaPaquetes;
+    }
+
+    private void actualizarPaginacion() {
+        int pageCount = (int) Math.ceil((double) sortedData.size() / ITEMS_POR_PAGINA);
+        paginacion.setPageCount(pageCount == 0 ? 1 : pageCount);
+        paginacion.setCurrentPageIndex(0);
+        crearPagina(0);
     }
 
     @FXML

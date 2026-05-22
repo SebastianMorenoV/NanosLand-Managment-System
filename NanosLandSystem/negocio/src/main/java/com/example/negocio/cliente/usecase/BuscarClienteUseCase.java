@@ -10,6 +10,7 @@ import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -50,11 +51,13 @@ public class BuscarClienteUseCase {
     }
 
     /**
-     * Devuelve el listado completo de clientes registrados en el sistema.
-     * Es el punto de entrada del Flujo Básico (paso 2 — carga de la tabla).
+     * Devuelve el listado completo de clientes ACTIVOS registrados en el sistema.
+     * Fix #12: usa findByActivoTrue() para excluir clientes con soft-delete.
+     * Fix #11: @Transactional(readOnly=true) para evitar dirty-checking.
      */
+    @Transactional(readOnly = true)
     public List<ClienteDTO> obtenerTodos() {
-        return ClienteMapper.toDTOList(clienteRepository.findAll());
+        return ClienteMapper.toDTOList(clienteRepository.findByActivoTrue());
     }
 
     // ── Flujo Alternativo 2.2.1 — Búsqueda y Filtrado ────────────────────────

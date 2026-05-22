@@ -4,6 +4,7 @@
  */
 package com.mycompany.persistencia.dominio;
 
+import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -30,7 +31,16 @@ public class Evento {
     private LocalTime horaFin;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TurnoEvento turno;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoEvento estado = EstadoEvento.TENTATIVO;
+
+    private String nombreFestejado;
+    
+    private String tematica;
 
     private String notas;
 
