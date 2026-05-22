@@ -275,6 +275,7 @@ public class CotizacionController {
             guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
             Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado (Fechas bloqueadas).");
             ok.showAndWait();
+            nuevaCotizacion();
         } else {
             TextInputDialog dialog = new TextInputDialog("3000");
             dialog.setTitle("Confirmar Cotización");
@@ -295,6 +296,7 @@ public class CotizacionController {
 
                     Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado exitosamente.");
                     ok.showAndWait();
+                    nuevaCotizacion();
                 } catch(Exception e) {
                     mostrarError(e.getMessage());
                 }
@@ -514,7 +516,7 @@ public class CotizacionController {
                 total.setStyle("-fx-font-weight: bold; -fx-text-fill: #1a82b8;");
 
                 // NUEVO BOTÓN EDITAR EN CADA CELDA
-                Button btnEditar = new Button("Editar");
+                Button btnEditar = new Button(item.getEstado() == EstadoCotizacion.BORRADOR ? "Editar" : "Ver");
                 btnEditar.setStyle("-fx-font-size: 10px; -fx-background-color: #ecf0f1; -fx-cursor: hand;");
                 btnEditar.setOnAction(e -> {
                     cotizacionContext.setModoEdicion(true);
@@ -522,10 +524,18 @@ public class CotizacionController {
                     cotizacionContext.setFechaEdicionActual(item.getFecha());
                     cotizacionContext.setTurnoEdicionActual(item.getTurno());
                     cotizacionContext.setEstadoEdicionActual(item.getEstado()); // Guardamos el estado original
-                    btnEliminarCotizacion.setDisable(false);
+                    btnEliminarCotizacion.setDisable(item.getEstado() != EstadoCotizacion.BORRADOR);
                     
                     cargarCotizacionEnFormulario(item);
                     cambiarModoInterfaz(true); // Mostrar botones de Guardar/Descartar
+
+                    // Si no es borrador, dejar en modo de solo lectura (ocultando guardado y bloqueando campos)
+                    boolean esBorrador = (item.getEstado() == EstadoCotizacion.BORRADOR);
+                    if (btnGuardarCambios != null) btnGuardarCambios.setDisable(!esBorrador);
+                    if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(!esBorrador);
+                    if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(!esBorrador);
+                    
+                    setSoloLectura(!esBorrador);
                 });
 
                 VBox left = new VBox(4, folio, cliente, fecha);
@@ -571,7 +581,11 @@ public class CotizacionController {
                 return listarCotizacionesUseCase.obtenerCotizaciones();
             }
         };
-        task.setOnSucceeded(e -> cotizacionesPanel.setAll(task.getValue()));
+        task.setOnSucceeded(e -> {
+            java.util.List<CotizacionDTO> lista = new java.util.ArrayList<>(task.getValue());
+            lista.sort((c1, c2) -> Long.compare(c2.getId(), c1.getId()));
+            cotizacionesPanel.setAll(lista);
+        });
         task.setOnFailed(e -> System.err.println("[CotizacionController] Error cargando panel: "
                 + task.getException().getMessage()));
         new Thread(task, "hilo-carga-cotizaciones").start();
@@ -682,6 +696,31 @@ public class CotizacionController {
         lblPrecioPaquete.setText(" $0.00");
         lblDetallesPaquete.setText("Los detalles aparecerán aquí");
         actualizarTotalEstimado();
+
+        // Restaurar botones por si se había abierto una en solo lectura
+        if (btnGuardarCambios != null) btnGuardarCambios.setDisable(false);
+        if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(false);
+        if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(false);
+        
+        setSoloLectura(false);
+    }
+
+    private void setSoloLectura(boolean soloLectura) {
+        if (comboClientes != null) comboClientes.setDisable(soloLectura);
+        if (comboPaquetes != null) comboPaquetes.setDisable(soloLectura);
+        if (datePickerFecha != null) datePickerFecha.setDisable(soloLectura);
+        if (comboTurnos != null) {
+            comboTurnos.setDisable(soloLectura);
+            // Si sale de solo lectura pero no hay fecha, debe seguir deshabilitado
+            if (!soloLectura && datePickerFecha != null && datePickerFecha.getValue() == null) {
+                comboTurnos.setDisable(true);
+            }
+        }
+        if (textAreaNotas != null) textAreaNotas.setDisable(soloLectura);
+        if (txtNombreFestejado != null) txtNombreFestejado.setDisable(soloLectura);
+        if (txtTematica != null) txtTematica.setDisable(soloLectura);
+        if (btnAnadirServicio != null) btnAnadirServicio.setDisable(soloLectura);
+        if (listaServiciosExtras != null) listaServiciosExtras.setDisable(soloLectura);
     }
 
     // ─── ELIMINAR COTIZACIÓN (Flujo 2.2.7) ────────────────────────────────
