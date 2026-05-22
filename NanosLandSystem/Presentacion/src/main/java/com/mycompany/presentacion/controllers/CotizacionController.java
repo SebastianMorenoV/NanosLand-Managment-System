@@ -170,6 +170,13 @@ public class CotizacionController {
     }
     @FXML
     public void initialize() {
+        if (txtAbono != null) {
+            txtAbono.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) return change;
+                return null;
+            }));
+        }
+        
         configurarComboClientes();
         configurarComboPaquetes();
         configurarListaServiciosExtras();

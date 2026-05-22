@@ -72,6 +72,9 @@ public class ReportesController {
         paginacion.setPageCount(1);
         paginacion.setPageFactory(this::crearPagina);
 
+        if (dpInicio != null) dpInicio.setEditable(false);
+        if (dpFin != null) dpFin.setEditable(false);
+
         dpInicio.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
         dpFin.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
         cmbTurno.valueProperty().addListener((obs, oldVal, newVal) -> generarReporte());
@@ -129,6 +132,12 @@ public class ReportesController {
             paginacion.setCurrentPageIndex(0);
             crearPagina(0); // Forzar actualización de tabla
         } catch (IllegalArgumentException e) {
+            // Limpiar datos anteriores para que no queden desfasados con las fechas erróneas
+            masterData.clear();
+            btnExportar.setDisable(true);
+            paginacion.setPageCount(1);
+            crearPagina(0);
+
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Filtro Inválido");
             alert.setHeaderText(null);

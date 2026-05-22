@@ -33,6 +33,18 @@ public class NuevoClienteModalController {
 
     @FXML
     public void initialize() {
+        if (txtTelefono != null) {
+            txtTelefono.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d{0,10}")) return change;
+                return null;
+            }));
+        }
+        if (txtCodigoPostal != null) {
+            txtCodigoPostal.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d{0,5}")) return change;
+                return null;
+            }));
+        }
         // Reset singleton state so a new modal open starts clean
         clienteCreado = null;
         clienteAEditar = null;

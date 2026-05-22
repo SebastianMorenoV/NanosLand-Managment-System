@@ -37,6 +37,13 @@ public class ConsultarCatalogoUseCase {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public PaqueteDTO obtenerPaquetePorId(Long id) {
+        return paqueteRepository.findById(id)
+                .map(PaqueteMapper::toDTO)
+                .orElse(null);
+    }
+
     public List<Servicio> obtenerServicios() {
         return servicioRepository.findAll();
     }

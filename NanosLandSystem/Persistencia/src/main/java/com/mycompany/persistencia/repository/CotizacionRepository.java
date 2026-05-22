@@ -19,6 +19,7 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
     Optional<Cotizacion> findByFolio(String folio);
     List<Cotizacion> findByClienteId(Long clienteId);
     List<Cotizacion> findByEstado(EstadoCotizacion estado);
+    boolean existsByPaqueteIdAndEstadoIn(Long paqueteId, Collection<EstadoCotizacion> estados);
 
     /**
      * NOTA: Las consultas de disponibilidad por fecha y turno han sido

@@ -56,6 +56,18 @@ public class PaqueteModalController {
 
     @FXML
     public void initialize() {
+        if (txtPrecio != null) {
+            txtPrecio.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) return change;
+                return null;
+            }));
+        }
+        if (txtCantidad != null) {
+            txtCantidad.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d*")) return change;
+                return null;
+            }));
+        }
         // Reset singleton state so a new modal open starts clean
         paqueteAEditar = null;
         paqueteCreado = null;
