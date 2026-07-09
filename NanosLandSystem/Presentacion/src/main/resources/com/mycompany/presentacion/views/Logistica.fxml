@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<HBox spacing="20" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.LogisticaController">
+    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+    <!-- Panel Izquierdo: Lista de Eventos -->
+    <VBox prefWidth="340" spacing="15">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="Eventos Próximos" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
+                <graphic>
+                    <javafx.scene.shape.SVGPath content="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z" fill="#2c3e50" scaleX="0.9" scaleY="0.9"/>
+                </graphic>
+            </Label>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="⟳" styleClass="boton-azul-claro" onAction="#refrescar" style="-fx-font-size: 16px;"/>
+        </HBox>
+
+        <VBox styleClass="panel-cotizaciones" VBox.vgrow="ALWAYS">
+            <ListView fx:id="listaEventos" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </VBox>
+
+    <!-- Panel Derecho: Servicios del Evento -->
+    <VBox HBox.hgrow="ALWAYS" spacing="15">
+        <Label fx:id="lblEventoSeleccionado" text="Seleccione un evento" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
+            <graphic>
+                <javafx.scene.shape.SVGPath content="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="#2c3e50" scaleX="0.9" scaleY="0.9"/>
+            </graphic>
+        </Label>
+        <Label text="Bitácora de seguimiento de servicios contratados para el evento." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+
+        <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="10">
+            <Label fx:id="lblSinServicios" text="No hay servicios de logística registrados para este evento." style="-fx-text-fill: #95a5a6; -fx-font-size: 13px; -fx-padding: 20 0 0 0;" visible="false" managed="false"/>
+
+            <!-- Leyenda de estados -->
+            <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-padding: 0 0 5 0;">
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label style="-fx-background-color: #e74c3c; -fx-background-radius: 50; -fx-min-width: 10; -fx-min-height: 10; -fx-max-width: 10; -fx-max-height: 10;"/>
+                    <Label text="Por Contactar" style="-fx-text-fill: #7f8c8d; -fx-font-size: 10px;"/>
+                </HBox>
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label style="-fx-background-color: #f39c12; -fx-background-radius: 50; -fx-min-width: 10; -fx-min-height: 10; -fx-max-width: 10; -fx-max-height: 10;"/>
+                    <Label text="Encargado" style="-fx-text-fill: #7f8c8d; -fx-font-size: 10px;"/>
+                </HBox>
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label style="-fx-background-color: #3498db; -fx-background-radius: 50; -fx-min-width: 10; -fx-min-height: 10; -fx-max-width: 10; -fx-max-height: 10;"/>
+                    <Label text="Confirmado" style="-fx-text-fill: #7f8c8d; -fx-font-size: 10px;"/>
+                </HBox>
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label style="-fx-background-color: #27ae60; -fx-background-radius: 50; -fx-min-width: 10; -fx-min-height: 10; -fx-max-width: 10; -fx-max-height: 10;"/>
+                    <Label text="Listo" style="-fx-text-fill: #7f8c8d; -fx-font-size: 10px;"/>
+                </HBox>
+            </HBox>
+
+            <ListView fx:id="listaServicios" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </VBox>
+</HBox>

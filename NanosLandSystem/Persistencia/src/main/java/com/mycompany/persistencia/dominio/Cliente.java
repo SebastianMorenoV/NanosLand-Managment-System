@@ -6,7 +6,7 @@ package com.mycompany.persistencia.dominio;
 
 /**
  *
- * @author Sebastian Moreno
+ * @author Sebastian Moreno 
  */
 import jakarta.persistence.*;
 import lombok.Data;
@@ -46,4 +46,3 @@ public class Cliente {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean activo = true;
 }
-

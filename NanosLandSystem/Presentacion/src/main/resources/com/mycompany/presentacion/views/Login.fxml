@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.ImageView?>
+
+<BorderPane stylesheets="@../styles/styles.css" styleClass="raiz-fondo" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.LoginController">
+    <center>
+        <VBox alignment="CENTER" spacing="0" maxWidth="420">
+            <VBox alignment="CENTER" styleClass="tarjeta-blanca" spacing="20" maxWidth="420">
+                <padding><Insets top="40" right="40" bottom="40" left="40"/></padding>
+
+                <!-- Logo -->
+                <HBox alignment="CENTER">
+                    <ImageView fx:id="imgLogo" fitWidth="150" preserveRatio="true"/>
+                </HBox>
+
+                <!-- Título -->
+                <Label text="Iniciar Sesión" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <Label text="Ingrese sus credenciales para acceder al sistema." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px; -fx-wrap-text: true;" wrapText="true" maxWidth="300"/>
+
+                <!-- Campos -->
+                <VBox spacing="8">
+                    <Label text="CORREO ELECTRÓNICO" styleClass="label-pequeno"/>
+                    <TextField fx:id="txtCorreo" promptText="correo@nanosland.com" styleClass="text-field-moderno"/>
+                </VBox>
+
+                <VBox spacing="8">
+                    <Label text="CONTRASEÑA" styleClass="label-pequeno"/>
+                    <PasswordField fx:id="txtContrasena" promptText="••••••••" styleClass="text-field-moderno" onAction="#iniciarSesion"/>
+                </VBox>
+
+                <!-- Botón -->
+                <Button text="Iniciar Sesión" styleClass="boton-azul" prefWidth="340" onAction="#iniciarSesion" style="-fx-font-size: 15px; -fx-padding: 12 0 12 0;"/>
+            </VBox>
+
+            <Label text="Sistema de Gestión NanosLand v1.0" style="-fx-text-fill: #b2b2b2; -fx-font-size: 11px; -fx-padding: 20 0 0 0;"/>
+        </VBox>
+    </center>
+</BorderPane>

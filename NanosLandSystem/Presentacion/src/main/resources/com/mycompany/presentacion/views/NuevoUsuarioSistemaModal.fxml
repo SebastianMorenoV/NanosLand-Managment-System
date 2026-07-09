@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="20" prefWidth="420" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.NuevoUsuarioSistemaModalController" stylesheets="@../styles/styles.css">
+    <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
+
+    <Label fx:id="lblTitulo" text="Registrar Nuevo Usuario" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Separator/>
+
+    <VBox spacing="8">
+        <Label text="CORREO ELECTRÓNICO *" styleClass="label-pequeno"/>
+        <TextField fx:id="txtCorreo" promptText="correo@nanosland.com" styleClass="text-field-moderno"/>
+    </VBox>
+
+    <VBox spacing="8">
+        <Label text="CONTRASEÑA *" styleClass="label-pequeno"/>
+        <PasswordField fx:id="txtContrasena" promptText="••••••••" styleClass="text-field-moderno"/>
+        <Label fx:id="lblContrasenaHint" text="Dejar vacío para mantener la contraseña actual." style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;" visible="false" managed="false"/>
+    </VBox>
+
+    <VBox spacing="8">
+        <Label text="TELÉFONO" styleClass="label-pequeno"/>
+        <TextField fx:id="txtTelefono" promptText="6441234567" styleClass="text-field-moderno"/>
+    </VBox>
+
+    <VBox spacing="8">
+        <Label text="ROL *" styleClass="label-pequeno"/>
+        <ComboBox fx:id="comboRol" prefWidth="360" promptText="Seleccione un rol..."/>
+    </VBox>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+        <Button text="Guardar" styleClass="boton-azul" onAction="#guardarUsuario"/>
+    </HBox>
+</VBox>

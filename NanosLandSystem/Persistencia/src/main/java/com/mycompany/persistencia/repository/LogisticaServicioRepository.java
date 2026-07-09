@@ -7,10 +7,15 @@ package com.mycompany.persistencia.repository;
 import com.mycompany.persistencia.dominio.LogisticaServicio;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 /**
  *
  * @author skyro
  */
 public interface LogisticaServicioRepository extends JpaRepository<LogisticaServicio, Long> {
-    
+
+    List<LogisticaServicio> findByEventoId(Long eventoId);
+
+    List<LogisticaServicio> findByEventoIdOrderByIdAsc(Long eventoId);
 }
