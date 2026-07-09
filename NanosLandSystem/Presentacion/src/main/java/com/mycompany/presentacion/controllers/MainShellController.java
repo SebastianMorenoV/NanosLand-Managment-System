@@ -36,6 +36,10 @@ public class MainShellController {
     @FXML private ToggleButton btnPaquetes;
     @FXML private ToggleButton btnReportes;
     @FXML private ToggleButton btnLogistica;
+    @FXML private ToggleButton btnEstadoCuenta;
+    @FXML private ToggleButton btnReporteAdeudos;
+    @FXML private ToggleButton btnReporteIngresos;
+    @FXML private ToggleButton btnOportunidades;
     @FXML private ToggleButton btnGestionUsuarios;
     @FXML private Label lblReloj;
     @FXML private ImageView imgLogo;
@@ -108,8 +112,28 @@ public class MainShellController {
     }
 
     @FXML
+    private void navReporteAdeudos() {
+        ViewSwitcher.cargarVista("ReporteAdeudos.fxml");
+    }
+
+    @FXML
+    private void navReporteIngresos() {
+        ViewSwitcher.cargarVista("ReporteIngresos.fxml");
+    }
+
+    @FXML
+    private void navOportunidades() {
+        ViewSwitcher.cargarVista("ReporteOportunidades.fxml");
+    }
+
+    @FXML
     private void navLogistica() {
         ViewSwitcher.cargarVista("Logistica.fxml");
+    }
+
+    @FXML
+    private void navEstadoCuenta() {
+        ViewSwitcher.cargarVista("EstadoCuenta.fxml");
     }
 
     @FXML

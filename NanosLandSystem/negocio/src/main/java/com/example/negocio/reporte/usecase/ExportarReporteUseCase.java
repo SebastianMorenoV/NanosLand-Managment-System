@@ -338,4 +338,314 @@ public class ExportarReporteUseCase {
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(cell);
     }
+
+    public void exportarAdeudosPDF(List<com.mycompany.common.dtos.AdeudoDTO> adeudos, InputStream logoStream, String rutaDestino) throws Exception {
+        if (adeudos == null || adeudos.isEmpty()) {
+            throw new IllegalArgumentException("No hay datos de adeudos para exportar.");
+        }
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        document.open();
+
+        Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
+        Font fontFechaHdr = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE);
+        Font fontHeaderTable = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.WHITE);
+        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
+
+        PdfPTable headerTable = new PdfPTable(3);
+        headerTable.setWidthPercentage(100);
+        headerTable.setWidths(new float[]{2.5f, 1f, 0.5f});
+
+        PdfPCell titleCell = new PdfPCell(new Phrase("Reporte de Adeudos por Cobrar", fontTitulo));
+        titleCell.setBackgroundColor(new Color(231, 76, 60)); // Rojo oscuro para adeudos
+        titleCell.setBorder(Rectangle.NO_BORDER);
+        titleCell.setPadding(20);
+        titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        headerTable.addCell(titleCell);
+
+        String dateStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date());
+        PdfPCell dateCell = new PdfPCell(new Phrase(dateStr, fontFechaHdr));
+        dateCell.setBackgroundColor(new Color(231, 76, 60));
+        dateCell.setBorder(Rectangle.NO_BORDER);
+        dateCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        dateCell.setPadding(20);
+        headerTable.addCell(dateCell);
+
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBackgroundColor(new Color(231, 76, 60));
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setPadding(10);
+        
+        try {
+            if (logoStream != null) {
+                byte[] bytes = logoStream.readAllBytes();
+                Image logo = Image.getInstance(bytes);
+                logo.scaleToFit(50, 50);
+                logo.setAlignment(Element.ALIGN_RIGHT);
+                logoCell.addElement(logo);
+            }
+        } catch (Exception e) {}
+        headerTable.addCell(logoCell);
+        
+        document.add(headerTable);
+        document.add(new Paragraph(" "));
+
+        double sumaAdeudos = adeudos.stream().mapToDouble(com.mycompany.common.dtos.AdeudoDTO::getSaldoPendiente).sum();
+        
+        Font fontKPIKey = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.DARK_GRAY);
+        Font fontKPIVal = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, new Color(231, 76, 60));
+        PdfPTable kpiTable = new PdfPTable(2);
+        kpiTable.setWidthPercentage(50);
+        kpiTable.setHorizontalAlignment(Element.ALIGN_LEFT);
+        kpiTable.setSpacingAfter(20);
+        kpiTable.setWidths(new float[]{1.5f, 2f});
+        
+        addKPICell(kpiTable, "Total por Cobrar:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, String.format("$%,.2f", sumaAdeudos), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        addKPICell(kpiTable, "Eventos con Deuda:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, String.valueOf(adeudos.size()), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        document.add(kpiTable);
+
+        PdfPTable table = new PdfPTable(7);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{1.2f, 2f, 1.5f, 1.5f, 1.2f, 1.2f, 1.5f});
+
+        String[] headers = {"Folio", "Cliente", "Teléfono", "Fecha", "G. Total", "Pagado", "Deuda"};
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTable));
+            cell.setBackgroundColor(new Color(192, 57, 43));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(8);
+            cell.setBorder(Rectangle.NO_BORDER);
+            table.addCell(cell);
+        }
+
+        boolean altRow = false;
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (com.mycompany.common.dtos.AdeudoDTO a : adeudos) {
+            Color rowColor = altRow ? new Color(245, 247, 250) : Color.WHITE;
+            altRow = !altRow;
+
+            addTableCell(table, a.getFolioCotizacion(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, a.getClienteNombre(), fontNormal, rowColor, Element.ALIGN_LEFT);
+            addTableCell(table, a.getClienteTelefono() != null ? a.getClienteTelefono() : "N/A", fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, a.getFechaEvento() != null ? a.getFechaEvento().format(dtf) : "", fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, String.format("$%,.2f", a.getGranTotal()), fontNormal, rowColor, Element.ALIGN_RIGHT);
+            addTableCell(table, String.format("$%,.2f", a.getTotalPagado()), fontNormal, rowColor, Element.ALIGN_RIGHT);
+            
+            Font fontRed = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new Color(231, 76, 60));
+            addTableCell(table, String.format("$%,.2f", a.getSaldoPendiente()), fontRed, rowColor, Element.ALIGN_RIGHT);
+        }
+
+        document.add(table);
+        document.close();
+    }
+    public void exportarIngresosPDF(List<com.mycompany.common.dtos.IngresoDTO> ingresos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
+        if (ingresos == null || ingresos.isEmpty()) {
+            throw new IllegalArgumentException("No hay datos de ingresos para exportar.");
+        }
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        document.open();
+
+        Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
+        Font fontFechaHdr = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE);
+        Font fontHeaderTable = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.WHITE);
+        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
+
+        PdfPTable headerTable = new PdfPTable(3);
+        headerTable.setWidthPercentage(100);
+        headerTable.setWidths(new float[]{2.5f, 1f, 0.5f});
+
+        PdfPCell titleCell = new PdfPCell(new Phrase("Reporte de Ingresos (Flujo de Caja)", fontTitulo));
+        titleCell.setBackgroundColor(new Color(39, 174, 96)); // Verde para ingresos
+        titleCell.setBorder(Rectangle.NO_BORDER);
+        titleCell.setPadding(20);
+        titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        headerTable.addCell(titleCell);
+
+        String dateStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date());
+        PdfPCell dateCell = new PdfPCell(new Phrase(dateStr, fontFechaHdr));
+        dateCell.setBackgroundColor(new Color(39, 174, 96));
+        dateCell.setBorder(Rectangle.NO_BORDER);
+        dateCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        dateCell.setPadding(20);
+        headerTable.addCell(dateCell);
+
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBackgroundColor(new Color(39, 174, 96));
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setPadding(10);
+        try {
+            if (logoStream != null) {
+                byte[] bytes = logoStream.readAllBytes();
+                Image logo = Image.getInstance(bytes);
+                logo.scaleToFit(50, 50);
+                logo.setAlignment(Element.ALIGN_RIGHT);
+                logoCell.addElement(logo);
+            }
+        } catch (Exception e) {}
+        headerTable.addCell(logoCell);
+        document.add(headerTable);
+        document.add(new Paragraph(" "));
+
+        double totalIngresos = ingresos.stream().mapToDouble(com.mycompany.common.dtos.IngresoDTO::getCantidad).sum();
+        
+        Font fontKPIKey = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.DARK_GRAY);
+        Font fontKPIVal = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, new Color(39, 174, 96));
+        PdfPTable kpiTable = new PdfPTable(2);
+        kpiTable.setWidthPercentage(50);
+        kpiTable.setHorizontalAlignment(Element.ALIGN_LEFT);
+        kpiTable.setSpacingAfter(20);
+        kpiTable.setWidths(new float[]{1.5f, 2f});
+        
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String periodo = (inicio != null ? inicio.format(dtf) : "Inicio") + " al " + (fin != null ? fin.format(dtf) : "Fin");
+        
+        addKPICell(kpiTable, "Periodo:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, periodo, fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        addKPICell(kpiTable, "Ingreso Total:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, String.format("$%,.2f", totalIngresos), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        document.add(kpiTable);
+
+        PdfPTable table = new PdfPTable(6);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{1.5f, 1.2f, 1.5f, 2f, 1.2f, 1.2f});
+
+        String[] headers = {"Fecha", "Folio Pago", "Folio Cotiz.", "Cliente", "Método", "Monto"};
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTable));
+            cell.setBackgroundColor(new Color(22, 160, 133));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(8);
+            cell.setBorder(Rectangle.NO_BORDER);
+            table.addCell(cell);
+        }
+
+        boolean altRow = false;
+        DateTimeFormatter dtfTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        for (com.mycompany.common.dtos.IngresoDTO i : ingresos) {
+            Color rowColor = altRow ? new Color(245, 247, 250) : Color.WHITE;
+            altRow = !altRow;
+
+            addTableCell(table, i.getFechaHora() != null ? i.getFechaHora().format(dtfTime) : "", fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, i.getFolioPago(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, i.getFolioCotizacion(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, i.getClienteNombre(), fontNormal, rowColor, Element.ALIGN_LEFT);
+            addTableCell(table, i.getTipo(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, String.format("$%,.2f", i.getCantidad()), fontNormal, rowColor, Element.ALIGN_RIGHT);
+        }
+
+        document.add(table);
+        document.close();
+    }
+
+    public void exportarOportunidadesPDF(List<com.mycompany.common.dtos.OportunidadDTO> oportunidades, InputStream logoStream, String rutaDestino, String tituloMes) throws Exception {
+        if (oportunidades == null || oportunidades.isEmpty()) {
+            throw new IllegalArgumentException("No hay datos para exportar.");
+        }
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        document.open();
+
+        Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
+        Font fontFechaHdr = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE);
+        Font fontHeaderTable = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.WHITE);
+        Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
+
+        PdfPTable headerTable = new PdfPTable(3);
+        headerTable.setWidthPercentage(100);
+        headerTable.setWidths(new float[]{2.5f, 1f, 0.5f});
+
+        PdfPCell titleCell = new PdfPCell(new Phrase("Reporte de Oportunidades de Venta", fontTitulo));
+        titleCell.setBackgroundColor(new Color(243, 156, 18)); // Naranja
+        titleCell.setBorder(Rectangle.NO_BORDER);
+        titleCell.setPadding(20);
+        titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        headerTable.addCell(titleCell);
+
+        String dateStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date());
+        PdfPCell dateCell = new PdfPCell(new Phrase(dateStr, fontFechaHdr));
+        dateCell.setBackgroundColor(new Color(243, 156, 18));
+        dateCell.setBorder(Rectangle.NO_BORDER);
+        dateCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        dateCell.setPadding(20);
+        headerTable.addCell(dateCell);
+
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBackgroundColor(new Color(243, 156, 18));
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setPadding(10);
+        try {
+            if (logoStream != null) {
+                byte[] bytes = logoStream.readAllBytes();
+                Image logo = Image.getInstance(bytes);
+                logo.scaleToFit(50, 50);
+                logo.setAlignment(Element.ALIGN_RIGHT);
+                logoCell.addElement(logo);
+            }
+        } catch (Exception e) {}
+        headerTable.addCell(logoCell);
+        document.add(headerTable);
+        document.add(new Paragraph(" "));
+
+        Font fontKPIKey = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.DARK_GRAY);
+        Font fontKPIVal = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, new Color(211, 84, 0));
+        PdfPTable kpiTable = new PdfPTable(2);
+        kpiTable.setWidthPercentage(50);
+        kpiTable.setHorizontalAlignment(Element.ALIGN_LEFT);
+        kpiTable.setSpacingAfter(20);
+        kpiTable.setWidths(new float[]{1.5f, 2f});
+        
+        addKPICell(kpiTable, "Filtro:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, tituloMes, fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        addKPICell(kpiTable, "Leads (Contactos):", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, String.valueOf(oportunidades.size()), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        document.add(kpiTable);
+
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{2f, 1.5f, 1.5f, 2f, 1.2f});
+
+        String[] headers = {"Cliente", "Teléfono", "Fecha Pasada", "Paquete Anterior", "Gasto Anterior"};
+        for (String h : headers) {
+            PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTable));
+            cell.setBackgroundColor(new Color(211, 84, 0));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(8);
+            cell.setBorder(Rectangle.NO_BORDER);
+            table.addCell(cell);
+        }
+
+        boolean altRow = false;
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (com.mycompany.common.dtos.OportunidadDTO o : oportunidades) {
+            Color rowColor = altRow ? new Color(245, 247, 250) : Color.WHITE;
+            altRow = !altRow;
+
+            addTableCell(table, o.getClienteNombre(), fontNormal, rowColor, Element.ALIGN_LEFT);
+            addTableCell(table, o.getClienteTelefono(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, o.getFechaEventoPasado() != null ? o.getFechaEventoPasado().format(dtf) : "", fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, o.getNombrePaquete(), fontNormal, rowColor, Element.ALIGN_LEFT);
+            addTableCell(table, String.format("$%,.2f", o.getMontoGastado()), fontNormal, rowColor, Element.ALIGN_RIGHT);
+        }
+
+        document.add(table);
+        document.close();
+    }
 }

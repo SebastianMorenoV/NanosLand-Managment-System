@@ -27,6 +27,10 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
     
     List<Evento> findByFechaBetween(LocalDate inicio, LocalDate fin);
 
+    List<Evento> findByEstadoNot(EstadoEvento estado);
+
+    List<Evento> findByEstadoAndFechaBetween(EstadoEvento estado, LocalDate inicio, LocalDate fin);
+
     boolean existsByFechaAndTurnoAndEstadoNot(LocalDate fecha, TurnoEvento turno, EstadoEvento estado);
 
     /**

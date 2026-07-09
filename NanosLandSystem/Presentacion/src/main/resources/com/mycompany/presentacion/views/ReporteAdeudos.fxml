@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
+<VBox spacing="20" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ReporteAdeudosController">
+    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Reporte de Adeudos (Por Cobrar)" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+            <Label text="Consulta y exporta el historial de clientes que tienen un saldo pendiente." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+    </HBox>
+
+    <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="15">
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Buscar Cliente" styleClass="label-pequeno"/>
+                <TextField fx:id="txtBuscarCliente" promptText="Nombre del cliente..." styleClass="text-field-moderno"/>
+            </VBox>
+            
+            <VBox alignment="BOTTOM_CENTER" spacing="5">
+                <Button fx:id="btnExportar" text="Exportar a PDF" disable="true" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15 8 15; -fx-background-radius: 5;" onAction="#exportarPDF">
+                    <graphic><SVGPath content="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z" fill="white" scaleX="0.8" scaleY="0.8"/></graphic>
+                </Button>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="20" alignment="CENTER_LEFT">
+            <HBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Deudores Encontrados:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblCantidadDeudores" text="0" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            </HBox>
+            <HBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Suma Total de Adeudos:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblTotalDeuda" text="$0.00" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-font-size: 16px;"/>
+            </HBox>
+        </HBox>
+
+        <fx:define>
+            <TableView fx:id="tablaAdeudos" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colFolio" text="Folio" prefWidth="100" />
+                    <TableColumn fx:id="colCliente" text="Cliente" prefWidth="200" />
+                    <TableColumn fx:id="colTelefono" text="Teléfono" prefWidth="120" />
+                    <TableColumn fx:id="colFecha" text="Fecha Evento" prefWidth="120" />
+                    <TableColumn fx:id="colGranTotal" text="Gran Total" prefWidth="120" />
+                    <TableColumn fx:id="colPagado" text="Pagado" prefWidth="120" />
+                    <TableColumn fx:id="colDeuda" text="Saldo Pendiente" prefWidth="150" />
+                </columns>
+            </TableView>
+        </fx:define>
+
+        <Pagination fx:id="paginacion" VBox.vgrow="ALWAYS" maxPageIndicatorCount="7" />
+    </VBox>
+</VBox>

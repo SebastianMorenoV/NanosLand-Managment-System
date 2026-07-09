@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="15" prefWidth="350" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.NuevoCargoExtraModalController" stylesheets="@../styles/styles.css">
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+
+    <Label text="Nuevo Cargo Extra" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Separator/>
+
+    <VBox spacing="5">
+        <Label text="DESCRIPCIÓN *" styleClass="label-pequeno"/>
+        <TextField fx:id="txtDescripcion" promptText="Ej. Cristalería rota, horas extra..." styleClass="text-field-moderno"/>
+    </VBox>
+
+    <HBox spacing="10">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="CANTIDAD *" styleClass="label-pequeno"/>
+            <TextField fx:id="txtCantidad" text="1" styleClass="text-field-moderno"/>
+        </VBox>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="PRECIO UNITARIO ($) *" styleClass="label-pequeno"/>
+            <TextField fx:id="txtPrecioUnitario" promptText="0.00" styleClass="text-field-moderno"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+        <Button text="Registrar Cargo" styleClass="boton-azul" onAction="#guardarCargo"/>
+    </HBox>
+</VBox>
