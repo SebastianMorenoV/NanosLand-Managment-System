@@ -48,8 +48,11 @@ public class App extends Application {
 
         primaryStage.show();
 
-        primaryStage.setMinWidth(1280);
-        primaryStage.setMinHeight(720);
+        // Mínimos por debajo de 1280x720 para que la ventana pueda reducirse en
+        // laptops pequeñas sin quedar bloqueada. El contenido sigue siendo
+        // accesible gracias al scroll que añade ViewSwitcher a cada vista.
+        primaryStage.setMinWidth(1024);
+        primaryStage.setMinHeight(620);
     }
 
     @Override

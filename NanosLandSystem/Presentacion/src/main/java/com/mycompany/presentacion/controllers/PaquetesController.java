@@ -19,7 +19,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -219,11 +218,9 @@ public class PaquetesController {
             }
 
             Stage stage = new Stage();
-            stage.setTitle(paqueteEditar == null ? "Nuevo Paquete" : "Editar Paquete");
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.setResizable(false);
-            stage.showAndWait();
+            com.mycompany.presentacion.utils.ModalHelper.mostrarModal(root,
+                    paqueteEditar == null ? "Nuevo Paquete" : "Editar Paquete", stage);
 
             if (controller.getPaqueteCreado() != null) {
                 cargarPaquetes();
@@ -244,11 +241,8 @@ public class PaquetesController {
             controller.setPaquete(paquete);
 
             Stage stage = new Stage();
-            stage.setTitle("Detalles del Paquete");
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.setResizable(false);
-            stage.showAndWait();
+            com.mycompany.presentacion.utils.ModalHelper.mostrarModal(root, "Detalles del Paquete", stage);
 
             // Si se modificaron los servicios o algo, refrescamos la tabla
             cargarPaquetes();

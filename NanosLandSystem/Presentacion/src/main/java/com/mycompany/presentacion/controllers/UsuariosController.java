@@ -19,7 +19,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -210,11 +209,9 @@ public class UsuariosController {
             }
 
             Stage stage = new Stage();
-            stage.setTitle(clienteEditar == null ? "Nuevo Cliente" : "Editar Cliente");
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.setResizable(false);
-            stage.showAndWait();
+            com.mycompany.presentacion.utils.ModalHelper.mostrarModal(root,
+                    clienteEditar == null ? "Nuevo Cliente" : "Editar Cliente", stage);
 
             // Si se guardó correctamente, recargar la tabla
             if (controller.getClienteCreado() != null) {

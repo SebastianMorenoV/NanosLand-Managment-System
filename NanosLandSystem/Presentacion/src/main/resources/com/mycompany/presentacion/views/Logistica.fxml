@@ -6,7 +6,7 @@
     <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
 
     <!-- Panel Izquierdo: Lista de Eventos -->
-    <VBox prefWidth="340" spacing="15">
+    <VBox prefWidth="340" minWidth="280" spacing="15">
         <HBox alignment="CENTER_LEFT" spacing="10">
             <Label text="Eventos Próximos" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
                 <graphic>

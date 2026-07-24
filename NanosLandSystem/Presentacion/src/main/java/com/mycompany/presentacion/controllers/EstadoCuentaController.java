@@ -14,7 +14,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -196,11 +195,8 @@ public class EstadoCuentaController {
             controller.setEventoId(estadoCuentaActual.getEventoId());
 
             Stage stage = new Stage();
-            stage.setTitle("Registrar Cargo Extra");
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.setResizable(false);
-            stage.showAndWait();
+            com.mycompany.presentacion.utils.ModalHelper.mostrarModal(root, "Registrar Cargo Extra", stage);
 
             if (controller.isCargoRegistrado()) {
                 // Recargar el estado de cuenta

@@ -1139,12 +1139,9 @@ public class CotizacionController {
             NuevoClienteModalController modalController = loader.getController();
 
             Stage modalStage = new Stage();
-            modalStage.setTitle("Registrar Nuevo Cliente");
             modalStage.initModality(Modality.APPLICATION_MODAL);
             modalStage.initStyle(StageStyle.UTILITY);
-            modalStage.setScene(new Scene(root));
-            modalStage.setResizable(false);
-            modalStage.showAndWait();
+            com.mycompany.presentacion.utils.ModalHelper.mostrarModal(root, "Registrar Nuevo Cliente", modalStage);
 
             configurarComboClientes();
 
