@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class GenerarReporteIngresosUseCase {
 
     private final PagoRepository pagoRepository;
 
+    @Transactional(readOnly = true)
     public List<IngresoDTO> generarReporteIngresos(LocalDate inicio, LocalDate fin) {
         LocalDateTime fechaInicio = inicio != null ? inicio.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
         LocalDateTime fechaFin = fin != null ? fin.atTime(23, 59, 59) : LocalDateTime.now().plusYears(100);

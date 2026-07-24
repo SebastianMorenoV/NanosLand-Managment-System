@@ -7,7 +7,7 @@
 <VBox xmlns="http://javafx.com/javafx/17"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.mycompany.presentacion.controllers.SeleccionarFechaController"
-      spacing="15">
+      spacing="15" minHeight="0">
 
     <stylesheets>
         <String fx:value="/com/mycompany/presentacion/styles/styles.css"/>
@@ -67,6 +67,7 @@
     <!-- SCROLLPANE CON EL GRID -->
     <ScrollPane fitToWidth="true"
                 VBox.vgrow="ALWAYS"
+                minHeight="0"
                 styleClass="scroll-pane"
                 hbarPolicy="NEVER"
                 vbarPolicy="AS_NEEDED">

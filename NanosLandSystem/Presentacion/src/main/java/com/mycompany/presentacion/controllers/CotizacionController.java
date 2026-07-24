@@ -7,6 +7,7 @@ import com.example.negocio.cotizacion.usecase.EliminarCotizacionUseCase;
 import com.example.negocio.cotizacion.usecase.CalcularTotalCotizacionUseCase;
 import com.example.negocio.cotizacion.usecase.CrearCotizacionUseCase;
 import com.example.negocio.cotizacion.usecase.GenerarComprobanteUseCase;
+import com.example.negocio.cotizacion.usecase.GenerarContratoUseCase;
 import com.example.negocio.cotizacion.usecase.ListarCotizacionesUseCase;
 import com.example.negocio.cotizacion.usecase.RegistrarAnticipoUseCase;
 import com.example.negocio.cotizacion.usecase.ModificarCotizacionUseCase;
@@ -69,6 +70,7 @@ public class CotizacionController {
     private final ModificarCotizacionUseCase modificarCotizacionUseCase;
     private final EliminarCotizacionUseCase eliminarCotizacionUseCase;
     private final GenerarComprobanteUseCase generarComprobanteUseCase;
+    private final GenerarContratoUseCase generarContratoUseCase;
     private final RegistrarAnticipoUseCase registrarAnticipoUseCase;
     private final CotizacionContext cotizacionContext;
 
@@ -482,7 +484,36 @@ public class CotizacionController {
             }
         });
 
-        HBox footer = new HBox(18, btnCrearSalir, btnImprimir);
+        Button btnContrato = new Button("Generar Contrato");
+        btnContrato.getStyleClass().add("boton-azul-claro");
+        btnContrato.setOnAction(ev -> {
+            if (cotizacionGuardada.getId() == null) {
+                mostrarError("No se encontró el ID de la cotización para imprimir.");
+                return;
+            }
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Guardar contrato PDF");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
+            fileChooser.setInitialFileName(cotizacionGuardada.getFolio() != null ? "Contrato_" + cotizacionGuardada.getFolio() + ".pdf" : "contrato.pdf");
+
+            File destino = fileChooser.showSaveDialog(modalStage);
+            if (destino == null) return;
+
+            try {
+                byte[] pdf = generarContratoUseCase.generarContrato(cotizacionGuardada.getId());
+                try (FileOutputStream fos = new FileOutputStream(destino)) {
+                    fos.write(pdf);
+                }
+
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(destino);
+                }
+            } catch (Exception ex) {
+                mostrarError("No se pudo generar el contrato. Intente de nuevo.");
+            }
+        });
+
+        HBox footer = new HBox(18, btnCrearSalir, btnImprimir, btnContrato);
         footer.setAlignment(Pos.CENTER_RIGHT);
 
         body.getChildren().addAll(q, req, anticipoRow, footer);
@@ -1292,6 +1323,14 @@ public class CotizacionController {
         }
         try {
             double monto = Double.parseDouble(txtAbono.getText().trim());
+            double pagadoActual = registrarAnticipoUseCase.obtenerTotalAbonado(getCotizacionEnEdicionId());
+            if (pagadoActual == 0 && monto < 3000) {
+                mostrarError("El pago mínimo inicial (anticipo) debe ser de al menos $3,000.");
+                return;
+            } else if (pagadoActual < 3000 && (pagadoActual + monto) < 3000) {
+                mostrarError("El pago total acumulado no alcanza los $3,000 requeridos como mínimo.");
+                return;
+            }
             registrarAnticipoUseCase.registrarAnticipo(getCotizacionEnEdicionId(), monto, MetodoPago.EFECTIVO);
             txtAbono.setText("");
             
@@ -1358,6 +1397,32 @@ public class CotizacionController {
             if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(destino);
         } catch (Exception ex) {
             mostrarError("No se pudo generar el comprobante PDF.");
+        }
+    }
+    
+    @FXML
+    private void generarContratoEnEdicion() {
+        if (!isModoEdicion() || getCotizacionEnEdicionId() == null) {
+            mostrarError("Seleccione una cotización guardada para generar el contrato.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar contrato PDF");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
+        fileChooser.setInitialFileName("Contrato.pdf");
+        
+        File destino = fileChooser.showSaveDialog(btnConfirmarCotizacion.getScene().getWindow());
+        if (destino == null) return;
+        
+        try {
+            byte[] pdf = generarContratoUseCase.generarContrato(getCotizacionEnEdicionId());
+            try (FileOutputStream fos = new FileOutputStream(destino)) {
+                fos.write(pdf);
+            }
+            if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(destino);
+        } catch (Exception ex) {
+            mostrarError("No se pudo generar el contrato PDF.");
         }
     }
     

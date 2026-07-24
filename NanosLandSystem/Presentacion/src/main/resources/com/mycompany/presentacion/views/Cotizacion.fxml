@@ -6,7 +6,7 @@
 <?import org.controlsfx.control.SearchableComboBox?>
 
 <!-- Padding reducido a 15px top/bottom para caber en 720px -->
-<VBox spacing="12" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.CotizacionController">
+<VBox spacing="12" minHeight="0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.CotizacionController">
     <padding>
         <Insets top="18" right="40" bottom="18" left="40"/>
     </padding>
@@ -20,7 +20,8 @@
     </HBox>
 
     <!-- CUERPO PRINCIPAL -->
-    <HBox spacing="16" VBox.vgrow="ALWAYS">
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" minHeight="0" style="-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0; -fx-border-color: transparent;">
+    <HBox spacing="16">
 
         <!-- ── PANEL LATERAL COTIZACIONES ── -->
         <VBox spacing="10" minWidth="260" prefWidth="280" HBox.hgrow="NEVER" styleClass="panel-cotizaciones">            
@@ -32,7 +33,8 @@
             <ListView fx:id="listaCotizaciones"
                       VBox.vgrow="ALWAYS"
                       styleClass="lista-moderna"
-                      prefHeight="300"/>
+                      prefHeight="250"
+                      minHeight="50"/>
 
             <HBox spacing="10" alignment="CENTER">
                 <Button fx:id="btnNuevaCotizacion" text="Nueva"
@@ -45,8 +47,9 @@
             </HBox>
         </VBox>
 
-        <!-- ── COLUMNA IZQUIERDA ── -->
-        <VBox spacing="10" prefWidth="360" HBox.hgrow="NEVER">
+
+                <!-- ── COLUMNA IZQUIERDA ── -->
+                <VBox spacing="10" prefWidth="360" HBox.hgrow="NEVER">
 
             <!-- ASIGNAR CLIENTE -->
             <VBox styleClass="tarjeta-blanca" spacing="8">
@@ -166,7 +169,7 @@
                 </HBox>
 
                 <Label text="Mantén presionada la tecla Ctrl para seleccionar varios extras" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
-                <ListView fx:id="listaServiciosExtras" VBox.vgrow="ALWAYS" prefHeight="200" styleClass="lista-moderna" />
+                <ListView fx:id="listaServiciosExtras" VBox.vgrow="ALWAYS" prefHeight="150" minHeight="50" styleClass="lista-moderna" />
                 <HBox alignment="BOTTOM_RIGHT" spacing="20">
                     <Label fx:id="lblSubtotalExtras" text="Subtotal Extras: $0.00" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
                     <VBox alignment="CENTER_RIGHT">
@@ -201,6 +204,9 @@
             </HBox>
 
             <HBox fx:id="boxBotonesEdicion" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20" visible="false" managed="false">
+                <Button fx:id="btnGenerarContratoEdicion" text="Generar Contrato" onAction="#generarContratoEnEdicion"
+                        styleClass="boton-azul-claro"
+                        minWidth="-Infinity"/>
                 <Button fx:id="btnDescartarCambios" text="Descartar Cambios" onAction="#nuevaCotizacion"
                         styleClass="boton-texto-rojo"
                         minWidth="-Infinity"/>
@@ -213,4 +219,5 @@
             </HBox>
         </VBox>
     </HBox>
+</ScrollPane>
 </VBox>

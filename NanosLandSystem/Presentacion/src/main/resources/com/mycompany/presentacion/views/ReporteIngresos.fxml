@@ -42,7 +42,7 @@
         <HBox spacing="20" alignment="CENTER_LEFT">
             <HBox spacing="5" alignment="CENTER_LEFT">
                 <Label text="Total Ingresado en el Periodo:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
-                <Label fx:id="lblIngresoTotal" text="$0.00" style="-fx-font-weight: bold; -fx-text-fill: #27ae60; -fx-font-size: 18px;"/>
+                <Label fx:id="lblIngresoTotal" text="\$0.00" style="-fx-font-weight: bold; -fx-text-fill: #27ae60; -fx-font-size: 18px;"/>
             </HBox>
         </HBox>
 

@@ -20,7 +20,7 @@ public class BuscarUsuarioSistemaUseCase {
 
     @Transactional(readOnly = true)
     public List<UsuarioSistemaDTO> obtenerTodos() {
-        return UsuarioSistemaMapper.toDTOList(usuarioRepository.findByActivoTrue());
+        return UsuarioSistemaMapper.toDTOList(usuarioRepository.findAll());
     }
 
     @Transactional(readOnly = true)

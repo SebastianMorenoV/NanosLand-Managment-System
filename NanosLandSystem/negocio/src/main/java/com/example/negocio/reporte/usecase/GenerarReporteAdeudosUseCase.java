@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ public class GenerarReporteAdeudosUseCase {
     private final EventoRepository eventoRepository;
     private final ConsultarEstadoCuentaUseCase consultarEstadoCuentaUseCase;
 
+    @Transactional(readOnly = true)
     public List<AdeudoDTO> generarReporteAdeudos() {
         // Obtenemos eventos que no estén cancelados
         List<Evento> eventosActivos = eventoRepository.findByEstadoNot(EstadoEvento.CANCELADO);

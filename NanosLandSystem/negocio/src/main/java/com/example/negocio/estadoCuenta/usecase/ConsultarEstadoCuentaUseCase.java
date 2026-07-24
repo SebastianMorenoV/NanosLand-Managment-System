@@ -105,6 +105,15 @@ public class ConsultarEstadoCuentaUseCase {
 
     @Transactional(readOnly = true)
     public List<Evento> obtenerEventosCobranza() {
-        return eventoRepository.findByEstadoNot(com.mycompany.persistencia.enums.EstadoEvento.CANCELADO);
+        List<Evento> eventos = eventoRepository.findByEstadoNot(com.mycompany.persistencia.enums.EstadoEvento.CANCELADO);
+        eventos.forEach(e -> {
+            if (e.getCotizacion() != null) {
+                org.hibernate.Hibernate.initialize(e.getCotizacion());
+                if (e.getCotizacion().getCliente() != null) {
+                    org.hibernate.Hibernate.initialize(e.getCotizacion().getCliente());
+                }
+            }
+        });
+        return eventos;
     }
 }

@@ -34,7 +34,7 @@
             </HBox>
             <HBox spacing="5" alignment="CENTER_LEFT">
                 <Label text="Suma Total de Adeudos:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
-                <Label fx:id="lblTotalDeuda" text="$0.00" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-font-size: 16px;"/>
+                <Label fx:id="lblTotalDeuda" text="\$0.00" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-font-size: 16px;"/>
             </HBox>
         </HBox>
 

@@ -41,25 +41,25 @@
         <HBox spacing="15" VBox.vgrow="ALWAYS">
             <!-- Columna de Cargos -->
             <VBox spacing="10" HBox.hgrow="ALWAYS" prefWidth="300">
-                <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="5">
+                <VBox styleClass="tarjeta-blanca" spacing="5">
                     <Label text="PRESUPUESTO ORIGINAL" styleClass="titulo-seccion"/>
-                    <ListView fx:id="listaPresupuesto" VBox.vgrow="ALWAYS" prefHeight="100"/>
+                    <ListView fx:id="listaPresupuesto" prefHeight="130"/>
                 </VBox>
-                <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="5">
+                <VBox styleClass="tarjeta-blanca" spacing="5">
                     <HBox alignment="CENTER_LEFT">
                         <Label text="CARGOS EXTRAS" styleClass="titulo-seccion"/>
                         <Region HBox.hgrow="ALWAYS"/>
                         <Button text="+ Cargo" styleClass="boton-azul-claro" onAction="#abrirModalCargoExtra" style="-fx-font-size: 10px; -fx-padding: 3 8 3 8;"/>
                     </HBox>
-                    <ListView fx:id="listaCargos" VBox.vgrow="ALWAYS" prefHeight="100"/>
+                    <ListView fx:id="listaCargos" prefHeight="130"/>
                 </VBox>
             </VBox>
             
             <!-- Columna de Pagos y Totales -->
-            <VBox spacing="10" prefWidth="250">
-                <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="5">
+            <VBox spacing="10" prefWidth="300" HBox.hgrow="ALWAYS">
+                <VBox styleClass="tarjeta-blanca" spacing="5">
                     <Label text="PAGOS REALIZADOS" styleClass="titulo-seccion"/>
-                    <ListView fx:id="listaPagos" VBox.vgrow="ALWAYS"/>
+                    <ListView fx:id="listaPagos" prefHeight="170"/>
                 </VBox>
 
                 <!-- Totales Consolidados -->
@@ -67,16 +67,16 @@
                     <Label text="BALANCE GENERAL" styleClass="titulo-seccion"/>
                     <HBox alignment="CENTER_RIGHT" spacing="10">
                         <Label text="Gran Total:" style="-fx-text-fill: #7f8c8d;"/>
-                        <Label fx:id="lblGranTotal" text="$0.00" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="lblGranTotal" text="\$0.00" style="-fx-font-weight: bold;"/>
                     </HBox>
                     <HBox alignment="CENTER_RIGHT" spacing="10">
                         <Label text="Pagado:" style="-fx-text-fill: #27ae60;"/>
-                        <Label fx:id="lblPagado" text="$0.00" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                        <Label fx:id="lblPagado" text="\$0.00" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
                     </HBox>
                     <Separator/>
                     <HBox alignment="CENTER_RIGHT" spacing="10">
                         <Label text="SALDO PENDIENTE:" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="lblSaldoPendiente" text="$0.00" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                        <Label fx:id="lblSaldoPendiente" text="\$0.00" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
                     </HBox>
                 </VBox>
             </VBox>

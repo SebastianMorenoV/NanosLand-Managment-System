@@ -22,7 +22,7 @@ public class App extends Application {
         springContext = new SpringApplicationBuilder()
                 .sources(NegocioApplication.class)
                 .sources(PresentacionConfig.class)
-                .run(new String[]{});
+                .run(new String[] {});
     }
 
     @Override
@@ -39,7 +39,7 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
         primaryStage.setFullScreenExitHint("Presiona F11 o ESC para salir de pantalla completa");
-        
+
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.F11) {
                 primaryStage.setFullScreen(!primaryStage.isFullScreen());
