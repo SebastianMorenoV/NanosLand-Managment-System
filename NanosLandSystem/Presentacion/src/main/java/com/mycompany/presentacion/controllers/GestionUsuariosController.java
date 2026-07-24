@@ -2,6 +2,7 @@ package com.mycompany.presentacion.controllers;
 
 import com.example.negocio.usuario.usecase.BuscarUsuarioSistemaUseCase;
 import com.example.negocio.usuario.usecase.EliminarUsuarioSistemaUseCase;
+import com.example.negocio.usuario.usecase.ActivarUsuarioSistemaUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.UsuarioSistemaDTO;
 import com.mycompany.persistencia.enums.RolUsuario;
@@ -36,6 +37,7 @@ public class GestionUsuariosController {
 
     private final BuscarUsuarioSistemaUseCase buscarUsuarioUseCase;
     private final EliminarUsuarioSistemaUseCase eliminarUsuarioUseCase;
+    private final ActivarUsuarioSistemaUseCase activarUsuarioUseCase;
 
     @FXML private TextField txtBuscar;
     @FXML private TableView<UsuarioSistemaDTO> tablaUsuarios;
@@ -46,6 +48,7 @@ public class GestionUsuariosController {
     @FXML private TableColumn<UsuarioSistemaDTO, String> colCorreo;
     @FXML private TableColumn<UsuarioSistemaDTO, String> colTelefono;
     @FXML private TableColumn<UsuarioSistemaDTO, RolUsuario> colRol;
+    @FXML private TableColumn<UsuarioSistemaDTO, String> colEstado;
     @FXML private Pagination paginacion;
 
     private static final int ITEMS_POR_PAGINA = 20;
@@ -64,13 +67,31 @@ public class GestionUsuariosController {
         tablaUsuarios.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             boolean hasSelection = newSelection != null;
             if (btnEditar != null) btnEditar.setDisable(!hasSelection);
-            if (btnEliminar != null) btnEliminar.setDisable(!hasSelection);
+            if (btnEliminar != null) {
+                btnEliminar.setDisable(!hasSelection);
+                if (hasSelection) {
+                    if (newSelection.isActivo()) {
+                        btnEliminar.setText("Desactivar");
+                        btnEliminar.getStyleClass().setAll("button", "boton-rojo");
+                    } else {
+                        btnEliminar.setText("Activar");
+                        btnEliminar.getStyleClass().setAll("button", "boton-verde");
+                    }
+                } else {
+                    btnEliminar.setText("Desactivar");
+                    btnEliminar.getStyleClass().setAll("button", "boton-rojo");
+                }
+            }
         });
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colCorreo.setCellValueFactory(new PropertyValueFactory<>("correo"));
         colTelefono.setCellValueFactory(new PropertyValueFactory<>("telefono"));
         colRol.setCellValueFactory(new PropertyValueFactory<>("rol"));
+        colEstado.setCellValueFactory(cellData -> {
+            boolean activo = cellData.getValue().isActivo();
+            return new javafx.beans.property.SimpleStringProperty(activo ? "Activo" : "Inactivo");
+        });
 
         configurarBuscadorYPaginacion();
         cargarUsuarios();
@@ -150,16 +171,26 @@ public class GestionUsuariosController {
         UsuarioSistemaDTO seleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
         if (seleccionado == null) return;
 
+        boolean desactivando = seleccionado.isActivo();
+
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirmar Eliminación");
-        alert.setHeaderText("¿Estás seguro de desactivar el usuario " + seleccionado.getCorreo() + "?");
-        alert.setContentText("El usuario será desactivado y no podrá iniciar sesión.");
+        alert.setTitle("Confirmar " + (desactivando ? "Desactivación" : "Activación"));
+        alert.setHeaderText("¿Estás seguro de " + (desactivando ? "desactivar" : "activar") + " el usuario " + seleccionado.getCorreo() + "?");
+        alert.setContentText(desactivando ? "El usuario será desactivado y no podrá iniciar sesión." : "El usuario será activado y podrá volver a iniciar sesión.");
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                eliminarUsuarioUseCase.eliminarUsuario(seleccionado.getId());
-                masterData.remove(seleccionado);
+                if (desactivando) {
+                    eliminarUsuarioUseCase.eliminarUsuario(seleccionado.getId());
+                    seleccionado.setActivo(false);
+                } else {
+                    activarUsuarioUseCase.activarUsuario(seleccionado.getId());
+                    seleccionado.setActivo(true);
+                }
+                tablaUsuarios.refresh();
+                tablaUsuarios.getSelectionModel().clearSelection();
+                tablaUsuarios.getSelectionModel().select(seleccionado);
             } catch (CotizacionException e) {
                 Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                 errorAlert.setTitle("Error al eliminar");

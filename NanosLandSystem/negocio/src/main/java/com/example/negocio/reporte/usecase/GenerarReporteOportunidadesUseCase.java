@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ public class GenerarReporteOportunidadesUseCase {
 
     private final EventoRepository eventoRepository;
 
+    @Transactional(readOnly = true)
     public List<OportunidadDTO> generarReporte(int year, int month) {
         // Buscamos los eventos de hace exactamente un año (o el año pasado en ese mes)
         // Pero la lógica de recompra suele ser: "En este mes (ej. Julio), ¿quiénes tuvieron evento en Julio del año pasado?"
