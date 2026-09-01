@@ -18,8 +18,11 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 
@@ -29,27 +32,43 @@ public class MainShellController {
 
     private final SesionContext sesionContext;
 
-    @FXML private BorderPane rootPane;
-    @FXML private ToggleGroup navGroup;
-    @FXML private ToggleButton btnCotizacion;
-    @FXML private ToggleButton btnClientes;
-    @FXML private ToggleButton btnPaquetes;
-    @FXML private ToggleButton btnReportes;
-    @FXML private ToggleButton btnLogistica;
-    @FXML private ToggleButton btnEstadoCuenta;
-    @FXML private ToggleButton btnReporteAdeudos;
-    @FXML private ToggleButton btnReporteIngresos;
-    @FXML private ToggleButton btnOportunidades;
-    @FXML private ToggleButton btnGestionUsuarios;
-    @FXML private Label lblReloj;
-    @FXML private ImageView imgLogo;
-    @FXML private Label lblUsuarioActual;
-    @FXML private Button btnCerrarSesion;
+    @FXML
+    private BorderPane rootPane;
+    @FXML
+    private ToggleGroup navGroup;
+    @FXML
+    private ToggleButton btnCotizacion;
+    @FXML
+    private ToggleButton btnClientes;
+    @FXML
+    private ToggleButton btnPaquetes;
+    @FXML
+    private ToggleButton btnReportes;
+    @FXML
+    private ToggleButton btnLogistica;
+    @FXML
+    private ToggleButton btnEstadoCuenta;
+    @FXML
+    private ToggleButton btnReporteAdeudos;
+    @FXML
+    private ToggleButton btnReporteIngresos;
+    @FXML
+    private ToggleButton btnOportunidades;
+    @FXML
+    private ToggleButton btnGestionUsuarios;
+    @FXML
+    private Label lblReloj;
+    @FXML
+    private ImageView imgLogo;
+    @FXML
+    private Label lblUsuarioActual;
+    @FXML
+    private Button btnCerrarSesion;
 
     @FXML
     public void initialize() {
         ViewSwitcher.setContenedorPrincipal(rootPane);
-        
+
         try {
             imgLogo.setImage(new Image(getClass().getResourceAsStream("/Logo Nanos.png")));
         } catch (Exception e) {
@@ -84,7 +103,7 @@ public class MainShellController {
         if (lblReloj != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a");
             Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
-                lblReloj.setText(LocalDateTime.now().format(formatter));
+                lblReloj.setText(LocalDateTime.now().atZone(ZoneId.of("America/Hermosillo")).format(formatter));
             }), new KeyFrame(Duration.seconds(1)));
             clock.setCycleCount(Animation.INDEFINITE);
             clock.play();
