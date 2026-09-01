@@ -60,7 +60,7 @@ public class GenerarContratoUseCase {
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document(PageSize.LETTER, 40, 40, 40, 40);
+        Document document = new Document(PageSize.LEGAL, 40, 40, 30, 30);
 
         try {
             PdfWriter.getInstance(document, baos);
