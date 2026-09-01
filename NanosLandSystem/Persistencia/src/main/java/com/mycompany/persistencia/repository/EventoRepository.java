@@ -27,6 +27,19 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
     
     List<Evento> findByFechaBetween(LocalDate inicio, LocalDate fin);
 
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT DISTINCT e FROM Evento e " +
+        "LEFT JOIN FETCH e.cotizacion c " +
+        "LEFT JOIN FETCH c.cliente " +
+        "LEFT JOIN FETCH c.paquete " +
+        "LEFT JOIN FETCH e.cargosExtras " +
+        "WHERE e.fecha BETWEEN :inicio AND :fin"
+    )
+    List<Evento> findByFechaBetweenWithRelations(
+        @org.springframework.data.repository.query.Param("inicio") LocalDate inicio,
+        @org.springframework.data.repository.query.Param("fin") LocalDate fin
+    );
+
     List<Evento> findByEstadoNot(EstadoEvento estado);
 
     List<Evento> findByEstadoAndFechaBetween(EstadoEvento estado, LocalDate inicio, LocalDate fin);
@@ -70,4 +83,14 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
         @org.springframework.data.repository.query.Param("estado") EstadoEvento estado,
         org.springframework.data.domain.Pageable pageable
     );
+
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT DISTINCT e FROM Evento e " +
+        "LEFT JOIN FETCH e.cotizacion c " +
+        "LEFT JOIN FETCH c.cliente cl " +
+        "LEFT JOIN FETCH c.paquete p " +
+        "LEFT JOIN FETCH e.cargosExtras ce " +
+        "ORDER BY e.fecha DESC, e.id DESC"
+    )
+    List<Evento> findAllWithRelations();
 }

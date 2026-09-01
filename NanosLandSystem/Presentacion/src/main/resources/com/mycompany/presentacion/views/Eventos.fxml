@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
+
+<VBox spacing="15" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.EventosController">
+    <padding><Insets top="25" right="35" bottom="25" left="35"/></padding>
+
+    <!-- Cabecera Principal -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox HBox.hgrow="ALWAYS" spacing="4">
+            <Label text="Gestión de Eventos" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
+                <graphic>
+                    <SVGPath content="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5z" fill="#1a82b8" scaleX="1.1" scaleY="1.1"/>
+                </graphic>
+            </Label>
+            <Label text="Visualiza, filtra y administra el ciclo de vida de todos los eventos registrados." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+        <Button text="⟳ Actualizar" styleClass="boton-azul-claro" onAction="#recargarEventos" style="-fx-font-size: 13px;"/>
+    </HBox>
+
+    <!-- Tarjetas KPI de Resumen Rápido -->
+    <HBox spacing="10">
+        <!-- Total -->
+        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #2c3e50; -fx-border-left-width: 4px;">
+            <Label text="TOTAL EVENTOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+            <Label fx:id="lblKpiTotal" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        </VBox>
+
+        <!-- Tentativos -->
+        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #f39c12; -fx-border-left-width: 4px;">
+            <Label text="TENTATIVOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
+            <Label fx:id="lblKpiTentativos" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
+        </VBox>
+
+        <!-- Confirmados -->
+        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #1a82b8; -fx-border-left-width: 4px;">
+            <Label text="CONFIRMADOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+            <Label fx:id="lblKpiConfirmados" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+        </VBox>
+
+        <!-- En Curso -->
+        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #8e44ad; -fx-border-left-width: 4px;">
+            <Label text="EN CURSO" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #8e44ad;"/>
+            <Label fx:id="lblKpiEnCurso" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #8e44ad;"/>
+        </VBox>
+
+        <!-- Finalizados -->
+        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #27ae60; -fx-border-left-width: 4px;">
+            <Label text="FINALIZADOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+            <Label fx:id="lblKpiFinalizados" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+        </VBox>
+
+        <!-- Cancelados -->
+        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #e74c3c; -fx-border-left-width: 4px;">
+            <Label text="CANCELADOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+            <Label fx:id="lblKpiCancelados" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+        </VBox>
+    </HBox>
+
+    <!-- Contenedor Principal con Filtros y Tabla -->
+    <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="12">
+        <!-- Barra de Filtros -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <HBox spacing="8" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <SVGPath content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#7f8c8d" />
+                <TextField fx:id="txtBuscar" promptText="Buscar por folio, cliente, festejado, temática o paquete..." HBox.hgrow="ALWAYS" styleClass="text-field-moderno"/>
+            </HBox>
+
+            <ComboBox fx:id="cmbEstado" promptText="Todos los estados" prefWidth="160" styleClass="text-field-moderno"/>
+            <ComboBox fx:id="cmbTurno" promptText="Todos los turnos" prefWidth="150" styleClass="text-field-moderno"/>
+            <DatePicker fx:id="dpInicio" promptText="Desde" prefWidth="135" styleClass="text-field-moderno"/>
+            <DatePicker fx:id="dpFin" promptText="Hasta" prefWidth="135" styleClass="text-field-moderno"/>
+            <Button text="Limpiar" styleClass="boton-texto-gris" onAction="#limpiarFiltros"/>
+        </HBox>
+
+        <!-- Tabla definida en fx:define para ser gobernada por la paginación -->
+        <fx:define>
+            <TableView fx:id="tablaEventos">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+                <columns>
+                    <TableColumn fx:id="colFolio" text="Folio" prefWidth="90" maxWidth="120" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colFecha" text="Fecha" prefWidth="100" maxWidth="120" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colTurno" text="Turno" prefWidth="90" maxWidth="110" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colCliente" text="Cliente" prefWidth="180" style="-fx-alignment: CENTER_LEFT;"/>
+                    <TableColumn fx:id="colFestejado" text="Festejado / Temática" prefWidth="160" style="-fx-alignment: CENTER_LEFT;"/>
+                    <TableColumn fx:id="colPaquete" text="Paquete" prefWidth="140" style="-fx-alignment: CENTER_LEFT;"/>
+                    <TableColumn fx:id="colTotal" text="Total" prefWidth="100" maxWidth="130" style="-fx-alignment: CENTER_RIGHT;"/>
+                    <TableColumn fx:id="colEstado" text="Estado" prefWidth="120" maxWidth="140" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colAcciones" text="Acción" prefWidth="90" maxWidth="110" style="-fx-alignment: CENTER;"/>
+                </columns>
+            </TableView>
+        </fx:define>
+
+        <!-- Paginación -->
+        <Pagination fx:id="paginacion" VBox.vgrow="ALWAYS" maxPageIndicatorCount="7"/>
+    </VBox>
+</VBox>

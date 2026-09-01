@@ -162,7 +162,19 @@ INSERT INTO logistica_servicios (evento_id, servicio_id, responsable_turno, hora
 (6, 9, 'Hot Dogs El Chino', '14:00:00', 'Llevar salsas extra', NULL, 'Jardín', 'CONFIRMADO'),
 (10, 13, 'Rodeo Party', '16:00:00', 'Enchufe trifásico necesario', NULL, 'Centro', 'ENCARGADO'),
 (12, 1, 'Payasos XYZ', '09:30:00', 'Dos rutinas separadas', NULL, 'Escenario', 'ENCARGADO'),
-(17, 14, 'DJ Sonido Master', '17:00:00', 'Probar luces a las 18:00', NULL, 'Pista de baile', 'ENCARGADO');
+(17, 14, 'DJ Sonido Master', '17:00:00', 'Probar luces a las 18:00', NULL, 'Pista de baile', 'ENCARGADO'),
+-- Eventos futuros (Sept 2026) — Baby Shower (evento 18, paquete Básico: servicios 5,3)
+(18, 5, NULL, '13:00:00', 'Globos tema Ositos', NULL, 'Entrada del salón', 'POR_CONTACTAR'),
+(18, 3, NULL, '14:00:00', 'Pintacaritas para niños acompañantes', NULL, 'Mesa lateral', 'POR_CONTACTAR'),
+-- Primera Comunión (evento 19, paquete NanosLand: servicios 1,4,3 + extra piñatas)
+(19, 1, 'Agencia Payasitas', '10:00:00', 'Show después de misa', NULL, 'Centro del salón', 'ENCARGADO'),
+(19, 4, NULL, '09:00:00', 'Mesa de snacks para 60 personas', 'Incluir fruta', 'Entrada', 'POR_CONTACTAR'),
+(19, 3, NULL, '11:00:00', 'Pintacaritas angelitos', NULL, 'Mesa de niños', 'POR_CONTACTAR'),
+(19, 7, NULL, '12:00:00', '3 piñatas de cruz grandes', NULL, 'Patio', 'POR_CONTACTAR'),
+-- Despedida de Soltera (evento 20, paquete Premium Acuático: servicios 2,4,5)
+(20, 2, 'Brincolines Max', '17:00:00', 'Brincolin acuático rosa', NULL, 'Jardín trasero', 'CONFIRMADO'),
+(20, 4, NULL, '16:30:00', 'Snacks temáticos despedida', 'Incluir shots', 'Barra', 'ENCARGADO'),
+(20, 5, NULL, '16:00:00', 'Decoración arco de globos rosa y dorado', NULL, 'Entrada y mesa principal', 'POR_CONTACTAR');
 
 -- 10. Cargos Extras
 INSERT INTO cargos_extras (evento_id, descripcion, cantidad, precio_unitario, subtotal, fecha_hora_cargo) VALUES

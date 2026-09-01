@@ -39,6 +39,8 @@ public class MainShellController {
     @FXML
     private ToggleButton btnCotizacion;
     @FXML
+    private ToggleButton btnEventos;
+    @FXML
     private ToggleButton btnClientes;
     @FXML
     private ToggleButton btnPaquetes;
@@ -89,6 +91,18 @@ public class MainShellController {
             btnGestionUsuarios.setManaged(esDueno);
         }
 
+        // Ocultar reportes de adeudos e ingresos para ADMINISTRADOR (solo visible para DUEÑO)
+        if (sesionContext.esAdministrador()) {
+            if (btnReporteAdeudos != null) {
+                btnReporteAdeudos.setVisible(false);
+                btnReporteAdeudos.setManaged(false);
+            }
+            if (btnReporteIngresos != null) {
+                btnReporteIngresos.setVisible(false);
+                btnReporteIngresos.setManaged(false);
+            }
+        }
+
         btnCotizacion.setSelected(true);
         navCotizacion();
 
@@ -113,6 +127,11 @@ public class MainShellController {
     @FXML
     private void navCotizacion() {
         ViewSwitcher.cargarVista("SeleccionarFecha.fxml");
+    }
+
+    @FXML
+    private void navEventos() {
+        ViewSwitcher.cargarVista("Eventos.fxml");
     }
 
     @FXML

@@ -23,6 +23,10 @@ public class SesionContext {
         return usuarioAutenticado != null;
     }
 
+    public boolean esAdministrador() {
+        return usuarioAutenticado != null && usuarioAutenticado.getRol() == RolUsuario.ADMINISTRADOR;
+    }
+
     public void cerrarSesion() {
         this.usuarioAutenticado = null;
     }

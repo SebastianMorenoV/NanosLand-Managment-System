@@ -38,7 +38,7 @@ public class ConsultarLogisticaUseCase {
         LocalDate hoy = LocalDate.now();
         // Traemos todos los eventos entre hoy y 90 días adelante
         LocalDate limite = hoy.plusDays(90);
-        List<Evento> eventos = eventoRepository.findByFechaBetween(hoy, limite);
+        List<Evento> eventos = eventoRepository.findByFechaBetweenWithRelations(hoy, limite);
 
         return eventos.stream()
                 .filter(e -> e.getEstado() != EstadoEvento.CANCELADO)
@@ -56,6 +56,6 @@ public class ConsultarLogisticaUseCase {
      */
     @Transactional(readOnly = true)
     public List<LogisticaDTO> obtenerServiciosPorEvento(Long eventoId) {
-        return LogisticaMapper.toDTOList(logisticaRepo.findByEventoIdOrderByIdAsc(eventoId));
+        return LogisticaMapper.toDTOList(logisticaRepo.findByEventoIdWithServicio(eventoId));
     }
 }

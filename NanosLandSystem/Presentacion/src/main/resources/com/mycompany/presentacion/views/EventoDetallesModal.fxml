@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.SVGPath?>
+
+<VBox spacing="20" prefWidth="580" styleClass="tarjeta-blanca" stylesheets="@../styles/styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.EventoDetallesModalController">
+    <padding><Insets top="25" right="30" bottom="25" left="30"/></padding>
+
+    <!-- Cabecera -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <VBox HBox.hgrow="ALWAYS" spacing="3">
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label fx:id="lblFolio" text="COT-000" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+                <Label fx:id="lblBadgeEstado" text="ESTADO" style="-fx-padding: 3 10 3 10; -fx-background-radius: 12px; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+            </HBox>
+            <Label fx:id="lblCliente" text="Cliente: -" style="-fx-text-fill: #2c3e50; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+        </VBox>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Información General del Evento -->
+    <GridPane hgap="15" vgap="12">
+        <columnConstraints>
+            <ColumnConstraints minWidth="120" prefWidth="130"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <!-- Festejado -->
+        <Label text="Festejado(a):" styleClass="titulo-seccion" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <Label fx:id="lblFestejado" text="-" style="-fx-text-fill: #2c3e50; -fx-font-weight: bold;" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <!-- Temática -->
+        <Label text="Temática:" styleClass="titulo-seccion" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <Label fx:id="lblTematica" text="-" style="-fx-text-fill: #2c3e50;" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <!-- Fecha y Horario -->
+        <Label text="Fecha y Turno:" styleClass="titulo-seccion" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <Label fx:id="lblFechaTurno" text="-" style="-fx-text-fill: #2c3e50;" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <!-- Horario -->
+        <Label text="Horario:" styleClass="titulo-seccion" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <Label fx:id="lblHorario" text="-" style="-fx-text-fill: #2c3e50;" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <!-- Paquete -->
+        <Label text="Paquete:" styleClass="titulo-seccion" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <Label fx:id="lblPaquete" text="-" style="-fx-text-fill: #1a82b8; -fx-font-weight: bold;" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <!-- Notas -->
+        <Label text="Notas / Indicaciones:" styleClass="titulo-seccion" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <Label fx:id="lblNotas" text="Sin notas adicionales." wrapText="true" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <!-- Resumen Financiero -->
+    <VBox style="-fx-background-color: #f8f9fa; -fx-background-radius: 8px; -fx-padding: 12px; -fx-border-color: #e8ecef; -fx-border-radius: 8px;" spacing="6">
+        <Label text="RESUMEN FINANCIERO" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+        <HBox spacing="20">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Total Cotización Base" style="-fx-font-size: 11px; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblTotalCotizacion" text="\$0.00" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            </VBox>
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Cargos Extras" style="-fx-font-size: 11px; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblCargosExtras" text="\$0.00" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+            </VBox>
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="Gran Total Evento" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+                <Label fx:id="lblGranTotal" text="\$0.00" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <Separator/>
+
+    <!-- Sección de Actualización de Estado -->
+    <VBox spacing="8">
+        <Label text="Actualizar Estado del Evento:" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 13px;"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <ComboBox fx:id="cmbNuevoEstado" prefWidth="200" styleClass="text-field-moderno"/>
+            <Button text="Guardar Estado" styleClass="boton-azul" onAction="#guardarEstado"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Cerrar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+        </HBox>
+    </VBox>
+</VBox>
