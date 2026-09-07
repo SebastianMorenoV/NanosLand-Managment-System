@@ -70,6 +70,18 @@ public class ReporteOportunidadesController {
         
         colPaquete.setCellValueFactory(new PropertyValueFactory<>("nombrePaquete"));
         colGasto.setCellValueFactory(new PropertyValueFactory<>("montoGastado"));
+        colGasto.setCellFactory(column -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", item));
+                }
+                setStyle("-fx-alignment: CENTER-RIGHT;");
+            }
+        });
 
         paginacion.setPageCount(1);
         paginacion.setPageFactory(this::crearPagina);

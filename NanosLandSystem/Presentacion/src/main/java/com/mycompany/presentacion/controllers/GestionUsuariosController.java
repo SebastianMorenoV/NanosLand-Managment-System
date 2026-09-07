@@ -67,7 +67,9 @@ public class GestionUsuariosController {
             boolean hasSelection = newSelection != null;
             if (btnEditar != null) btnEditar.setDisable(!hasSelection);
             if (btnEliminar != null) {
-                btnEliminar.setDisable(!hasSelection);
+                // Bloquear el botón para usuarios con rol DUEÑO
+                boolean esDueno = hasSelection && newSelection.getRol() == RolUsuario.DUEÑO;
+                btnEliminar.setDisable(!hasSelection || esDueno);
                 if (hasSelection) {
                     if (newSelection.isActivo()) {
                         btnEliminar.setText("Desactivar");

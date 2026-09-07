@@ -1,13 +1,8 @@
 package com.mycompany.presentacion.controllers;
 
-import com.example.negocio.evento.usecase.ActualizarEstadoEventoUseCase;
-import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.EventoDTO;
 import com.mycompany.persistencia.enums.EstadoEvento;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +13,6 @@ import java.time.format.DateTimeFormatter;
 @Controller
 @RequiredArgsConstructor
 public class EventoDetallesModalController {
-
-    private final ActualizarEstadoEventoUseCase actualizarEstadoEventoUseCase;
 
     @FXML private Label lblFolio;
     @FXML private Label lblBadgeEstado;
@@ -33,15 +26,9 @@ public class EventoDetallesModalController {
     @FXML private Label lblTotalCotizacion;
     @FXML private Label lblCargosExtras;
     @FXML private Label lblGranTotal;
-    @FXML private ComboBox<EstadoEvento> cmbNuevoEstado;
 
     private EventoDTO evento;
     private Runnable onEstadoActualizado;
-
-    @FXML
-    public void initialize() {
-        cmbNuevoEstado.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
-    }
 
     public void setEvento(EventoDTO evento, Runnable onEstadoActualizado) {
         this.evento = evento;
@@ -75,7 +62,6 @@ public class EventoDetallesModalController {
         lblGranTotal.setText(String.format("$%,.2f", granTotal));
 
         actualizarBadgeEstado(evento.getEstadoEvento());
-        cmbNuevoEstado.setValue(evento.getEstadoEvento());
     }
 
     private void actualizarBadgeEstado(EstadoEvento estado) {
@@ -108,47 +94,7 @@ public class EventoDetallesModalController {
         }
     }
 
-    @FXML
-    private void guardarEstado() {
-        EstadoEvento nuevoEstado = cmbNuevoEstado.getValue();
-        if (nuevoEstado == null || evento == null) return;
 
-        if (nuevoEstado == evento.getEstadoEvento()) {
-            cerrarModal();
-            return;
-        }
-
-        try {
-            actualizarEstadoEventoUseCase.actualizarEstado(evento.getId(), nuevoEstado);
-            evento.setEstadoEvento(nuevoEstado);
-            actualizarBadgeEstado(nuevoEstado);
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Estado Actualizado");
-            alert.setHeaderText(null);
-            alert.setContentText("El estado del evento ha sido cambiado a: " + nuevoEstado.name());
-            alert.showAndWait();
-
-            if (onEstadoActualizado != null) {
-                onEstadoActualizado.run();
-            }
-
-            cerrarModal();
-        } catch (CotizacionException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText(null);
-            alert.setContentText(e.getMessage());
-            alert.showAndWait();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText("No se pudo actualizar el estado");
-            alert.setContentText("Ocurrió un error inesperado al actualizar el estado.");
-            alert.showAndWait();
-        }
-    }
 
     @FXML
     private void cerrarModal() {

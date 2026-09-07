@@ -72,6 +72,18 @@ public class ReporteIngresosController {
         colCliente.setCellValueFactory(new PropertyValueFactory<>("clienteNombre"));
         colMetodo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
         colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
+        colCantidad.setCellFactory(column -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", item));
+                }
+                setStyle("-fx-alignment: CENTER-RIGHT;");
+            }
+        });
 
         paginacion.setPageCount(1);
         paginacion.setPageFactory(this::crearPagina);

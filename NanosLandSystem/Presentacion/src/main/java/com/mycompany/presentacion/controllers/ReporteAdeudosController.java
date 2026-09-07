@@ -57,8 +57,44 @@ public class ReporteAdeudosController {
         colTelefono.setCellValueFactory(new PropertyValueFactory<>("clienteTelefono"));
         colFecha.setCellValueFactory(new PropertyValueFactory<>("fechaEvento"));
         colGranTotal.setCellValueFactory(new PropertyValueFactory<>("granTotal"));
+        colGranTotal.setCellFactory(column -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", item));
+                }
+                setStyle("-fx-alignment: CENTER-RIGHT;");
+            }
+        });
         colPagado.setCellValueFactory(new PropertyValueFactory<>("totalPagado"));
+        colPagado.setCellFactory(column -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", item));
+                }
+                setStyle("-fx-alignment: CENTER-RIGHT;");
+            }
+        });
         colDeuda.setCellValueFactory(new PropertyValueFactory<>("saldoPendiente"));
+        colDeuda.setCellFactory(column -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", item));
+                }
+                setStyle("-fx-alignment: CENTER-RIGHT;");
+            }
+        });
 
         paginacion.setPageCount(1);
         paginacion.setPageFactory(this::crearPagina);

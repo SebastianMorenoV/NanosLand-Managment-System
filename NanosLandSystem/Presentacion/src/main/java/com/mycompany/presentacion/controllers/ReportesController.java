@@ -65,6 +65,18 @@ public class ReportesController {
         colPaquete.setCellValueFactory(new PropertyValueFactory<>("paqueteNombre"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estadoEvento"));
         colTotal.setCellValueFactory(new PropertyValueFactory<>("totalCotizacion"));
+        colTotal.setCellFactory(column -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("$%,.2f", item));
+                }
+                setStyle("-fx-alignment: CENTER-RIGHT;");
+            }
+        });
 
         cmbTurno.setItems(FXCollections.observableArrayList(TurnoEvento.values()));
         cmbEstado.setItems(FXCollections.observableArrayList(EstadoEvento.values()));

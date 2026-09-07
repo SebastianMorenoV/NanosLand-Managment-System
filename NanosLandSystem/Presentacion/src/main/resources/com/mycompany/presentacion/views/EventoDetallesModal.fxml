@@ -73,14 +73,9 @@
 
     <Separator/>
 
-    <!-- Sección de Actualización de Estado -->
-    <VBox spacing="8">
-        <Label text="Actualizar Estado del Evento:" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 13px;"/>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <ComboBox fx:id="cmbNuevoEstado" prefWidth="200" styleClass="text-field-moderno"/>
-            <Button text="Guardar Estado" styleClass="boton-azul" onAction="#guardarEstado"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Cerrar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
-        </HBox>
-    </VBox>
+    <!-- Estado del Evento (Solo lectura) -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Cerrar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+    </HBox>
 </VBox>
