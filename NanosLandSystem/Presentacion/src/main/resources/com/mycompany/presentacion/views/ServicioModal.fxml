@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20" prefWidth="450" stylesheets="@../styles/styles.css" style="-fx-background-color: #ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ServicioModalController">
+    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+    <Label fx:id="lblTitulo" text="Nuevo Servicio" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Label text="Ingresa o edita la información del servicio." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+
+    <VBox spacing="5">
+        <Label text="Nombre del Servicio" styleClass="label-pequeno"/>
+        <TextField fx:id="txtNombre" promptText="Ej: Brincolín, Decoración, etc." styleClass="text-field-moderno"/>
+    </VBox>
+
+    <VBox spacing="5">
+        <Label text="Precio" styleClass="label-pequeno"/>
+        <TextField fx:id="txtPrecio" promptText="Ej: 1500.00" styleClass="text-field-moderno"/>
+    </VBox>
+
+    <VBox spacing="5" VBox.vgrow="ALWAYS">
+        <Label text="Descripción" styleClass="label-pequeno"/>
+        <TextArea fx:id="txtDescripcion" promptText="Detalles del servicio..." prefRowCount="4" wrapText="true" styleClass="text-area-notas" VBox.vgrow="ALWAYS"/>
+    </VBox>
+
+    <HBox alignment="CENTER_RIGHT" spacing="15">
+        <Button text="Cancelar" styleClass="boton-azul-claro" onAction="#cerrarModal"/>
+        <Button text="Guardar Servicio" styleClass="boton-azul" onAction="#guardarServicio"/>
+    </HBox>
+</VBox>

@@ -45,6 +45,8 @@ public class MainShellController {
     @FXML
     private ToggleButton btnPaquetes;
     @FXML
+    private ToggleButton btnServicios;
+    @FXML
     private ToggleButton btnReportes;
     @FXML
     private ToggleButton btnLogistica;
@@ -142,6 +144,11 @@ public class MainShellController {
     @FXML
     private void navPaquetes() {
         ViewSwitcher.cargarVista("Paquetes.fxml");
+    }
+
+    @FXML
+    private void navServicios() {
+        ViewSwitcher.cargarVista("Servicios.fxml");
     }
 
     @FXML

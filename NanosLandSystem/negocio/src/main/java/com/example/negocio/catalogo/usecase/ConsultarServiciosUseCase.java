@@ -17,7 +17,7 @@ public class ConsultarServiciosUseCase {
     private ServicioRepository servicioRepository;
 
     public List<ServicioDTO> obtenerTodos() {
-        return servicioRepository.findAll().stream()
+        return servicioRepository.findByActivoTrue().stream()
                 .map(ServicioMapper::toDTO)
                 .collect(Collectors.toList());
     }

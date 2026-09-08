@@ -45,12 +45,11 @@ public class ConsultarCatalogoUseCase {
     }
 
     public List<Servicio> obtenerServicios() {
-        return servicioRepository.findAll();
+        return servicioRepository.findByActivoTrue();
     }
 
     public List<ServicioDTO> obtenerTodosLosServicios() {
-        return servicioRepository.findAll().stream()
-                // AQUÍ ESTÁ LA MAGIA: Usamos 'ServicioMapper' con S mayúscula
+        return servicioRepository.findByActivoTrue().stream()
                 .map(ServicioMapper::toDTO)
                 .collect(Collectors.toList());
     }
