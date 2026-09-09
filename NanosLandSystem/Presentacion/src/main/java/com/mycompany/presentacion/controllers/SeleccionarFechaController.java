@@ -170,7 +170,7 @@ public class SeleccionarFechaController {
 
     private VBox crearCelda(LocalDate fecha, List<Evento> eventos) {
         List<Evento> eventosDelDia = eventos.stream()
-                .filter(e -> e.getFecha() != null && e.getFecha().equals(fecha))
+                .filter(e -> e.getFecha() != null && e.getFecha().equals(fecha) && e.getEstado() != com.mycompany.persistencia.enums.EstadoEvento.CANCELADO)
                 .toList();
 
         int turnosDisponibles = 0;

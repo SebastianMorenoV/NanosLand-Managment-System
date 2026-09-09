@@ -8,5 +8,6 @@ public enum EstadoEvento {
     CONFIRMADO,   // El anticipo mínimo fue pagado, bloquea la fecha
     EN_CURSO,     // El día del evento ha llegado y está sucediendo
     FINALIZADO,   // El evento terminó satisfactoriamente
-    CANCELADO     // El evento fue cancelado (ej. lluvia, problemas de logística)
+    CANCELADO,    // El evento fue cancelado con anticipación
+    CANCELADO_TARDIO // El evento fue cancelado 1 día antes o el mismo día (bloquea la fecha)
 }

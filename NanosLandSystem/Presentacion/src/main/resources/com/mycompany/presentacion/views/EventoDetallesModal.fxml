@@ -73,8 +73,10 @@
 
     <Separator/>
 
-    <!-- Estado del Evento (Solo lectura) -->
+    <!-- Estado del Evento y Acciones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancelar Evento" styleClass="boton-rojo" onAction="#cancelarEvento" fx:id="btnCancelar"/>
+        <Button text="Reprogramar Fecha" styleClass="boton-azul" onAction="#abrirReprogramarModal" fx:id="btnReprogramar"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="Cerrar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
     </HBox>

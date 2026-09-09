@@ -38,6 +38,14 @@ public class ActualizarEstadoEventoUseCase {
         Evento evento = eventoRepository.findById(eventoId)
                 .orElseThrow(() -> new CotizacionException("No se encontró el evento con ID " + eventoId));
 
+        if (nuevoEstado == EstadoEvento.CANCELADO) {
+            java.time.LocalDate hoy = java.time.LocalDate.now();
+            java.time.LocalDate fechaEvento = evento.getFecha();
+            if (fechaEvento != null && (hoy.isEqual(fechaEvento) || hoy.isEqual(fechaEvento.minusDays(1)))) {
+                nuevoEstado = EstadoEvento.CANCELADO_TARDIO;
+            }
+        }
+
         evento.setEstado(nuevoEstado);
         Evento guardado = eventoRepository.save(evento);
         return EventoMapper.toDTO(guardado);

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 
 import java.time.format.DateTimeFormatter;
+import javafx.scene.control.Button;
 
 @Controller
 @RequiredArgsConstructor
@@ -27,8 +28,13 @@ public class EventoDetallesModalController {
     @FXML private Label lblCargosExtras;
     @FXML private Label lblGranTotal;
 
+    @FXML private Button btnCancelar;
+    @FXML private Button btnReprogramar;
+
     private EventoDTO evento;
     private Runnable onEstadoActualizado;
+
+    private final com.example.negocio.evento.usecase.ActualizarEstadoEventoUseCase actualizarEstadoEventoUseCase;
 
     public void setEvento(EventoDTO evento, Runnable onEstadoActualizado) {
         this.evento = evento;
@@ -62,6 +68,12 @@ public class EventoDetallesModalController {
         lblGranTotal.setText(String.format("$%,.2f", granTotal));
 
         actualizarBadgeEstado(evento.getEstadoEvento());
+        
+        boolean deshabilitarBotones = evento.getEstadoEvento() == EstadoEvento.CANCELADO || 
+                                      evento.getEstadoEvento() == EstadoEvento.CANCELADO_TARDIO ||
+                                      evento.getEstadoEvento() == EstadoEvento.FINALIZADO;
+        if (btnCancelar != null) btnCancelar.setDisable(deshabilitarBotones);
+        if (btnReprogramar != null) btnReprogramar.setDisable(deshabilitarBotones);
     }
 
     private void actualizarBadgeEstado(EstadoEvento estado) {
@@ -86,6 +98,7 @@ public class EventoDetallesModalController {
                 lblBadgeEstado.setStyle("-fx-background-color: #eafaf1; -fx-text-fill: #27ae60; -fx-border-color: #27ae60; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 3 10 3 10; -fx-font-weight: bold; -fx-font-size: 11px;");
                 break;
             case CANCELADO:
+            case CANCELADO_TARDIO:
                 lblBadgeEstado.setStyle("-fx-background-color: #fdedec; -fx-text-fill: #e74c3c; -fx-border-color: #e74c3c; -fx-border-radius: 12px; -fx-background-radius: 12px; -fx-padding: 3 10 3 10; -fx-font-weight: bold; -fx-font-size: 11px;");
                 break;
             default:
@@ -94,7 +107,59 @@ public class EventoDetallesModalController {
         }
     }
 
+    @FXML
+    private void cancelarEvento() {
+        javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Cancelar Evento");
+        confirm.setHeaderText("¿Está seguro de que desea cancelar este evento?");
+        confirm.setContentText("Esta acción cambiará el estado del evento. Si se cancela 1 día antes o el mismo día, la fecha no se liberará para otras cotizaciones.");
+        
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == javafx.scene.control.ButtonType.OK) {
+                try {
+                    actualizarEstadoEventoUseCase.actualizarEstado(evento.getId(), EstadoEvento.CANCELADO);
+                    if (onEstadoActualizado != null) onEstadoActualizado.run();
+                    cerrarModal();
+                } catch (Exception e) {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error al cancelar el evento");
+                    alert.setContentText(e.getMessage());
+                    alert.showAndWait();
+                }
+            }
+        });
+    }
 
+    @FXML
+    private void abrirReprogramarModal() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/mycompany/presentacion/views/ReprogramarEventoModal.fxml"));
+            loader.setControllerFactory(com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()::getBean);
+            javafx.scene.Parent root = loader.load();
+
+            ReprogramarEventoModalController controller = loader.getController();
+            controller.setEvento(evento, () -> {
+                if (onEstadoActualizado != null) onEstadoActualizado.run();
+                cerrarModal();
+            });
+
+            Stage stage = new Stage();
+            stage.setTitle("Reprogramar Evento");
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.initOwner(lblFolio.getScene().getWindow());
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.setResizable(false);
+            stage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No se pudo abrir la ventana de reprogramación");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
 
     @FXML
     private void cerrarModal() {
