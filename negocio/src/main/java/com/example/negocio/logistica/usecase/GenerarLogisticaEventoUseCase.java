@@ -27,10 +27,10 @@ import java.util.Map;
 public class GenerarLogisticaEventoUseCase {
 
     /** Datos de un servicio contratado, reunidos del paquete y de los extras. */
-    private static final class Contratado {
-        Servicio servicio;
-        int cantidad;
-        DetalleCotizacion detalle; // primer extra con datos operativos; null si solo viene del paquete
+    public static final class Contratado {
+        public Servicio servicio;
+        public int cantidad;
+        public DetalleCotizacion detalle; // primer extra con datos operativos; null si solo viene del paquete
     }
 
     /**
@@ -95,7 +95,8 @@ public class GenerarLogisticaEventoUseCase {
         }
     }
 
-    private Map<Long, Contratado> serviciosContratados(Cotizacion cotizacion) {
+    /** Servicios contratados en una cotización (paquete + extras), por id de servicio. */
+    public Map<Long, Contratado> serviciosContratados(Cotizacion cotizacion) {
         Map<Long, Contratado> contratados = new LinkedHashMap<>();
 
         if (cotizacion.getPaquete() != null && cotizacion.getPaquete().getServicios() != null) {

@@ -44,6 +44,25 @@ public class LogisticaController {
         cargarEventos();
     }
 
+    /** Abre el reporte semanal: lo que se ocupa cada día de la semana, evento por evento. */
+    @FXML
+    private void abrirReporteSemanal() {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass()
+                    .getResource("/com/mycompany/presentacion/views/ReporteLogisticaSemanal.fxml"));
+            loader.setControllerFactory(com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()::getBean);
+            javafx.scene.Parent root = loader.load();
+
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.initOwner(listaEventos.getScene().getWindow());
+            com.mycompany.presentacion.utils.ModalHelper.mostrarModal(root, "Reporte Semanal de Logística", stage);
+        } catch (Exception e) {
+            e.printStackTrace();
+            com.mycompany.presentacion.config.RegistroErrores.avisar("No se pudo abrir el reporte semanal", e);
+        }
+    }
+
     private void cargarEventos() {
         List<EventoDTO> eventos = consultarLogisticaUseCase.obtenerEventosProximos();
         eventosData.clear();

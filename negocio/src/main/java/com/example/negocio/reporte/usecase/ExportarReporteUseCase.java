@@ -139,7 +139,7 @@ public class ExportarReporteUseCase {
         try {
             if (logoStream != null) {
                 byte[] bytes = logoStream.readAllBytes();
-                Image logo = Image.getInstance(bytes);
+                Image logo = logoReducido(bytes);
                 logo.scaleToFit(50, 50);
                 logo.setAlignment(Element.ALIGN_RIGHT);
                 logoCell.addElement(logo);
@@ -407,7 +407,7 @@ public class ExportarReporteUseCase {
         try {
             if (logoStream != null) {
                 byte[] bytes = logoStream.readAllBytes();
-                Image logo = Image.getInstance(bytes);
+                Image logo = logoReducido(bytes);
                 logo.scaleToFit(50, 50);
                 logo.setAlignment(Element.ALIGN_RIGHT);
                 logoCell.addElement(logo);
@@ -520,7 +520,7 @@ public class ExportarReporteUseCase {
         try {
             if (logoStream != null) {
                 byte[] bytes = logoStream.readAllBytes();
-                Image logo = Image.getInstance(bytes);
+                Image logo = logoReducido(bytes);
                 logo.scaleToFit(50, 50);
                 logo.setAlignment(Element.ALIGN_RIGHT);
                 logoCell.addElement(logo);
@@ -633,7 +633,7 @@ public class ExportarReporteUseCase {
         try {
             if (logoStream != null) {
                 byte[] bytes = logoStream.readAllBytes();
-                Image logo = Image.getInstance(bytes);
+                Image logo = logoReducido(bytes);
                 logo.scaleToFit(50, 50);
                 logo.setAlignment(Element.ALIGN_RIGHT);
                 logoCell.addElement(logo);
@@ -688,6 +688,211 @@ public class ExportarReporteUseCase {
         document.add(table);
         document.close();
     }
+    // ─────────────────────────────────────────────────────────────────────────
+    // Reporte semanal de logística
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public void exportarLogisticaSemanalPDF(com.mycompany.common.dtos.ReporteLogisticaSemanalDTO reporte, InputStream logoStream, String rutaDestino) throws Exception {
+        try {
+            exportarLogisticaSemanalPDFInterno(reporte, logoStream, rutaDestino);
+        } finally {
+            cerrarSalidasPendientes();
+        }
+    }
+
+    private void exportarLogisticaSemanalPDFInterno(com.mycompany.common.dtos.ReporteLogisticaSemanalDTO reporte, InputStream logoStream, String rutaDestino) throws Exception {
+        if (reporte == null || reporte.getDias() == null || reporte.getDias().isEmpty()) {
+            throw new IllegalArgumentException("No hay datos de logística para exportar.");
+        }
+
+        Color azul = new Color(26, 130, 184);
+        Color oscuro = new Color(44, 62, 80);
+        Color grisDia = new Color(236, 240, 241);
+        Color grisTexto = new Color(127, 140, 141);
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document, abrirDestino(rutaDestino));
+        document.open();
+
+        Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
+        Font fontFechaHdr = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE);
+        Font fontRango = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, oscuro);
+        Font fontDia = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE);
+        Font fontDiaDer = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.WHITE);
+        Font fontDiaVacio = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, grisTexto);
+        Font fontDiaVacioDer = FontFactory.getFont(FontFactory.HELVETICA, 10, grisTexto);
+        Font fontTotal = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, azul);
+        Font fontHorario = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, azul);
+        Font fontDescripcion = FontFactory.getFont(FontFactory.HELVETICA, 10, oscuro);
+        Font fontImportante = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(192, 57, 43));
+        Font fontServicio = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, oscuro);
+        Font fontDetalle = FontFactory.getFont(FontFactory.HELVETICA, 10, grisTexto);
+        Font fontCasilla = FontFactory.getFont(FontFactory.ZAPFDINGBATS, 13, grisTexto);
+        Font fontCasillaLista = FontFactory.getFont(FontFactory.ZAPFDINGBATS, 13, new Color(39, 174, 96));
+
+        // Cabecera (la misma de los demás reportes)
+        PdfPTable headerTable = new PdfPTable(3);
+        headerTable.setWidthPercentage(100);
+        headerTable.setWidths(new float[]{2.5f, 1f, 0.5f});
+
+        PdfPCell titleCell = new PdfPCell(new Phrase("Logística de la semana", fontTitulo));
+        titleCell.setBackgroundColor(azul);
+        titleCell.setBorder(Rectangle.NO_BORDER);
+        titleCell.setPadding(20);
+        titleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        headerTable.addCell(titleCell);
+
+        String dateStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date());
+        PdfPCell dateCell = new PdfPCell(new Phrase(dateStr, fontFechaHdr));
+        dateCell.setBackgroundColor(azul);
+        dateCell.setBorder(Rectangle.NO_BORDER);
+        dateCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        dateCell.setPadding(20);
+        headerTable.addCell(dateCell);
+
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBackgroundColor(azul);
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.setPadding(10);
+        try {
+            if (logoStream != null) {
+                byte[] bytes = logoStream.readAllBytes();
+                Image logo = logoReducido(bytes);
+                logo.scaleToFit(50, 50);
+                logo.setAlignment(Element.ALIGN_RIGHT);
+                logoCell.addElement(logo);
+            }
+        } catch (Exception e) {}
+        headerTable.addCell(logoCell);
+        document.add(headerTable);
+
+        Paragraph rango = new Paragraph(reporte.getRango(), fontRango);
+        rango.setSpacingBefore(12);
+        rango.setSpacingAfter(4);
+        document.add(rango);
+
+        for (com.mycompany.common.dtos.ReporteLogisticaSemanalDTO.Dia dia : reporte.getDias()) {
+            int n = dia.getEventos().size();
+            if (n == 0) {
+                PdfPTable vacio = tablaLogistica();
+                agregarBarraDia(vacio, dia.getNombre(), "Sin eventos", grisDia, fontDiaVacio, fontDiaVacioDer);
+                document.add(vacio);
+                continue;
+            }
+
+            boolean primero = true;
+            for (com.mycompany.common.dtos.ReporteLogisticaSemanalDTO.EventoLogistica ev : dia.getEventos()) {
+                // Cada evento va en una sola tabla para que no se parta entre dos páginas;
+                // el primero lleva la barra del día, para que no quede sola al final de una hoja.
+                PdfPTable tabla = tablaLogistica();
+                if (primero) {
+                    agregarBarraDia(tabla, dia.getNombre(), n + (n == 1 ? " evento" : " eventos"), oscuro, fontDia, fontDiaDer);
+                    if (n > 1) {
+                        PdfPCell total = new PdfPCell(new Phrase("Total del día: " + dia.getResumenTexto(), fontTotal));
+                        total.setColspan(4);
+                        total.setBackgroundColor(new Color(235, 245, 251));
+                        total.setBorder(Rectangle.NO_BORDER);
+                        total.setPadding(7);
+                        tabla.addCell(total);
+                    }
+                    primero = false;
+                }
+
+                PdfPCell cabecera = new PdfPCell();
+                cabecera.setColspan(4);
+                cabecera.setBorder(Rectangle.NO_BORDER);
+                cabecera.setPaddingTop(6);
+                cabecera.setPaddingBottom(4);
+                cabecera.addElement(new Paragraph(ev.getHorario(), fontHorario));
+                cabecera.addElement(new Paragraph(ev.getDescripcion(), fontDescripcion));
+                if (ev.getNotas() != null && !ev.getNotas().isBlank()) {
+                    cabecera.addElement(new Paragraph("Importante: " + ev.getNotas().trim(), fontImportante));
+                }
+                tabla.addCell(cabecera);
+
+                if (ev.getServicios().isEmpty()) {
+                    PdfPCell sin = new PdfPCell(new Phrase("No tiene servicios registrados.", fontDetalle));
+                    sin.setColspan(4);
+                    sin.setBorder(Rectangle.NO_BORDER);
+                    tabla.addCell(sin);
+                }
+                for (com.mycompany.common.dtos.ReporteLogisticaSemanalDTO.Servicio sv : ev.getServicios()) {
+                    // En ZapfDingbats, "o" es una casilla vacía y "4" una palomita.
+                    tabla.addCell(celdaLogistica(sv.isListo() ? "4" : "o", sv.isListo() ? fontCasillaLista : fontCasilla, Element.ALIGN_CENTER));
+                    tabla.addCell(celdaLogistica(String.valueOf(sv.getCantidad()), fontServicio, Element.ALIGN_CENTER));
+                    tabla.addCell(celdaLogistica(sv.getNombre(), fontServicio, Element.ALIGN_LEFT));
+                    tabla.addCell(celdaLogistica(sv.getDetalle(), fontDetalle, Element.ALIGN_LEFT));
+                }
+                document.add(tabla);
+            }
+        }
+
+        document.close();
+    }
+
+    private static PdfPTable tablaLogistica() throws Exception {
+        PdfPTable tabla = new PdfPTable(4);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{0.4f, 0.4f, 2.8f, 3.6f});
+        tabla.setSpacingBefore(8);
+        tabla.setKeepTogether(true);
+        return tabla;
+    }
+
+    private static void agregarBarraDia(PdfPTable tabla, String dia, String cuenta, Color fondo, Font fuenteDia, Font fuenteCuenta) {
+        PdfPCell nombre = new PdfPCell(new Phrase(dia, fuenteDia));
+        nombre.setColspan(3);
+        nombre.setBackgroundColor(fondo);
+        nombre.setBorder(Rectangle.NO_BORDER);
+        nombre.setPadding(7);
+        tabla.addCell(nombre);
+
+        PdfPCell derecha = new PdfPCell(new Phrase(cuenta, fuenteCuenta));
+        derecha.setBackgroundColor(fondo);
+        derecha.setBorder(Rectangle.NO_BORDER);
+        derecha.setPadding(7);
+        derecha.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        derecha.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        tabla.addCell(derecha);
+    }
+
+    private static PdfPCell celdaLogistica(String texto, Font fuente, int alineacion) {
+        PdfPCell celda = new PdfPCell(new Phrase(texto, fuente));
+        celda.setBorder(Rectangle.BOTTOM);
+        celda.setBorderColor(new Color(236, 240, 241));
+        celda.setPaddingTop(4);
+        celda.setPaddingBottom(5);
+        celda.setHorizontalAlignment(alineacion);
+        celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        return celda;
+    }
+
+    /**
+     * Logo para la cabecera de los reportes. El archivo original mide 2000 px y pesa más
+     * de 1 MB; incrustarlo tal cual hacía que cada PDF pesara más de 2 MB para mostrarlo
+     * a 50 puntos. Se reduce antes de incrustarlo; si no se puede leer, se usa el original.
+     */
+    private static Image logoReducido(byte[] bytes) throws Exception {
+        try {
+            BufferedImage original = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+            if (original != null && original.getWidth() > 300) {
+                int ancho = 300;
+                int alto = Math.max(1, original.getHeight() * ancho / original.getWidth());
+                BufferedImage reducido = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = reducido.createGraphics();
+                g.drawImage(original.getScaledInstance(ancho, alto, java.awt.Image.SCALE_SMOOTH), 0, 0, null);
+                g.dispose();
+                return Image.getInstance(reducido, null);
+            }
+        } catch (Exception e) {
+            // Se continúa con la imagen original.
+        }
+        return Image.getInstance(bytes);
+    }
+
     /**
      * Abre el archivo destino del PDF. El flujo se registra para cerrarlo aunque la
      * generación falle a medias: de lo contrario el archivo queda truncado y bloqueado

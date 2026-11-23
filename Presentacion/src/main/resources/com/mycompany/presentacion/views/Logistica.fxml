@@ -29,7 +29,11 @@
                 <javafx.scene.shape.SVGPath content="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="#2c3e50" scaleX="0.9" scaleY="0.9"/>
             </graphic>
         </Label>
-        <Label text="Bitácora de seguimiento de servicios contratados para el evento." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="Bitácora de seguimiento de servicios contratados para el evento." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnReporteSemanal" text="Reporte semanal" styleClass="boton-azul" onAction="#abrirReporteSemanal"/>
+        </HBox>
 
         <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="10">
             <Label fx:id="lblSinServicios" text="No hay servicios de logística registrados para este evento." style="-fx-text-fill: #95a5a6; -fx-font-size: 13px; -fx-padding: 20 0 0 0;" visible="false" managed="false"/>
