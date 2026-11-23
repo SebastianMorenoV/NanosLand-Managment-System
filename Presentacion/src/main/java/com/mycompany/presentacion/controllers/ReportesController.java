@@ -96,6 +96,15 @@ public class ReportesController {
         generarReporte();
     }
 
+    /** Vuelve a "todos": las fechas no son editables y los combos no tienen opción vacía. */
+    @FXML
+    private void limpiarFiltros() {
+        dpInicio.setValue(null);
+        dpFin.setValue(null);
+        cmbTurno.setValue(null);
+        cmbEstado.setValue(null);
+    }
+
     private Node crearPagina(int pageIndex) {
         int fromIndex = pageIndex * ITEMS_POR_PAGINA;
         int toIndex = Math.min(fromIndex + ITEMS_POR_PAGINA, masterData.size());

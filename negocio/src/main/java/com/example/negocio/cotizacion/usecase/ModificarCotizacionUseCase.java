@@ -77,6 +77,17 @@ public class ModificarCotizacionUseCase {
             throw new CotizacionException("Debe seleccionar un paquete base para la cotización.");
         }
 
+        // Mismos límites que al crear, para evitar "Data too long" (VARCHAR 255)
+        if (dto.getNombreFestejado() != null && dto.getNombreFestejado().length() > 255) {
+            throw new CotizacionException("El nombre del festejado es demasiado largo (máximo 255 caracteres).");
+        }
+        if (dto.getTematica() != null && dto.getTematica().length() > 255) {
+            throw new CotizacionException("La temática es demasiado larga (máximo 255 caracteres).");
+        }
+        if (dto.getNotas() != null && dto.getNotas().length() > 255) {
+            throw new CotizacionException("Las notas del evento son demasiado largas (máximo 255 caracteres).");
+        }
+
         if (dto.getFecha().isBefore(LocalDate.now())) {
             throw new CotizacionException("La fecha del evento no puede ser en el pasado. Seleccione una fecha válida.");
         }

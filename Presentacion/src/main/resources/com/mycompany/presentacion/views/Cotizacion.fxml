@@ -189,6 +189,7 @@
                     <TextField fx:id="txtAbono" promptText="Monto a abonar..." styleClass="text-field-moderno"/>
                     <ComboBox fx:id="comboMetodoPago" promptText="Método de pago" styleClass="combo-box-base"/>
                     <Button text="Registrar Abono" styleClass="boton-azul" onAction="#registrarAbonoCotizacion"/>
+                    <Button text="Comprobante" styleClass="boton-azul-claro" onAction="#generarComprobante"/>
                 </HBox>
             </VBox>
             <!-- BOTONES DE ACCIÓN -->

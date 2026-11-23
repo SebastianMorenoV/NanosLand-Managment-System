@@ -76,9 +76,7 @@ public class BuscarClienteUseCase {
         }
         String t = texto.trim();
         return ClienteMapper.toDTOList(
-                clienteRepository
-                        .findByNombreContainingIgnoreCaseOrTelefonoContainingIgnoreCaseOrCorreoContainingIgnoreCase(
-                                t, t, t)
+                clienteRepository.buscarClientesActivos(t)
         );
     }
 

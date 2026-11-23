@@ -11,8 +11,9 @@ name: Publicar instalador (jDeploy)
 on:
   push:
     tags:
-      - 'v*'
-    branches:
+      # Solo versiones completas (v1.2.3): un tag distinto daría una versión inválida.
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+branches:
       - '*-snapshot'
 
 permissions:
@@ -42,6 +43,8 @@ jobs:
         uses: shannah/jdeploy@master
         with:
           github_token: ${{ github.token }}
+          # Versión fija de jDeploy: un cambio en la acción no altera el instalador sin avisar.
+          jdeploy_version: '6.1.12'
 
       # jDeploy deja el release del tag como borrador; aquí se publica y se le
       # ponen como notas los enlaces de descarga de los instaladores.

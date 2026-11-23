@@ -48,6 +48,18 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
 
     boolean existsByFechaAndTurnoAndEstadoNot(LocalDate fecha, TurnoEvento turno, EstadoEvento estado);
 
+    /**
+     * Fecha y turno de los eventos de un periodo que están en alguno de los estados dados.
+     * Devuelve solo esas dos columnas: sirve para pintar un calendario con una sola consulta.
+     */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT e.fecha, e.turno FROM Evento e " +
+        "WHERE e.fecha BETWEEN :inicio AND :fin AND e.estado IN :estados")
+    List<Object[]> findFechaYTurnoOcupados(
+        @org.springframework.data.repository.query.Param("inicio") LocalDate inicio,
+        @org.springframework.data.repository.query.Param("fin") LocalDate fin,
+        @org.springframework.data.repository.query.Param("estados") java.util.Collection<EstadoEvento> estados);
+
     boolean existsByFechaAndTurnoAndEstadoIn(LocalDate fecha, TurnoEvento turno,
                                              java.util.Collection<EstadoEvento> estados);
 

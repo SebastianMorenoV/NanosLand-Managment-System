@@ -40,6 +40,14 @@ import java.util.stream.Collectors;
 public class ExportarReporteUseCase {
 
     public void exportarPDF(List<EventoDTO> eventos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
+        try {
+            exportarPDFInterno(eventos, logoStream, rutaDestino, inicio, fin);
+        } finally {
+            cerrarSalidasPendientes();
+        }
+    }
+
+    private void exportarPDFInterno(List<EventoDTO> eventos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
         if (eventos == null || eventos.isEmpty()) {
             throw new IllegalArgumentException("No hay datos para exportar.");
         }
@@ -85,7 +93,7 @@ public class ExportarReporteUseCase {
 
         // Iniciar Documento OpenPDF
         Document document = new Document(PageSize.A4);
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        PdfWriter writer = PdfWriter.getInstance(document, abrirDestino(rutaDestino));
         document.open();
 
         // Fuentes
@@ -348,12 +356,20 @@ public class ExportarReporteUseCase {
     }
 
     public void exportarAdeudosPDF(List<com.mycompany.common.dtos.AdeudoDTO> adeudos, InputStream logoStream, String rutaDestino) throws Exception {
+        try {
+            exportarAdeudosPDFInterno(adeudos, logoStream, rutaDestino);
+        } finally {
+            cerrarSalidasPendientes();
+        }
+    }
+
+    private void exportarAdeudosPDFInterno(List<com.mycompany.common.dtos.AdeudoDTO> adeudos, InputStream logoStream, String rutaDestino) throws Exception {
         if (adeudos == null || adeudos.isEmpty()) {
             throw new IllegalArgumentException("No hay datos de adeudos para exportar.");
         }
 
         Document document = new Document(PageSize.A4);
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        PdfWriter writer = PdfWriter.getInstance(document, abrirDestino(rutaDestino));
         document.open();
 
         Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
@@ -454,12 +470,20 @@ public class ExportarReporteUseCase {
         document.close();
     }
     public void exportarIngresosPDF(List<com.mycompany.common.dtos.IngresoDTO> ingresos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
+        try {
+            exportarIngresosPDFInterno(ingresos, logoStream, rutaDestino, inicio, fin);
+        } finally {
+            cerrarSalidasPendientes();
+        }
+    }
+
+    private void exportarIngresosPDFInterno(List<com.mycompany.common.dtos.IngresoDTO> ingresos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
         if (ingresos == null || ingresos.isEmpty()) {
             throw new IllegalArgumentException("No hay datos de ingresos para exportar.");
         }
 
         Document document = new Document(PageSize.A4);
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        PdfWriter writer = PdfWriter.getInstance(document, abrirDestino(rutaDestino));
         document.open();
 
         Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
@@ -559,12 +583,20 @@ public class ExportarReporteUseCase {
     }
 
     public void exportarOportunidadesPDF(List<com.mycompany.common.dtos.OportunidadDTO> oportunidades, InputStream logoStream, String rutaDestino, String tituloMes) throws Exception {
+        try {
+            exportarOportunidadesPDFInterno(oportunidades, logoStream, rutaDestino, tituloMes);
+        } finally {
+            cerrarSalidasPendientes();
+        }
+    }
+
+    private void exportarOportunidadesPDFInterno(List<com.mycompany.common.dtos.OportunidadDTO> oportunidades, InputStream logoStream, String rutaDestino, String tituloMes) throws Exception {
         if (oportunidades == null || oportunidades.isEmpty()) {
             throw new IllegalArgumentException("No hay datos para exportar.");
         }
 
         Document document = new Document(PageSize.A4);
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(rutaDestino));
+        PdfWriter writer = PdfWriter.getInstance(document, abrirDestino(rutaDestino));
         document.open();
 
         Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA, 20, Color.WHITE);
@@ -655,5 +687,30 @@ public class ExportarReporteUseCase {
 
         document.add(table);
         document.close();
+    }
+    /**
+     * Abre el archivo destino del PDF. El flujo se registra para cerrarlo aunque la
+     * generación falle a medias: de lo contrario el archivo queda truncado y bloqueado
+     * por Windows hasta cerrar la aplicación.
+     */
+    private static FileOutputStream abrirDestino(String rutaDestino) throws java.io.IOException {
+        FileOutputStream salida = new FileOutputStream(rutaDestino);
+        SALIDAS_ABIERTAS.get().add(salida);
+        return salida;
+    }
+
+    private static final ThreadLocal<java.util.List<FileOutputStream>> SALIDAS_ABIERTAS =
+        ThreadLocal.withInitial(java.util.ArrayList::new);
+
+    /** Cierra los archivos que una exportación haya dejado abiertos. */
+    private static void cerrarSalidasPendientes() {
+        for (FileOutputStream salida : SALIDAS_ABIERTAS.get()) {
+            try {
+                salida.close();
+            } catch (java.io.IOException e) {
+                // ya estaba cerrado o no se pudo cerrar: no hay nada más que hacer
+            }
+        }
+        SALIDAS_ABIERTAS.get().clear();
     }
 }

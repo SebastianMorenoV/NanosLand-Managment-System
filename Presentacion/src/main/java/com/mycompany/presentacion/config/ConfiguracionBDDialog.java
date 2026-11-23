@@ -147,6 +147,12 @@ public final class ConfiguracionBDDialog {
             mensaje.setText("Servidor, base de datos y usuario son obligatorios.");
             return null;
         }
+        // Nombre de equipo, IPv4 o IPv6 entre corchetes; sin puerto, rutas ni parámetros.
+        if (!host.getText().trim().matches("[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?|\\[[0-9A-Fa-f:.]+\\]")) {
+            mensaje.setText("El servidor debe ser un nombre de equipo o una dirección IP, sin puerto "
+                    + "(por ejemplo: localhost o 192.168.1.10). Una dirección IPv6 va entre corchetes: [::1].");
+            return null;
+        }
         if (!base.getText().trim().matches("[A-Za-z0-9_]+")) {
             mensaje.setText("El nombre de la base de datos solo puede llevar letras, números y guion bajo.");
             return null;

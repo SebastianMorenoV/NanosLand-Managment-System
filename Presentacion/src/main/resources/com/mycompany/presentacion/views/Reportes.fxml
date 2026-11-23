@@ -33,6 +33,7 @@
             </VBox>
             <VBox alignment="BOTTOM_CENTER" spacing="5">
                 <Label text="" styleClass="label-pequeno"/>
+                <Button text="Limpiar filtros" styleClass="boton-texto-gris" onAction="#limpiarFiltros"/>
                 <Button fx:id="btnExportar" text="Exportar a PDF" disable="true" styleClass="boton-verde" onAction="#exportarPDF"/>
             </VBox>
         </HBox>

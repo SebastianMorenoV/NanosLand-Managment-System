@@ -58,6 +58,12 @@ public class GestionUsuariosController {
 
     @FXML
     public void initialize() {
+        // El botón del menú solo se muestra al dueño; se comprueba aquí también para que
+        // la pantalla no dependa de que el botón esté oculto.
+        if (!com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()
+                .getBean(com.mycompany.presentacion.context.SesionContext.class).esDueno()) {
+            throw new IllegalStateException("Esta pantalla solo está disponible para el dueño.");
+        }
         if (tablaUsuarios != null) {
             tablaUsuarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         }
@@ -126,6 +132,10 @@ public class GestionUsuariosController {
 
         sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tablaUsuarios.comparatorProperty());
+        // Cada página es una copia: al ordenar por una columna hay que regenerarla, o las
+        // páginas quedan mezcladas (filas repetidas en una y ausentes en otra).
+        sortedData.comparatorProperty().addListener((obs, anterior, nuevo) ->
+            crearPagina(paginacion.getCurrentPageIndex()));
 
         filteredData.addListener((javafx.collections.ListChangeListener.Change<? extends UsuarioSistemaDTO> c) -> {
             actualizarPaginacion();

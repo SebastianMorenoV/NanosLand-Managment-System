@@ -20,6 +20,7 @@ import java.util.Optional;
 public class ActualizarUsuarioSistemaUseCase {
 
     private final UsuarioRepository usuarioRepository;
+    private final com.example.negocio.sesion.usecase.Contrasenas contrasenas;
 
     @Transactional
     public UsuarioSistemaDTO actualizarUsuario(UsuarioSistemaDTO dto) {
@@ -55,7 +56,7 @@ public class ActualizarUsuarioSistemaUseCase {
 
         // Solo actualizar contraseña si se proporcionó una nueva
         if (dto.getContrasena() != null && !dto.getContrasena().trim().isEmpty()) {
-            existente.setContrasena(dto.getContrasena());
+            existente.setContrasena(contrasenas.cifrar(dto.getContrasena()));
         }
 
         Usuario guardado = usuarioRepository.save(existente);

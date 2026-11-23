@@ -48,6 +48,12 @@ public class ReporteAdeudosController {
 
     @FXML
     public void initialize() {
+        // El botón del menú solo se muestra al dueño; se comprueba aquí también para que
+        // la pantalla no dependa de que el botón esté oculto.
+        if (!com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()
+                .getBean(com.mycompany.presentacion.context.SesionContext.class).esDueno()) {
+            throw new IllegalStateException("Esta pantalla solo está disponible para el dueño.");
+        }
         if (tablaAdeudos != null) {
             tablaAdeudos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         }

@@ -130,6 +130,10 @@ public class UsuariosController {
         // Envolvemos la FilteredList en una SortedList para mantener la capacidad de ordenar las columnas dando clic en ellas
         sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tablaUsuarios.comparatorProperty());
+        // Cada página es una copia: al ordenar por una columna hay que regenerarla, o las
+        // páginas quedan mezcladas (filas repetidas en una y ausentes en otra).
+        sortedData.comparatorProperty().addListener((obs, anterior, nuevo) ->
+            crearPagina(paginacion.getCurrentPageIndex()));
         
         filteredData.addListener((javafx.collections.ListChangeListener.Change<? extends ClienteDTO> c) -> {
             actualizarPaginacion();

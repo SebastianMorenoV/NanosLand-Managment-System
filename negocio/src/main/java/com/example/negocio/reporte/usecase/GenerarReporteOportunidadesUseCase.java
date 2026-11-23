@@ -36,10 +36,20 @@ public class GenerarReporteOportunidadesUseCase {
         List<Evento> eventosPasados = eventoRepository.findByEstadoAndFechaBetween(EstadoEvento.FINALIZADO, inicio, fin);
         
         List<OportunidadDTO> oportunidades = new ArrayList<>();
-        
+        // Un contacto por cliente: si tuvo varios eventos en el mes cuenta una sola vez
+        // (se conserva el más reciente). Los clientes dados de baja no se contactan.
+        java.util.Map<Long, OportunidadDTO> porCliente = new java.util.HashMap<>();
+
         for (Evento e : eventosPasados) {
             OportunidadDTO dto = new OportunidadDTO();
-            
+            Long idCliente = null;
+            if (e.getCotizacion() != null && e.getCotizacion().getCliente() != null) {
+                if (!e.getCotizacion().getCliente().isActivo()) {
+                    continue;
+                }
+                idCliente = e.getCotizacion().getCliente().getId();
+            }
+
             if (e.getCotizacion() != null) {
                 if (e.getCotizacion().getCliente() != null) {
                     dto.setClienteNombre(e.getCotizacion().getCliente().getNombre());
@@ -60,8 +70,20 @@ public class GenerarReporteOportunidadesUseCase {
             }
             
             dto.setFechaEventoPasado(e.getFecha());
-            
-            oportunidades.add(dto);
+
+            if (idCliente == null) {
+                oportunidades.add(dto);
+                continue;
+            }
+            OportunidadDTO anterior = porCliente.get(idCliente);
+            if (anterior == null) {
+                porCliente.put(idCliente, dto);
+                oportunidades.add(dto);
+            } else if (dto.getFechaEventoPasado() != null && anterior.getFechaEventoPasado() != null
+                    && dto.getFechaEventoPasado().isAfter(anterior.getFechaEventoPasado())) {
+                oportunidades.set(oportunidades.indexOf(anterior), dto);
+                porCliente.put(idCliente, dto);
+            }
         }
         
         // Ordenar por fecha del evento pasado

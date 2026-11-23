@@ -46,6 +46,7 @@ public class CrearCotizacionUseCase {
     private final PaqueteRepository paqueteRepository;
     private final ServicioRepository servicioRepository;
     private final com.mycompany.persistencia.repository.EventoRepository eventoRepository;
+    private final com.mycompany.persistencia.repository.UsuarioRepository usuarioRepository;
 
     /**
      * Crea y persiste una cotización con estado BORRADOR.
@@ -122,6 +123,10 @@ public class CrearCotizacionUseCase {
         cotizacion.setPaquete(paquete);
         EstadoCotizacion estado = dto.getEstado() != null ? dto.getEstado() : EstadoCotizacion.BORRADOR;
         cotizacion.setEstado(estado);
+        if (dto.getUsuarioId() != null) {
+            // Usuario que elaboró la cotización (el que tiene la sesión abierta).
+            usuarioRepository.findById(dto.getUsuarioId()).ifPresent(cotizacion::setUsuario);
+        }
 
         Evento evento = new Evento();
         evento.setFecha(dto.getFecha());

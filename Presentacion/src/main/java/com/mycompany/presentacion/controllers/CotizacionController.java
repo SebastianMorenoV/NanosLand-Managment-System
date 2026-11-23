@@ -143,6 +143,24 @@ public class CotizacionController {
      * mismo servicio puede agregarse varias veces con datos distintos.
      */
     private final java.util.Map<ServicioDTO, DetalleCotizacionDTO> datosDeExtras = new java.util.IdentityHashMap<>();
+    private javafx.collections.ListChangeListener<ServicioDTO> listenerExtras;
+
+    /**
+     * Disponibilidad ya consultada, por mes. El calendario pinta unas 42 celdas por
+     * mes; consultar cada día por separado eran 84 consultas a la base cada vez que
+     * se abría o se cambiaba de mes. Aquí se hace una consulta por mes mostrado.
+     */
+    private final java.util.Map<java.time.YearMonth, java.util.Map<LocalDate, String>> disponibilidadPorMes =
+        new java.util.HashMap<>();
+
+    /** "LIBRE", "AMARILLO" (un turno ocupado) o "GRIS" (día lleno). */
+    private String estadoDelDia(LocalDate fecha) {
+        java.time.YearMonth mes = java.time.YearMonth.from(fecha);
+        return disponibilidadPorMes
+            .computeIfAbsent(mes, m -> verificarDisponibilidadTurnoUseCase
+                .obtenerEstadosDisponibilidad(m.atDay(1), m.atEndOfMonth()))
+            .getOrDefault(fecha, "LIBRE");
+    }
 
     public static class ServicioAgrupado {
         public ServicioDTO servicio;
@@ -197,7 +215,10 @@ public class CotizacionController {
         configurarComboPaquetes();
         configurarListaServiciosExtras();
 
-        serviciosSeleccionados.addListener((javafx.collections.ListChangeListener.Change<? extends ServicioDTO> c) -> {
+        if (listenerExtras != null) {
+            serviciosSeleccionados.removeListener(listenerExtras);
+        }
+        listenerExtras = (javafx.collections.ListChangeListener.Change<? extends ServicioDTO> c) -> {
             java.util.Map<Long, java.util.List<ServicioDTO>> map = serviciosSeleccionados.stream()
                 .collect(java.util.stream.Collectors.groupingBy(ServicioDTO::getId));
             // Se olvidan los datos de los extras que ya no están seleccionados.
@@ -211,7 +232,8 @@ public class CotizacionController {
             if (lblSubtotalExtras != null) {
                 lblSubtotalExtras.setText(String.format("Subtotal Extras: $%,.2f", subtotalExtras));
             }
-        });
+        };
+        serviciosSeleccionados.addListener(listenerExtras);
 
         serviciosSeleccionados.clear();
         
@@ -240,6 +262,10 @@ public class CotizacionController {
             // Bloquear escritura manual
             datePickerFecha.setEditable(false);
 
+            // Cada vez que se abre el calendario se vuelve a consultar la disponibilidad.
+            disponibilidadPorMes.clear();
+            datePickerFecha.setOnShowing(e -> disponibilidadPorMes.clear());
+
             datePickerFecha.setDayCellFactory(picker -> new DateCell() {
                 @Override
                 public void updateItem(LocalDate date, boolean empty) {
@@ -256,7 +282,7 @@ public class CotizacionController {
                             setStyle("-fx-background-color: #f2f2f2; -fx-text-fill: #b2b2b2;");
                         } else {
                             // Lógica de colores según Flujo 2.2.1 y 2.2.2
-                            String estado = verificarDisponibilidadTurnoUseCase.obtenerEstadoDisponibilidad(date);
+                            String estado = estadoDelDia(date);
                             if (estado.equals("GRIS")) {
                                 setDisable(true);
                                 setStyle("-fx-background-color: #bdc3c7;"); // Gris (Bloqueado)
@@ -374,6 +400,9 @@ public class CotizacionController {
                 // Fix #7: escribir al contexto en lugar de campos locales
                 cotizacionContext.setModoEdicion(true);
                 cotizacionContext.setCotizacionEnEdicionId(resultado.getId());
+                cotizacionContext.setFechaEdicionActual(resultado.getFecha());
+                cotizacionContext.setTurnoEdicionActual(resultado.getTurno());
+                cotizacionContext.setEstadoEdicionActual(resultado.getEstado());
             }
             cargarCotizacionesPanel();
             return resultado;
@@ -708,8 +737,10 @@ public class CotizacionController {
             });
             cotizacionesPanel.setAll(lista);
         });
-        task.setOnFailed(e -> System.err.println("[CotizacionController] Error cargando panel: "
-                + task.getException().getMessage()));
+        task.setOnFailed(e -> {
+            System.err.println("[CotizacionController] Error cargando panel: " + task.getException().getMessage());
+            com.mycompany.presentacion.config.RegistroErrores.avisar("No se pudo cargar la lista de cotizaciones", task.getException());
+        });
         new Thread(task, "hilo-carga-cotizaciones").start();
     }
 
@@ -934,6 +965,11 @@ public class CotizacionController {
         String tematica = txtTematica.getText();
 
         CotizacionDTO dto = new CotizacionDTO();
+        // Usuario con la sesión abierta: queda registrado como quien elaboró la cotización.
+        var sesion = ViewSwitcher.getSpringContext().getBean(com.mycompany.presentacion.context.SesionContext.class);
+        if (sesion.getUsuarioAutenticado() != null) {
+            dto.setUsuarioId(sesion.getUsuarioAutenticado().getId());
+        }
         dto.setClienteId(clienteSeleccionado.getId());
         dto.setPaqueteId(paqueteSeleccionado.getId());
         dto.setFecha(fecha);
@@ -1453,6 +1489,20 @@ public class CotizacionController {
             if (lblPagado   != null) lblPagado.setText("Pagado: N/A");
             if (lblRestante != null) lblRestante.setText("Restante: N/A");
         }
+    }
+
+    /** Vuelve a generar el comprobante (por si se canceló el guardado al registrar el pago). */
+    @FXML
+    private void generarComprobante() {
+        if (!isModoEdicion() || getCotizacionEnEdicionId() == null) {
+            mostrarError("Seleccione una cotización.");
+            return;
+        }
+        if (registrarAnticipoUseCase.obtenerTotalAbonado(getCotizacionEnEdicionId()) <= 0) {
+            mostrarError("La cotización todavía no tiene pagos registrados.");
+            return;
+        }
+        imprimirComprobante(getCotizacionEnEdicionId());
     }
 
     private void imprimirComprobante(Long id) {

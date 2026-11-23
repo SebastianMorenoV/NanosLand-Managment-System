@@ -93,9 +93,18 @@ public record ConfiguracionBD(String host, int puerto, String baseDatos, String 
     public String[] argumentosSpring() {
         return new String[] {
                 "--spring.datasource.url=" + urlJdbc(),
-                "--spring.datasource.username=" + usuario,
-                "--spring.datasource.password=" + contrasena
+                "--spring.datasource.username=" + literal(usuario),
+                "--spring.datasource.password=" + literal(contrasena)
         };
+    }
+
+    /**
+     * Spring interpreta "${...}" dentro del valor de una propiedad como una variable.
+     * Anteponer una barra invertida hace que lo tome como texto literal, de modo que
+     * un usuario o contraseña que contenga esa secuencia funcione igual.
+     */
+    private static String literal(String valor) {
+        return valor.replace("${", "\\${");
     }
 
     /**
@@ -119,11 +128,23 @@ public record ConfiguracionBD(String host, int puerto, String baseDatos, String 
                 default:
                     if (e.getErrorCode() == 0) {
                         return "No se pudo conectar con MySQL en " + host + ":" + puerto
-                                + ". Verifica que el servidor esté encendido y que los datos sean correctos.";
+                                + ". Verifica que el servidor esté encendido y que los datos sean correctos."
+                                + "\nDetalle: " + detalle(e);
                     }
                     return "MySQL rechazó la conexión: " + e.getMessage();
             }
         }
+    }
+
+    /** Mensaje de la causa original del error de conexión, en una sola línea. */
+    private static String detalle(Throwable error) {
+        Throwable causa = error;
+        while (causa.getCause() != null && causa.getCause() != causa) {
+            causa = causa.getCause();
+        }
+        String texto = causa.getMessage() != null ? causa.getMessage() : causa.toString();
+        texto = texto.replaceAll("\\s+", " ").trim();
+        return texto.length() > 200 ? texto.substring(0, 200) + "…" : texto;
     }
 
     private static ConfiguracionBD desdeAplicacion() {

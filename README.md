@@ -57,10 +57,7 @@ La capa de presentación arranca el contexto de Spring y obtiene de él los cont
    CREATE DATABASE nanosland_db;
    ```
 
-2. Pon tu usuario y contraseña de MySQL en los dos archivos de configuración (deben coincidir):
-
-   - `negocio/src/main/resources/application.properties`
-   - `Persistencia/src/main/resources/application.properties`
+2. Pon tu usuario y contraseña de MySQL en `negocio/src/main/resources/application.properties`. Si no coinciden con tu MySQL, la aplicación te los pedirá al abrir.
 
 3. Compila todos los módulos desde la raíz del repositorio:
 
@@ -90,6 +87,8 @@ La capa de presentación arranca el contexto de Spring y obtiene de él los cont
    |---|---|---|
    | Dueño | `dueno@nanosland.com` | `dueno123` |
    | Administrador | `admin@nanosland.com` | `admin123` |
+
+   Las contraseñas se guardan cifradas (hash BCrypt): la aplicación convierte las del script la siguiente vez que se abre. En una base sin usuarios, al abrir se pide crear la cuenta del dueño.
 
 Si cambias el código, repite el paso 3 antes de volver a iniciar la aplicación.
 

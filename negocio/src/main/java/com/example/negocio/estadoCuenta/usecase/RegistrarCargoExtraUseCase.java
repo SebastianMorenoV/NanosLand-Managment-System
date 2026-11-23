@@ -28,6 +28,9 @@ public class RegistrarCargoExtraUseCase {
         if (dto.getDescripcion() == null || dto.getDescripcion().trim().isEmpty()) {
             throw new CotizacionException("La descripción del cargo extra es obligatoria.");
         }
+        if (dto.getDescripcion().trim().length() > 255) {
+            throw new CotizacionException("La descripción es demasiado larga (máximo 255 caracteres).");
+        }
         if (dto.getCantidad() <= 0) {
             throw new CotizacionException("La cantidad debe ser mayor a cero.");
         }

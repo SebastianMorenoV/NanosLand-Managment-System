@@ -109,6 +109,9 @@ public class SeleccionarFechaController {
 
         task.setOnSucceeded(e -> {
             // Poblar celdas en el FX Thread (setOnSucceeded ya corre en FX Thread)
+            if (!mesAConstruir.equals(mesActual)) {
+                return; // el usuario ya cambió de mes: esta respuesta llegó tarde
+            }
             List<Evento> eventos = task.getValue();
             poblarCeldasCalendario(mesAConstruir, eventos);
             // Restaurar botón de navegación
@@ -118,6 +121,7 @@ public class SeleccionarFechaController {
         });
         task.setOnFailed(e -> {
             System.err.println("[SeleccionarFecha] Error cargando agenda: " + task.getException().getMessage());
+            com.mycompany.presentacion.config.RegistroErrores.avisar("No se pudo cargar el calendario", task.getException());
             if (btnMesAnterior != null) {
                 btnMesAnterior.setDisable(!mesActual.isAfter(YearMonth.now()));
             }

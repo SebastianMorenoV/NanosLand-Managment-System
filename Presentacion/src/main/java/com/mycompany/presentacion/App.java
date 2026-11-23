@@ -70,7 +70,11 @@ public class App extends Application {
         Scene scene = new Scene(cargarLogin(), 1280, 720);
 
         primaryStage.setTitle("Sistema de Gestión NanosLand");
-        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/Logo Nanos.png")));
+        try {
+            primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/Logo Nanos.png")));
+        } catch (RuntimeException e) {
+            // Sin ícono la aplicación sigue funcionando.
+        }
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
         primaryStage.setFullScreenExitHint("Presiona F11 o ESC para salir de pantalla completa");
@@ -148,6 +152,8 @@ public class App extends Application {
         springContext = contexto;
         ViewSwitcher.setSpringContext(contexto);
         try {
+            // Contraseñas que sigan en texto plano (usuarios antiguos o cargados por script).
+            contexto.getBean(com.example.negocio.sesion.usecase.Contrasenas.class).migrarTextoPlano();
             // Eventos confirmados cuya fecha ya llegó o pasó: en curso / finalizado.
             contexto.getBean(ActualizarEstadosPorFechaUseCase.class).actualizar();
         } catch (RuntimeException e) {

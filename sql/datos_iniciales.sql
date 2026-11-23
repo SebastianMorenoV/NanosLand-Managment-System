@@ -7,6 +7,8 @@ USE nanosland_db;
 -- en caso de que ya contengan datos, o usar hibernate ddl-auto=create.
 
 -- 1. Usuarios (10)
+-- Las contraseñas van aquí en texto plano para poder iniciar sesión con ellas;
+-- la aplicación las convierte a hash (BCrypt) la siguiente vez que se abre.
 INSERT INTO usuarios (correo, contrasena, telefono, rol, activo) VALUES
 ('dueno@nanosland.com', 'dueno123', '6441112233', 'DUEÑO', true),
 ('admin@nanosland.com', 'admin123', '6442223344', 'ADMINISTRADOR', true),

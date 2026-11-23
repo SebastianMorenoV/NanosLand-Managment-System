@@ -37,7 +37,7 @@ public class GenerarReporteAdeudosUseCase {
                 EstadoCuentaDTO estado = consultarEstadoCuentaUseCase.generarEstadoCuenta(evento.getId());
                 
                 // Si tiene saldo pendiente, lo agregamos a la lista de adeudos
-                if (estado.getSaldoPendiente() > 0) {
+                if (estado.getSaldoPendiente() > 0.005) {
                     AdeudoDTO adeudo = new AdeudoDTO();
                     adeudo.setEventoId(evento.getId());
                     adeudo.setFolioCotizacion(estado.getFolioCotizacion());

@@ -73,7 +73,9 @@ public class LogisticaController {
                 lblCliente.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px;");
 
                 String turnoStr = item.getTurno() != null ? item.getTurno().name() : "";
-                turnoStr = turnoStr.substring(0, 1).toUpperCase() + turnoStr.substring(1).toLowerCase();
+                if (!turnoStr.isEmpty()) {
+                    turnoStr = turnoStr.substring(0, 1).toUpperCase() + turnoStr.substring(1).toLowerCase();
+                }
                 Label lblTurno = new Label("Turno: " + turnoStr);
                 lblTurno.setStyle("-fx-text-fill: #95a5a6; -fx-font-size: 10px;");
 

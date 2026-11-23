@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class GestionarServicioUseCase {
 
     private final ServicioRepository servicioRepository;
+    private final com.mycompany.persistencia.repository.PaqueteRepository paqueteRepository;
 
     @Transactional(readOnly = true)
     public List<ServicioDTO> obtenerServiciosActivos() {
@@ -75,6 +76,16 @@ public class GestionarServicioUseCase {
         }
 
         Servicio servicio = opt.get();
+        java.util.List<String> paquetes = paqueteRepository.findByActivoTrue().stream()
+            .filter(p -> p.getServicios() != null && p.getServicios().stream()
+                .anyMatch(ps -> ps.getServicio() != null && ps.getServicio().getId().equals(id)))
+            .map(com.mycompany.persistencia.dominio.Paquete::getNombre)
+            .collect(java.util.stream.Collectors.toList());
+        if (!paquetes.isEmpty()) {
+            throw new CotizacionException("No se puede eliminar el servicio porque forma parte de "
+                + (paquetes.size() == 1 ? "el paquete " : "los paquetes ") + String.join(", ", paquetes)
+                + ". Quítelo de ahí primero.");
+        }
         servicio.setActivo(false);
         servicioRepository.save(servicio);
     }

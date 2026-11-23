@@ -24,12 +24,16 @@ public class EventoMapper {
         dto.setNombreFestejado(evento.getNombreFestejado());
         dto.setTematica(evento.getTematica());
         dto.setNotas(evento.getNotas());
+        dto.setEstadoEvento(evento.getEstado());
         if (evento.getCotizacion() != null) {
+            // Las notas se capturan en la cotización; el evento las muestra si no tiene propias.
+            if (evento.getNotas() == null || evento.getNotas().isBlank()) {
+                dto.setNotas(evento.getCotizacion().getNotas());
+            }
             dto.setCotizacionId(evento.getCotizacion().getId());
             dto.setFolioCotizacion(evento.getCotizacion().getFolio());
             dto.setClienteNombre(evento.getCotizacion().getCliente() != null ? evento.getCotizacion().getCliente().getNombre() : "Desconocido");
             dto.setPaqueteNombre(evento.getCotizacion().getPaquete() != null ? evento.getCotizacion().getPaquete().getNombre() : "Personalizado");
-            dto.setEstadoEvento(evento.getEstado());
             dto.setTotalCotizacion(evento.getCotizacion().getTotal());
         }
         if (evento.getCargosExtras() != null) {

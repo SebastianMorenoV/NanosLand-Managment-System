@@ -25,6 +25,7 @@ public class NuevoCargoExtraModalController {
 
     @FXML
     public void initialize() {
+        cargoRegistrado = false; // el controlador se reutiliza entre aperturas del modal
         txtCantidad.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
             if (change.getControlNewText().matches("\\d*")) return change;
             return null;

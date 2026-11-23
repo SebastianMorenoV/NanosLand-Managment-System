@@ -110,6 +110,10 @@ public class ServiciosController {
 
         sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tablaServicios.comparatorProperty());
+        // Cada página es una copia: al ordenar por una columna hay que regenerarla, o las
+        // páginas quedan mezcladas (filas repetidas en una y ausentes en otra).
+        sortedData.comparatorProperty().addListener((obs, anterior, nuevo) ->
+            crearPagina(paginacion.getCurrentPageIndex()));
 
         filteredData.addListener((javafx.collections.ListChangeListener.Change<? extends ServicioDTO> c) -> {
             actualizarPaginacion();

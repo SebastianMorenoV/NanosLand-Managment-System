@@ -5,14 +5,19 @@
 package com.mycompany.persistencia.dominio;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 import java.util.List;
 import lombok.ToString;
 
 @Entity
 @Table(name = "paquetes")
-@Data
+// Sin @Data: su equals/hashCode por valor recorre las relaciones (ciclos entre
+// Cotizacion y Evento, y carga perezosa fuera de transacción).
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 public class Paquete {
 

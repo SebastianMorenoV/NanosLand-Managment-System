@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RegistrarUsuarioSistemaUseCase {
 
     private final UsuarioRepository usuarioRepository;
+    private final com.example.negocio.sesion.usecase.Contrasenas contrasenas;
 
     @Transactional
     public UsuarioSistemaDTO registrarUsuario(UsuarioSistemaDTO dto) {
@@ -37,7 +38,7 @@ public class RegistrarUsuarioSistemaUseCase {
 
         Usuario usuario = new Usuario();
         usuario.setCorreo(dto.getCorreo().trim());
-        usuario.setContrasena(dto.getContrasena());
+        usuario.setContrasena(contrasenas.cifrar(dto.getContrasena()));
         usuario.setTelefono(dto.getTelefono() != null ? dto.getTelefono().trim() : null);
         usuario.setRol(dto.getRol());
         usuario.setActivo(true);

@@ -7,7 +7,8 @@ package com.mycompany.persistencia.dominio;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
@@ -16,7 +17,11 @@ import lombok.ToString;
 
 @Entity
 @Table(name = "cotizaciones")
-@Data
+// Sin @Data: su equals/hashCode por valor recorre las relaciones (ciclos entre
+// Cotizacion y Evento, y carga perezosa fuera de transacción).
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 public class Cotizacion {
 

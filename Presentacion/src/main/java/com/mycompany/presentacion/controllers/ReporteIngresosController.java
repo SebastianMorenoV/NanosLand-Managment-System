@@ -49,6 +49,12 @@ public class ReporteIngresosController {
 
     @FXML
     public void initialize() {
+        // El botón del menú solo se muestra al dueño; se comprueba aquí también para que
+        // la pantalla no dependa de que el botón esté oculto.
+        if (!com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()
+                .getBean(com.mycompany.presentacion.context.SesionContext.class).esDueno()) {
+            throw new IllegalStateException("Esta pantalla solo está disponible para el dueño.");
+        }
         if (tablaIngresos != null) {
             tablaIngresos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         }
@@ -129,6 +135,9 @@ public class ReporteIngresosController {
             paginacion.setCurrentPageIndex(0);
             crearPagina(0);
 
+        } catch (com.example.negocio.exception.CotizacionException e) {
+            // Dato inválido (por ejemplo, fecha de inicio posterior a la final): se explica al usuario.
+            mostrarAlertaError("Fechas inválidas", e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             mostrarAlertaError("Error", "No se pudo generar el reporte de ingresos.");

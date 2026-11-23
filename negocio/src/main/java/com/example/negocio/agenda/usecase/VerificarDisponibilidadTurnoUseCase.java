@@ -65,6 +65,25 @@ public class VerificarDisponibilidadTurnoUseCase {
      * - "AMARILLO" → un turno ocupado, uno libre
      * - "GRIS"     → todos los turnos ocupados (día bloqueado)
      */
+    /**
+     * Estado visual ("LIBRE", "AMARILLO" o "GRIS") de cada día de un periodo, con UNA
+     * sola consulta. Para pintar un calendario se usa este método en lugar de llamar a
+     * {@link #obtenerEstadoDisponibilidad(LocalDate)} día por día (dos consultas por día).
+     * Los días sin eventos confirmados no aparecen en el mapa: están libres.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<LocalDate, String> obtenerEstadosDisponibilidad(LocalDate inicio, LocalDate fin) {
+        java.util.Map<LocalDate, java.util.Set<TurnoEvento>> ocupados = new java.util.HashMap<>();
+        for (Object[] fila : eventoRepository.findFechaYTurnoOcupados(inicio, fin, ESTADOS_QUE_OCUPAN)) {
+            ocupados.computeIfAbsent((LocalDate) fila[0], f -> java.util.EnumSet.noneOf(TurnoEvento.class))
+                    .add((TurnoEvento) fila[1]);
+        }
+        java.util.Map<LocalDate, String> estados = new java.util.HashMap<>();
+        ocupados.forEach((fecha, turnos) ->
+            estados.put(fecha, turnos.size() >= TurnoEvento.values().length ? "GRIS" : "AMARILLO"));
+        return estados;
+    }
+
     @Transactional(readOnly = true)  // Fix #11: solo lectura
     public String obtenerEstadoDisponibilidad(LocalDate fecha) {
         long turnosOcupados = Arrays.stream(TurnoEvento.values())

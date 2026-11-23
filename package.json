@@ -23,6 +23,7 @@
     "javaVersion": "21",
     "javafx": true,
     "jdk": false,
-    "title": "NanosLand"
+    "title": "NanosLand",
+    "singleton": true
   }
 }

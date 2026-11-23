@@ -21,7 +21,14 @@ public class GenerarReporteIngresosUseCase {
     @Transactional(readOnly = true)
     public List<IngresoDTO> generarReporteIngresos(LocalDate inicio, LocalDate fin) {
         LocalDateTime fechaInicio = inicio != null ? inicio.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
-        LocalDateTime fechaFin = fin != null ? fin.atTime(23, 59, 59) : LocalDateTime.now().plusYears(100);
+        if (inicio != null && fin != null && inicio.isAfter(fin)) {
+            throw new com.example.negocio.exception.CotizacionException(
+                "La fecha de inicio no puede ser posterior a la fecha final.");
+        }
+        // Hasta el último instante del día final (los pagos se guardan con fracciones de segundo).
+        LocalDateTime fechaFin = fin != null
+            ? fin.plusDays(1).atStartOfDay().minusNanos(1000)
+            : LocalDateTime.now().plusYears(100);
 
         List<Pago> pagos = pagoRepository.findByFechaHoraBetween(fechaInicio, fechaFin);
         List<IngresoDTO> ingresos = new ArrayList<>();

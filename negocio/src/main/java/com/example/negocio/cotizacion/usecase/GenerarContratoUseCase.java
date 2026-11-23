@@ -78,7 +78,8 @@ public class GenerarContratoUseCase {
             headerTable.setWidthPercentage(100);
             headerTable.setWidths(new int[]{1, 3});
             
-            PdfPCell logoCell = new PdfPCell(new Phrase("NANOS\nLAND", titleFont));
+            PdfPCell logoCell = celdaLogo(titleFont);
+            logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             logoCell.setBorder(com.lowagie.text.Rectangle.NO_BORDER);
             logoCell.setHorizontalAlignment(Element.ALIGN_CENTER);
             headerTable.addCell(logoCell);
@@ -101,7 +102,7 @@ public class GenerarContratoUseCase {
             dateFolio.add(new Chunk("Folio: ", boldFont));
             dateFolio.add(new Chunk(folio != null ? folio : "______", normalFont));
             dateFolio.add(new Chunk("                  A " + LocalDate.now().getDayOfMonth() + " DE " + 
-                                     LocalDate.now().getMonth().name() + " DEL " + LocalDate.now().getYear(), normalFont));
+                                     LocalDate.now().getMonth().getDisplayName(java.time.format.TextStyle.FULL, new java.util.Locale("es", "MX")).toUpperCase() + " DEL "+ LocalDate.now().getYear(), normalFont));
             dateFolio.setAlignment(Element.ALIGN_RIGHT);
             document.add(dateFolio);
             document.add(new Paragraph(" "));
@@ -233,5 +234,41 @@ public class GenerarContratoUseCase {
         c2.setHorizontalAlignment(Element.ALIGN_LEFT);
         table.addCell(c1);
         table.addCell(c2);
+    }
+    /** Recurso con el logo del negocio (está en los resources de la aplicación). */
+    private static final String RECURSO_LOGO = "/Logo Nanos.png";
+
+    /**
+     * Celda del encabezado con el logo del negocio. Si el recurso no está
+     * disponible o no se puede leer, se usa el nombre en texto como antes.
+     */
+    private static PdfPCell celdaLogo(Font fuenteTexto) {
+        try (java.io.InputStream in = GenerarContratoUseCase.class.getResourceAsStream(RECURSO_LOGO)) {
+            if (in != null) {
+                java.awt.image.BufferedImage original = javax.imageio.ImageIO.read(in);
+                if (original != null) {
+                    // El archivo original es muy grande (2000 px): se reduce antes de
+                    // incrustarlo para que cada contrato no pese varios megabytes.
+                    int ancho = 360;
+                    int alto = Math.max(1, original.getHeight() * ancho / original.getWidth());
+                    java.awt.image.BufferedImage reducido =
+                        new java.awt.image.BufferedImage(ancho, alto, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    java.awt.Graphics2D g = reducido.createGraphics();
+                    g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,
+                        java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING,
+                        java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+                    g.drawImage(original.getScaledInstance(ancho, alto, java.awt.Image.SCALE_SMOOTH), 0, 0, null);
+                    g.dispose();
+
+                    com.lowagie.text.Image logo = com.lowagie.text.Image.getInstance(reducido, null);
+                    logo.scaleToFit(90f, 90f);
+                    return new PdfPCell(logo, false);
+                }
+            }
+        } catch (Exception e) {
+            // Se continúa con el nombre en texto.
+        }
+        return new PdfPCell(new Phrase("NANOS\nLAND", fuenteTexto));
     }
 }

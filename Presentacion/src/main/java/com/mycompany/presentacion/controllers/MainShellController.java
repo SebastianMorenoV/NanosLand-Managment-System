@@ -116,14 +116,20 @@ public class MainShellController {
         iniciarReloj();
     }
 
+    private Timeline reloj;
+
     private void iniciarReloj() {
         if (lblReloj != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a");
+            if (reloj != null) {
+                reloj.stop(); // el controlador se reutiliza: no acumular un reloj por cada inicio de sesión
+            }
             Timeline clock = new Timeline(new KeyFrame(Duration.ZERO, e -> {
                 lblReloj.setText(LocalDateTime.now().atZone(ZoneId.of("America/Hermosillo")).format(formatter));
             }), new KeyFrame(Duration.seconds(1)));
             clock.setCycleCount(Animation.INDEFINITE);
             clock.play();
+            reloj = clock;
         }
     }
 
@@ -199,10 +205,10 @@ public class MainShellController {
             loader.setControllerFactory(ViewSwitcher.getSpringContext()::getBean);
             Parent root = loader.load();
 
-            Stage stage = (Stage) rootPane.getScene().getWindow();
-            Scene scene = new Scene(root, 1280, 720);
-            stage.setScene(scene);
-            stage.setMaximized(true);
+            // Se cambia solo el contenido de la escena existente. Crear una escena nueva de
+            // 1280x720 sobre la ventana maximizada la dejaba descuadrada, y además perdía
+            // el atajo F11, que está registrado en la escena original.
+            rootPane.getScene().setRoot(root);
         } catch (Exception e) {
             e.printStackTrace();
             com.mycompany.presentacion.config.RegistroErrores.avisar("No se pudo cerrar la sesión", e);

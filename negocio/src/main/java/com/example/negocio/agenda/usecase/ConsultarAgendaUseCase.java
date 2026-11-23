@@ -31,23 +31,4 @@ public class ConsultarAgendaUseCase {
         LocalDate fin = YearMonth.of(anio, mes).atEndOfMonth();
         return eventoRepository.findByFechaBetween(inicio, fin);
     }
-
-
-    @Transactional(readOnly = true)  // Fix #11
-    public boolean verificarTurnoDisponible(LocalDate fecha, TurnoEvento turno) {
-        List<Evento> eventos = eventoRepository.findByFecha(fecha);
-        if (eventos.isEmpty()) {
-            return true;
-        }
-
-        LocalTime inicioTurno = (turno == TurnoEvento.MATUTINO) ? LocalTime.of(9, 0) : LocalTime.of(15, 0);
-        LocalTime finTurno = (turno == TurnoEvento.MATUTINO) ? LocalTime.of(14, 0) : LocalTime.of(20, 0);
-
-        for (Evento e : eventos) {
-            if (inicioTurno.isBefore(e.getHoraFin()) && finTurno.isAfter(e.getHoraInicio())) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

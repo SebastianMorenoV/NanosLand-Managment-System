@@ -76,15 +76,20 @@ public class NuevoClienteModalController {
         }
     }
 
+    private static String texto(javafx.scene.control.TextField campo) {
+        return campo.getText() != null ? campo.getText().trim() : "";
+    }
+
     @FXML
     private void guardarCliente() {
-        String nombre = txtNombre.getText().trim();
-        String telefono = txtTelefono.getText().trim();
-        String correo = txtCorreo.getText() != null ? txtCorreo.getText().trim() : "";
-        String calle = txtCalle.getText().trim();
-        String colonia = txtColonia.getText().trim();
-        String ciudad = txtCiudad.getText().trim();
-        String cp = txtCodigoPostal.getText().trim();
+        // getText() devuelve null si el campo se llenó con un dato nulo (cliente sin dirección).
+        String nombre = texto(txtNombre);
+        String telefono = texto(txtTelefono);
+        String correo = texto(txtCorreo);
+        String calle = texto(txtCalle);
+        String colonia = texto(txtColonia);
+        String ciudad = texto(txtCiudad);
+        String cp = texto(txtCodigoPostal);
 
         // 1. Validar campos obligatorios
         if (nombre.isEmpty() || telefono.isEmpty()) {

@@ -20,8 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class IniciarSesionUseCase {
 
     private final UsuarioRepository usuarioRepository;
+    private final Contrasenas contrasenas;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Usuario iniciarSesion(String correo, String contrasena) {
         if (correo == null || correo.trim().isEmpty()) {
             throw new CotizacionException("El correo es obligatorio.");
@@ -33,8 +34,12 @@ public class IniciarSesionUseCase {
         Usuario usuario = usuarioRepository.findByCorreoAndActivoTrue(correo.trim())
                 .orElseThrow(() -> new CotizacionException("No se encontró un usuario activo con ese correo."));
 
-        if (!usuario.getContrasena().equals(contrasena)) {
+        if (!contrasenas.coincide(contrasena, usuario.getContrasena())) {
             throw new CotizacionException("Contraseña incorrecta.");
+        }
+        // Una contraseña que seguía en texto plano se guarda cifrada en cuanto se usa.
+        if (!Contrasenas.esHash(usuario.getContrasena())) {
+            usuario.setContrasena(contrasenas.cifrar(contrasena));
         }
 
         return usuario;

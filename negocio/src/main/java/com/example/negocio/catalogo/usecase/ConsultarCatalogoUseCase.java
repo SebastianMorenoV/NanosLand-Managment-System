@@ -54,7 +54,17 @@ public class ConsultarCatalogoUseCase {
                 .collect(Collectors.toList());
     }
 
+    private static void validarAlta(String nombre, Double importe) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new com.example.negocio.exception.CotizacionException("El nombre es obligatorio.");
+        }
+        if (importe == null || importe < 0) {
+            throw new com.example.negocio.exception.CotizacionException("El precio no puede estar vacío ni ser negativo.");
+        }
+    }
+
     public ServicioDTO guardarNuevoServicio(String nombre, Double precio, String descripcion) {
+        validarAlta(nombre, precio);
         com.mycompany.persistencia.dominio.Servicio entidad = new com.mycompany.persistencia.dominio.Servicio();
         entidad.setNombre(nombre);
         entidad.setPrecio(precio);
@@ -70,6 +80,7 @@ public class ConsultarCatalogoUseCase {
     }
 
     public PaqueteDTO guardarNuevoPaquete(String nombre, Double costoBase, String descripcion) {
+        validarAlta(nombre, costoBase);
         Paquete entidad = new Paquete();
         entidad.setNombre(nombre);
         entidad.setCosto(costoBase);

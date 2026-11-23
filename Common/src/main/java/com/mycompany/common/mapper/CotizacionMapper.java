@@ -16,6 +16,9 @@ public class CotizacionMapper {
         CotizacionDTO dto = new CotizacionDTO();
         dto.setId(cotizacion.getId());
         dto.setFolio(cotizacion.getFolio());
+        if (cotizacion.getUsuario() != null) {
+            dto.setUsuarioId(cotizacion.getUsuario().getId());
+        }
         if (cotizacion.getEvento() != null) {
             dto.setFecha(cotizacion.getEvento().getFecha());
             dto.setTurno(cotizacion.getEvento().getTurno());

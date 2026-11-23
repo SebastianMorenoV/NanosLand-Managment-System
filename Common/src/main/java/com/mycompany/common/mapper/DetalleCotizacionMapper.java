@@ -14,8 +14,10 @@ public class DetalleCotizacionMapper {
         if (detalle == null) return null;
         DetalleCotizacionDTO dto = new DetalleCotizacionDTO();
         dto.setId(detalle.getId());
-        dto.setServicioId(detalle.getServicio().getId());
-        dto.setNombreServicio(detalle.getServicio().getNombre());
+        if (detalle.getServicio() != null) {
+            dto.setServicioId(detalle.getServicio().getId());
+            dto.setNombreServicio(detalle.getServicio().getNombre());
+        }
         dto.setPrecioUnitario(detalle.getPrecioUnitario());
         dto.setCantidad(detalle.getCantidad());
         dto.setSubtotal(detalle.getSubtotal());

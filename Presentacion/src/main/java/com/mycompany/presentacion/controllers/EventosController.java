@@ -189,6 +189,7 @@ public class EventosController {
                             badge.setStyle("-fx-background-color: #eafaf1; -fx-text-fill: #27ae60; -fx-border-color: #27ae60; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 3 6 3 6; -fx-font-size: 11px; -fx-font-weight: bold;");
                             break;
                         case CANCELADO:
+                        case CANCELADO_TARDIO:
                             badge.setStyle("-fx-background-color: #fdedec; -fx-text-fill: #e74c3c; -fx-border-color: #e74c3c; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 3 6 3 6; -fx-font-size: 11px; -fx-font-weight: bold;");
                             break;
                         default:
@@ -288,7 +289,8 @@ public class EventosController {
         long confirmados = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.CONFIRMADO).count();
         long enCurso = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.EN_CURSO).count();
         long finalizados = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.FINALIZADO).count();
-        long cancelados = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.CANCELADO).count();
+        long cancelados = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.CANCELADO
+                || e.getEstadoEvento() == EstadoEvento.CANCELADO_TARDIO).count();
 
         lblKpiTotal.setText(String.valueOf(total));
         lblKpiTentativos.setText(String.valueOf(tentativos));
