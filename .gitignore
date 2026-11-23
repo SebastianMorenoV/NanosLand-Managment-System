@@ -1,3 +1,9 @@
 /Persistencia/target/
 /Presentacion/target/
 /Common/target/
+
+# jDeploy / npm
+/jdeploy-bundle/
+/jdeploy/
+/node_modules/
+/negocio/target/

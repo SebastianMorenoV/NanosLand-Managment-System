@@ -92,3 +92,28 @@ La capa de presentación arranca el contexto de Spring y obtiene de él los cont
    | Administrador | `admin@nanosland.com` | `admin123` |
 
 Si cambias el código, repite el paso 3 antes de volver a iniciar la aplicación.
+
+## Conexión a la base de datos
+
+La aplicación guarda los datos de conexión a MySQL de cada equipo en un archivo propio del usuario (`%APPDATA%\NanosLand\conexion.properties` en Windows), fuera del programa, así que las actualizaciones no los tocan.
+
+- Si al abrir no logra conectarse (por ejemplo, la primera vez en un equipo nuevo), muestra la ventana **Conexión a la base de datos** para capturar servidor, puerto, base de datos, usuario y contraseña.
+- También se puede abrir desde la pantalla de inicio de sesión, con el botón **Configurar conexión a la base de datos**.
+- Si la base de datos indicada no existe, se crea sola junto con sus tablas.
+
+Mientras ese archivo no exista se usan los valores de `application.properties`.
+
+## Instalador y actualizaciones
+
+El instalador se genera con [jDeploy](https://www.jdeploy.com/) y se publica en GitHub Releases. La aplicación instalada busca versiones nuevas al abrirse y se actualiza sola, sin desinstalar nada.
+
+Para publicar una versión:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+El workflow `.github/workflows/jdeploy.yml` compila el proyecto y sube los instaladores al release de ese tag. El nombre del tag no puede pasar de 16 caracteres.
+
+En el equipo donde se instala solo hace falta tener MySQL; el instalador incluye su propio Java.

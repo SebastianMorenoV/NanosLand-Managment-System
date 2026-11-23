@@ -3,6 +3,7 @@ package com.mycompany.presentacion.controllers;
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.sesion.usecase.IniciarSesionUseCase;
 import com.mycompany.persistencia.dominio.Usuario;
+import com.mycompany.presentacion.App;
 import com.mycompany.presentacion.context.SesionContext;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.fxml.FXML;
@@ -63,6 +64,11 @@ public class LoginController {
             mostrarAlerta("Error", "Ocurrió un error inesperado al iniciar sesión.");
             ex.printStackTrace();
         }
+    }
+
+    @FXML
+    private void configurarConexion() {
+        App.configurarConexion();
     }
 
     private void mostrarAlerta(String titulo, String mensaje) {
