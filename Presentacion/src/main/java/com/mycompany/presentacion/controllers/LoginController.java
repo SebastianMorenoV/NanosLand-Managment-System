@@ -11,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -29,9 +30,14 @@ public class LoginController {
     @FXML private TextField txtCorreo;
     @FXML private PasswordField txtContrasena;
     @FXML private ImageView imgLogo;
+    @FXML private Label lblVersion;
 
     @FXML
     public void initialize() {
+        // jDeploy indica la versión instalada; al ejecutar desde el IDE no existe.
+        String version = System.getProperty("jdeploy.app.version");
+        lblVersion.setText("Sistema de Gestión NanosLand "
+                + (version != null ? "v" + version : "(desarrollo)"));
         try {
             imgLogo.setImage(new Image(getClass().getResourceAsStream("/Logo Nanos.png")));
         } catch (Exception e) {
