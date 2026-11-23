@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="14" prefWidth="560" prefHeight="560" stylesheets="@../styles/styles.css" style="-fx-background-color: #ffffff;"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.mycompany.presentacion.controllers.ProductosModalController">
+    <padding><Insets top="24" right="28" bottom="20" left="28"/></padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <Label text="Productos" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="btnCerrar" text="Cerrar" minWidth="-Infinity" styleClass="boton-texto-gris" onAction="#cerrar"/>
+    </HBox>
+
+    <VBox spacing="8" style="-fx-background-color: #f8f9fa; -fx-background-radius: 8; -fx-padding: 12;">
+        <Label fx:id="lblFormulario" text="Agregar producto" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        <HBox spacing="10" alignment="BOTTOM_LEFT">
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="NOMBRE" styleClass="label-pequeno"/>
+                <TextField fx:id="txtNombre" promptText="Ej: Calcetines" styleClass="text-field-moderno"/>
+            </VBox>
+            <VBox spacing="4" prefWidth="110" minWidth="110">
+                <Label text="PRECIO" styleClass="label-pequeno"/>
+                <TextField fx:id="txtPrecio" promptText="Ej: 50" styleClass="text-field-moderno" onAction="#guardar"/>
+            </VBox>
+        </HBox>
+        <Label fx:id="lblError" wrapText="true" visible="false" managed="false" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
+        <HBox spacing="8" alignment="CENTER_RIGHT">
+            <Button fx:id="btnCancelarEdicion" text="Cancelar" minWidth="-Infinity" styleClass="boton-texto-gris" visible="false" managed="false" onAction="#cancelarEdicion"/>
+            <Button fx:id="btnGuardar" text="Agregar" minWidth="-Infinity" styleClass="boton-azul" onAction="#guardar"/>
+        </HBox>
+    </VBox>
+
+    <Label fx:id="lblSinProductos" text="Todavía no hay productos." style="-fx-text-fill: #95a5a6; -fx-font-size: 13px;"/>
+    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" styleClass="scroll-pane">
+        <VBox fx:id="listaProductos" spacing="4"/>
+    </ScrollPane>
+</VBox>

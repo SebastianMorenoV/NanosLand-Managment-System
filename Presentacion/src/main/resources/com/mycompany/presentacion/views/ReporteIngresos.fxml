@@ -9,7 +9,7 @@
     <HBox alignment="CENTER_LEFT">
         <VBox HBox.hgrow="ALWAYS">
             <Label text="Reporte de Ingresos (Flujo de Caja)" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
-            <Label text="Analiza el dinero real que ha ingresado al negocio (anticipos y liquidaciones)." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+            <Label text="Analiza el dinero real que ha ingresado al negocio (anticipos, liquidaciones y ventas extra)." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
         </VBox>
     </HBox>
 
@@ -44,7 +44,16 @@
                 <Label text="Total Ingresado en el Periodo:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
                 <Label fx:id="lblIngresoTotal" text="\$0.00" style="-fx-font-weight: bold; -fx-text-fill: #27ae60; -fx-font-size: 18px;"/>
             </HBox>
+            <HBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Eventos:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblIngresoEventos" text="\$0.00" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 15px;"/>
+            </HBox>
+            <HBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Ventas extra:" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="lblIngresoVentas" text="\$0.00" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 15px;"/>
+            </HBox>
         </HBox>
+        <Label fx:id="lblVentasProducto" wrapText="true" visible="false" managed="false" style="-fx-text-fill: #1a82b8; -fx-font-weight: bold; -fx-font-size: 13px;"/>
 
         <fx:define>
             <TableView fx:id="tablaIngresos" VBox.vgrow="ALWAYS">
@@ -53,9 +62,10 @@
                 </columnResizePolicy>
                 <columns>
                     <TableColumn fx:id="colFecha" text="Fecha/Hora" prefWidth="130" />
-                    <TableColumn fx:id="colFolioPago" text="Folio Pago" prefWidth="100" />
+                    <TableColumn fx:id="colFolioPago" text="Folio" prefWidth="100" />
+                    <TableColumn fx:id="colOrigen" text="Origen" prefWidth="90" />
                     <TableColumn fx:id="colCotizacion" text="Cotización" prefWidth="100" />
-                    <TableColumn fx:id="colCliente" text="Cliente" prefWidth="180" />
+                    <TableColumn fx:id="colCliente" text="Cliente / Productos" prefWidth="180" />
                     <TableColumn fx:id="colMetodo" text="Método" prefWidth="100" />
                     <TableColumn fx:id="colCantidad" text="Cantidad" prefWidth="120" />
                 </columns>

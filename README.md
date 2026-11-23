@@ -11,6 +11,7 @@ Aplicación de escritorio para administrar el negocio de **NanosLand**, un saló
 - **Eventos**: agenda de eventos, consulta de detalles, cancelación y reprogramación.
 - **Logística**: seguimiento del estado de cada servicio contratado para un evento.
 - **Estado de cuenta**: pagos recibidos, cargos extra y saldo pendiente de cada evento.
+- **Ventas extra**: venta de productos aparte de los eventos (por ejemplo, calcetines), que cuenta como ingreso del negocio sin afectar a ningún evento.
 - **Reportes**: ingresos, adeudos, eventos y oportunidades de recompra, con exportación a PDF.
 
 ## Tecnologías

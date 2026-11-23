@@ -159,6 +159,11 @@ public class MainShellController {
     }
 
     @FXML
+    private void navVentas() {
+        ViewSwitcher.cargarVista("Ventas.fxml");
+    }
+
+    @FXML
     private void navReportes() {
         ViewSwitcher.cargarVista("Reportes.fxml");
     }

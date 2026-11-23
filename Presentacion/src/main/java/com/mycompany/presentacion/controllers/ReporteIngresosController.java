@@ -33,10 +33,14 @@ public class ReporteIngresosController {
     @FXML private Button btnGenerar;
     @FXML private Button btnExportar;
     @FXML private Label lblIngresoTotal;
+    @FXML private Label lblIngresoEventos;
+    @FXML private Label lblIngresoVentas;
+    @FXML private Label lblVentasProducto;
 
     @FXML private TableView<IngresoDTO> tablaIngresos;
     @FXML private TableColumn<IngresoDTO, LocalDateTime> colFecha;
     @FXML private TableColumn<IngresoDTO, String> colFolioPago;
+    @FXML private TableColumn<IngresoDTO, String> colOrigen;
     @FXML private TableColumn<IngresoDTO, String> colCotizacion;
     @FXML private TableColumn<IngresoDTO, String> colCliente;
     @FXML private TableColumn<IngresoDTO, String> colMetodo;
@@ -46,6 +50,7 @@ public class ReporteIngresosController {
 
     private static final int ITEMS_POR_PAGINA = 20;
     private final ObservableList<IngresoDTO> masterData = FXCollections.observableArrayList();
+    private List<com.mycompany.common.dtos.VentaProductoDTO> ventasPorProducto = List.of();
 
     @FXML
     public void initialize() {
@@ -74,6 +79,7 @@ public class ReporteIngresosController {
         });
 
         colFolioPago.setCellValueFactory(new PropertyValueFactory<>("folioPago"));
+        colOrigen.setCellValueFactory(new PropertyValueFactory<>("origen"));
         colCotizacion.setCellValueFactory(new PropertyValueFactory<>("folioCotizacion"));
         colCliente.setCellValueFactory(new PropertyValueFactory<>("clienteNombre"));
         colMetodo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
@@ -127,6 +133,19 @@ public class ReporteIngresosController {
             
             double total = masterData.stream().mapToDouble(IngresoDTO::getCantidad).sum();
             lblIngresoTotal.setText(String.format("$%,.2f", total));
+
+            // Las ventas extra se muestran aparte: no son ganancia de ningún evento.
+            double ventasExtra = masterData.stream().filter(IngresoDTO::isVentaExtra)
+                    .mapToDouble(IngresoDTO::getCantidad).sum();
+            lblIngresoEventos.setText(String.format("$%,.2f", total - ventasExtra));
+            lblIngresoVentas.setText(String.format("$%,.2f", ventasExtra));
+            ventasPorProducto = generarReporteIngresosUseCase.generarVentasPorProducto(inicio, fin);
+            String detalleVentas = ventasPorProducto.stream()
+                    .map(v -> v.getCantidad() + " " + v.getNombre() + String.format(" ($%,.2f)", v.getTotal()))
+                    .collect(java.util.stream.Collectors.joining(", "));
+            lblVentasProducto.setText("Vendido: " + detalleVentas);
+            lblVentasProducto.setVisible(!ventasPorProducto.isEmpty());
+            lblVentasProducto.setManaged(!ventasPorProducto.isEmpty());
             
             btnExportar.setDisable(masterData.isEmpty());
 
@@ -158,7 +177,7 @@ public class ReporteIngresosController {
 
         if (archivo != null) {
             try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
-                exportarReporteUseCase.exportarIngresosPDF(masterData, logoStream, archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
+                exportarReporteUseCase.exportarIngresosPDF(masterData, ventasPorProducto, logoStream, archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
                 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Éxito");

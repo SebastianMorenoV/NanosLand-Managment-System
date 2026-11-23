@@ -469,15 +469,15 @@ public class ExportarReporteUseCase {
         document.add(table);
         document.close();
     }
-    public void exportarIngresosPDF(List<com.mycompany.common.dtos.IngresoDTO> ingresos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
+    public void exportarIngresosPDF(List<com.mycompany.common.dtos.IngresoDTO> ingresos, List<com.mycompany.common.dtos.VentaProductoDTO> ventasPorProducto, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
         try {
-            exportarIngresosPDFInterno(ingresos, logoStream, rutaDestino, inicio, fin);
+            exportarIngresosPDFInterno(ingresos, ventasPorProducto, logoStream, rutaDestino, inicio, fin);
         } finally {
             cerrarSalidasPendientes();
         }
     }
 
-    private void exportarIngresosPDFInterno(List<com.mycompany.common.dtos.IngresoDTO> ingresos, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
+    private void exportarIngresosPDFInterno(List<com.mycompany.common.dtos.IngresoDTO> ingresos, List<com.mycompany.common.dtos.VentaProductoDTO> ventasPorProducto, InputStream logoStream, String rutaDestino, LocalDate inicio, LocalDate fin) throws Exception {
         if (ingresos == null || ingresos.isEmpty()) {
             throw new IllegalArgumentException("No hay datos de ingresos para exportar.");
         }
@@ -545,15 +545,52 @@ public class ExportarReporteUseCase {
         
         addKPICell(kpiTable, "Periodo:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
         addKPICell(kpiTable, periodo, fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        double ingresosVentas = ingresos.stream().filter(com.mycompany.common.dtos.IngresoDTO::isVentaExtra)
+            .mapToDouble(com.mycompany.common.dtos.IngresoDTO::getCantidad).sum();
+        addKPICell(kpiTable, "Eventos:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, String.format("$%,.2f", totalIngresos - ingresosVentas), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
+        addKPICell(kpiTable, "Ventas extra:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
+        addKPICell(kpiTable, String.format("$%,.2f", ingresosVentas), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
         addKPICell(kpiTable, "Ingreso Total:", fontKPIKey, new Color(248, 249, 250), Element.ALIGN_RIGHT);
         addKPICell(kpiTable, String.format("$%,.2f", totalIngresos), fontKPIVal, new Color(248, 249, 250), Element.ALIGN_LEFT);
         document.add(kpiTable);
 
+        if (ventasPorProducto != null && !ventasPorProducto.isEmpty()) {
+            Paragraph tituloVentas = new Paragraph("Ventas extra por producto",
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, Color.DARK_GRAY));
+            tituloVentas.setSpacingAfter(6);
+            document.add(tituloVentas);
+
+            PdfPTable tablaVentas = new PdfPTable(3);
+            tablaVentas.setWidthPercentage(60);
+            tablaVentas.setHorizontalAlignment(Element.ALIGN_LEFT);
+            tablaVentas.setWidths(new float[]{3f, 1f, 1.4f});
+            tablaVentas.setSpacingAfter(16);
+            for (String h : new String[]{"Producto", "Vendidos", "Total"}) {
+                PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTable));
+                cell.setBackgroundColor(new Color(22, 160, 133));
+                cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                cell.setPadding(6);
+                cell.setBorder(Rectangle.NO_BORDER);
+                tablaVentas.addCell(cell);
+            }
+            boolean altVenta = false;
+            for (com.mycompany.common.dtos.VentaProductoDTO v : ventasPorProducto) {
+                Color fila = altVenta ? new Color(245, 247, 250) : Color.WHITE;
+                altVenta = !altVenta;
+                addTableCell(tablaVentas, v.getNombre(), fontNormal, fila, Element.ALIGN_LEFT);
+                addTableCell(tablaVentas, String.valueOf(v.getCantidad()), fontNormal, fila, Element.ALIGN_CENTER);
+                addTableCell(tablaVentas, String.format("$%,.2f", v.getTotal()), fontNormal, fila, Element.ALIGN_RIGHT);
+            }
+            document.add(tablaVentas);
+        }
+
         PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{1.5f, 1.2f, 1.5f, 2f, 1.2f, 1.2f});
+        table.setWidths(new float[]{1.65f, 1.55f, 1.6f, 2.4f, 1.4f, 1.2f});
 
-        String[] headers = {"Fecha", "Folio Pago", "Folio Cotiz.", "Cliente", "Método", "Monto"};
+        String[] headers = {"Fecha", "Folio", "Origen", "Cliente / Productos", "Método", "Monto"};
         for (String h : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(h, fontHeaderTable));
             cell.setBackgroundColor(new Color(22, 160, 133));
@@ -572,9 +609,10 @@ public class ExportarReporteUseCase {
 
             addTableCell(table, i.getFechaHora() != null ? i.getFechaHora().format(dtfTime) : "", fontNormal, rowColor, Element.ALIGN_CENTER);
             addTableCell(table, i.getFolioPago(), fontNormal, rowColor, Element.ALIGN_CENTER);
-            addTableCell(table, i.getFolioCotizacion(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            // Pagos de eventos: su cotización. Ventas extra: se identifican como tales.
+            addTableCell(table, i.isVentaExtra() ? i.getOrigen() : i.getFolioCotizacion(), fontNormal, rowColor, Element.ALIGN_CENTER);
             addTableCell(table, i.getClienteNombre(), fontNormal, rowColor, Element.ALIGN_LEFT);
-            addTableCell(table, i.getTipo(), fontNormal, rowColor, Element.ALIGN_CENTER);
+            addTableCell(table, nombreMetodoPago(i.getTipo()), fontNormal, rowColor, Element.ALIGN_CENTER);
             addTableCell(table, String.format("$%,.2f", i.getCantidad()), fontNormal, rowColor, Element.ALIGN_RIGHT);
         }
 
@@ -868,6 +906,14 @@ public class ExportarReporteUseCase {
         celda.setHorizontalAlignment(alineacion);
         celda.setVerticalAlignment(Element.ALIGN_MIDDLE);
         return celda;
+    }
+
+    /** "TRANSFERENCIA" -> "Transferencia": más legible y cabe en la columna. */
+    private static String nombreMetodoPago(String metodo) {
+        if (metodo == null || metodo.equals("N/A") || metodo.length() < 2) {
+            return metodo;
+        }
+        return metodo.charAt(0) + metodo.substring(1).toLowerCase();
     }
 
     /**
