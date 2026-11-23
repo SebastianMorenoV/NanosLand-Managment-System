@@ -106,13 +106,13 @@ public class ModificarCotizacionUseCase {
             || !eventoExistente.getTurno().equals(turnoNuevo);
 
         if (cambioFechaTurno) {
-            // Solo bloqueamos si la nueva fecha/turno ya tiene un evento que no esté cancelado
-            // Obtenemos los eventos para la fecha y turno
-            List<com.mycompany.persistencia.dominio.Evento> eventosEnTurno = eventoRepository.findByFechaAndTurno(fechaNueva, turnoNuevo);
-            
-            boolean turnoOcupado = eventosEnTurno.stream()
-                .anyMatch(e -> !e.getId().equals(eventoExistente.getId()) && e.getEstado() != EstadoEvento.CANCELADO);
-                
+            // Solo bloqueamos si la nueva fecha/turno ya tiene OTRO evento confirmado
+            // (los borradores de otros clientes no apartan el turno).
+            boolean turnoOcupado = eventoRepository.existsByFechaAndTurnoAndEstadoInAndIdNot(
+                fechaNueva, turnoNuevo,
+                com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase.ESTADOS_QUE_OCUPAN,
+                eventoExistente.getId());
+
             if (turnoOcupado) {
                 throw new CotizacionException("Ya existe un evento confirmado para esta fecha y turno. Seleccione otro turno.");
             }
@@ -121,8 +121,13 @@ public class ModificarCotizacionUseCase {
         existente.setCliente(cliente);
         existente.setPaquete(paquete);
         
+        boolean cambioTurno = eventoExistente.getTurno() != dto.getTurno();
         eventoExistente.setFecha(dto.getFecha());
         eventoExistente.setTurno(dto.getTurno());
+        // Un evento que ya tiene horario (confirmado) toma el del nuevo turno.
+        if (cambioTurno && eventoExistente.getHoraInicio() != null) {
+            com.example.negocio.evento.usecase.HorarioTurno.asignar(eventoExistente);
+        }
         eventoExistente.setNombreFestejado(dto.getNombreFestejado());
         eventoExistente.setTematica(dto.getTematica());
         
@@ -185,7 +190,7 @@ public class ModificarCotizacionUseCase {
             List<com.mycompany.persistencia.dominio.Pago> pagosExistentes = pagoRepository.findByCotizacionId(cotizacionId);
             double anticipoExistente = pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(com.mycompany.persistencia.dominio.Pago::getCantidad).sum();
             
-            double minimoRequerido = Math.max(3000.0, anticipoExistente);
+            double minimoRequerido = Math.max(RegistrarAnticipoUseCase.anticipoMinimo(total), anticipoExistente);
             if (total < minimoRequerido) {
                 throw new CotizacionException(String.format("El nuevo total de la cotización ($%,.2f) no puede ser menor al monto ya abonado o requerido ($%,.2f).", total, minimoRequerido));
             }

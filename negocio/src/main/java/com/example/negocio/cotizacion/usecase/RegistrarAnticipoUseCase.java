@@ -9,7 +9,6 @@ import com.mycompany.persistencia.dominio.Pago;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.MetodoPago;
-import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.persistencia.repository.CotizacionRepository;
 import com.mycompany.persistencia.repository.EventoRepository;
 import com.mycompany.persistencia.repository.PagoRepository;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.Year;
 import java.util.List;
 
@@ -61,6 +59,20 @@ public class RegistrarAnticipoUseCase {
             throw new CotizacionException("El abono excede el saldo pendiente.");
         }
 
+        // Con este pago la cotización puede quedar confirmada: como los borradores no
+        // apartan la fecha, se comprueba aquí que nadie más haya confirmado ese turno.
+        boolean seConfirma = anticipoExistente + cantidad >= anticipoMinimo(cotizacion.getTotal())
+            && cotizacion.getEstado() != EstadoCotizacion.VIGENTE;
+        if (seConfirma && eventoCotizacion != null && eventoCotizacion.getEstado() == EstadoEvento.TENTATIVO
+                && eventoRepository.existsByFechaAndTurnoAndEstadoInAndIdNot(
+                    eventoCotizacion.getFecha(), eventoCotizacion.getTurno(),
+                    com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase.ESTADOS_QUE_OCUPAN,
+                    eventoCotizacion.getId())) {
+            throw new CotizacionException(
+                "La fecha y el turno de esta cotización ya fueron confirmados para otro evento. "
+                + "Cambie la fecha o el turno antes de registrar el pago.");
+        }
+
         Pago pago = new Pago();
         pago.setCotizacion(cotizacion);
         pago.setCantidad(cantidad);
@@ -70,9 +82,8 @@ public class RegistrarAnticipoUseCase {
 
         Pago pagoGuardado = pagoRepository.save(pago);
 
-        // Si la suma de pagos alcanza o supera los $3,000, Confirmamos la Cotizacion y el Evento
-        double totalAbonado = anticipoExistente + cantidad;
-        if (totalAbonado >= 3000.0 && cotizacion.getEstado() != EstadoCotizacion.VIGENTE) {
+        // Si la suma de pagos alcanza el anticipo mínimo, Confirmamos la Cotizacion y el Evento
+        if (seConfirma) {
             cotizacion.setEstado(EstadoCotizacion.VIGENTE);
             cotizacionRepository.save(cotizacion);
 
@@ -81,12 +92,8 @@ public class RegistrarAnticipoUseCase {
                 evento.setEstado(EstadoEvento.CONFIRMADO);
                 
                 // Asignar horarios por defecto del turno si no los tiene
-                if (evento.getTurno() == TurnoEvento.MATUTINO) {
-                    if (evento.getHoraInicio() == null) evento.setHoraInicio(LocalTime.of(9, 0));
-                    if (evento.getHoraFin() == null) evento.setHoraFin(LocalTime.of(14, 0));
-                } else if (evento.getTurno() == TurnoEvento.VESPERTINO) {
-                    if (evento.getHoraInicio() == null) evento.setHoraInicio(LocalTime.of(15, 0));
-                    if (evento.getHoraFin() == null) evento.setHoraFin(LocalTime.of(20, 0));
+                if (evento.getHoraInicio() == null || evento.getHoraFin() == null) {
+                    com.example.negocio.evento.usecase.HorarioTurno.asignar(evento);
                 }
                 eventoRepository.save(evento);
 
@@ -101,6 +108,21 @@ public class RegistrarAnticipoUseCase {
     public double obtenerTotalAbonado(Long cotizacionId) {
         List<Pago> pagosExistentes = pagoRepository.findByCotizacionId(cotizacionId);
         return pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(Pago::getCantidad).sum();
+    }
+
+    /** Anticipo que confirma una cotización: $3,000, o el total si la cotización vale menos. */
+    public static final double ANTICIPO_MINIMO = 3000.0;
+
+    public static double anticipoMinimo(double totalCotizacion) {
+        return Math.min(ANTICIPO_MINIMO, totalCotizacion);
+    }
+
+    /** Anticipo mínimo que confirma la cotización indicada. */
+    @Transactional(readOnly = true)
+    public double obtenerAnticipoMinimo(Long cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
+            .orElseThrow(() -> new CotizacionException("No existe la cotización indicada."));
+        return anticipoMinimo(cotizacion.getTotal());
     }
 
     /**

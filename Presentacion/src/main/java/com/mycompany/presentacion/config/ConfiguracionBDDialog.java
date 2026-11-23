@@ -1,6 +1,5 @@
 package com.mycompany.presentacion.config;
 
-import java.io.IOException;
 import java.util.Optional;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -36,7 +35,7 @@ public final class ConfiguracionBDDialog {
      * @param propietario ventana sobre la que se muestra, o {@code null}.
      * @param inicial     valores con los que se llenan los campos.
      * @param aviso       mensaje inicial (por ejemplo, el error de conexión), o {@code null}.
-     * @return la configuración ya probada y guardada, o vacío si se canceló.
+     * @return la configuración ya probada (todavía sin guardar), o vacío si se canceló.
      */
     public static Optional<ConfiguracionBD> mostrar(Window propietario, ConfiguracionBD inicial, String aviso) {
         Stage stage = new Stage();
@@ -123,14 +122,8 @@ public final class ConfiguracionBDDialog {
                 mensaje.setText(error);
                 return;
             }
-            try {
-                config.guardar();
-            } catch (IOException ex) {
-                estiloMensaje(mensaje, false);
-                mensaje.setText("No se pudo guardar la configuración en "
-                        + ConfiguracionBD.rutaArchivo() + ": " + ex.getMessage());
-                return;
-            }
+            // No se guarda aquí: quien llama lo hace cuando el sistema ya arrancó con
+            // estos datos, para no dejar guardada una configuración que no funciona.
             resultado[0] = config;
             stage.close();
         });

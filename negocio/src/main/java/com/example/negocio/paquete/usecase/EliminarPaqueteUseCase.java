@@ -26,9 +26,10 @@ public class EliminarPaqueteUseCase {
             throw new CotizacionException("El paquete no existe o ya está eliminado.");
         }
 
-        boolean enUso = cotizacionRepository.existsByPaqueteIdAndEstadoIn(id, 
-            java.util.List.of(com.mycompany.persistencia.enums.EstadoCotizacion.BORRADOR, 
-                              com.mycompany.persistencia.enums.EstadoCotizacion.VIGENTE));
+        boolean enUso = cotizacionRepository.existeCotizacionAbiertaConPaquete(id,
+            java.util.List.of(com.mycompany.persistencia.enums.EstadoCotizacion.BORRADOR,
+                              com.mycompany.persistencia.enums.EstadoCotizacion.VIGENTE),
+            com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO);
         
         if (enUso) {
             throw new CotizacionException("No se puede eliminar el paquete porque tiene cotizaciones activas o vigentes asociadas.");

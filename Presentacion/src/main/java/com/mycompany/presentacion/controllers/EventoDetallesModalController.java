@@ -30,6 +30,7 @@ public class EventoDetallesModalController {
 
     @FXML private Button btnCancelar;
     @FXML private Button btnReprogramar;
+    @FXML private Button btnFinalizar;
 
     private EventoDTO evento;
     private Runnable onEstadoActualizado;
@@ -74,6 +75,12 @@ public class EventoDetallesModalController {
                                       evento.getEstadoEvento() == EstadoEvento.FINALIZADO;
         if (btnCancelar != null) btnCancelar.setDisable(deshabilitarBotones);
         if (btnReprogramar != null) btnReprogramar.setDisable(deshabilitarBotones);
+
+        // Finalizar a mano: solo un evento confirmado o en curso cuya fecha ya llegó.
+        boolean sePuedeFinalizar = (evento.getEstadoEvento() == EstadoEvento.CONFIRMADO
+                || evento.getEstadoEvento() == EstadoEvento.EN_CURSO)
+                && evento.getFecha() != null && !evento.getFecha().isAfter(java.time.LocalDate.now());
+        if (btnFinalizar != null) btnFinalizar.setDisable(!sePuedeFinalizar);
     }
 
     private void actualizarBadgeEstado(EstadoEvento estado) {
@@ -112,7 +119,8 @@ public class EventoDetallesModalController {
         javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Cancelar Evento");
         confirm.setHeaderText("¿Está seguro de que desea cancelar este evento?");
-        confirm.setContentText("Esta acción cambiará el estado del evento. Si se cancela 1 día antes o el mismo día, la fecha no se liberará para otras cotizaciones.");
+        confirm.setContentText("El evento y su cotización quedarán cancelados y la fecha quedará libre. "
+                + "Si el evento ya estaba confirmado y se cancela el mismo día o un día antes, se registra como cancelación tardía.");
         
         confirm.showAndWait().ifPresent(response -> {
             if (response == javafx.scene.control.ButtonType.OK) {
@@ -124,6 +132,30 @@ public class EventoDetallesModalController {
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
                     alert.setTitle("Error");
                     alert.setHeaderText("Error al cancelar el evento");
+                    alert.setContentText(e.getMessage());
+                    alert.showAndWait();
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void finalizarEvento() {
+        javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Finalizar Evento");
+        confirm.setHeaderText("¿Marcar este evento como finalizado?");
+        confirm.setContentText("Un evento finalizado ya no se puede cancelar ni reprogramar.");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == javafx.scene.control.ButtonType.OK) {
+                try {
+                    actualizarEstadoEventoUseCase.actualizarEstado(evento.getId(), EstadoEvento.FINALIZADO);
+                    if (onEstadoActualizado != null) onEstadoActualizado.run();
+                    cerrarModal();
+                } catch (Exception e) {
+                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                    alert.setTitle("Error");
+                    alert.setHeaderText("Error al finalizar el evento");
                     alert.setContentText(e.getMessage());
                     alert.showAndWait();
                 }

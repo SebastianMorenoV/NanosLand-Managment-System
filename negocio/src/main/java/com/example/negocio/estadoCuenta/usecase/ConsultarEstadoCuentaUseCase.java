@@ -96,7 +96,11 @@ public class ConsultarEstadoCuentaUseCase {
         dto.setTotalPagado(totalPagado);
 
         // Totales Consolidados
-        double granTotal = dto.getPrecioPaqueteBase() + totalExtras + totalCargos;
+        // Se parte del total GUARDADO en la cotización (lo pactado con el cliente), no del
+        // precio actual del paquete: así un cambio posterior en el catálogo no altera
+        // lo que debe un evento ya vendido. El paquete se muestra a su precio pactado.
+        dto.setPrecioPaqueteBase(cotizacion.getTotal() - totalExtras);
+        double granTotal = cotizacion.getTotal() + totalCargos;
         dto.setGranTotal(granTotal);
         dto.setSaldoPendiente(granTotal - totalPagado);
 

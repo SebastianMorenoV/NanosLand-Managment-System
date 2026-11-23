@@ -40,9 +40,10 @@ public class ActualizarPaqueteUseCase {
             throw new com.example.negocio.exception.CotizacionException("El paquete no existe o no está activo.");
         }
 
-        boolean enUso = cotizacionRepository.existsByPaqueteIdAndEstadoIn(paqueteDTO.getId(), 
-            java.util.List.of(com.mycompany.persistencia.enums.EstadoCotizacion.BORRADOR, 
-                              com.mycompany.persistencia.enums.EstadoCotizacion.VIGENTE));
+        boolean enUso = cotizacionRepository.existeCotizacionAbiertaConPaquete(paqueteDTO.getId(),
+            java.util.List.of(com.mycompany.persistencia.enums.EstadoCotizacion.BORRADOR,
+                              com.mycompany.persistencia.enums.EstadoCotizacion.VIGENTE),
+            com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO);
         
         if (enUso) {
             throw new com.example.negocio.exception.CotizacionException(

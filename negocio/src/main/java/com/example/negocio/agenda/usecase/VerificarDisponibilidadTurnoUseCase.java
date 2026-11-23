@@ -31,14 +31,32 @@ public class VerificarDisponibilidadTurnoUseCase {
     private final EventoRepository eventoRepository;
 
     /**
+     * Estados de evento que ocupan su fecha y turno. Un borrador sin anticipo
+     * (TENTATIVO) NO aparta la fecha: puede haber varios para el mismo turno y
+     * se lo queda el primero que paga el anticipo. Los cancelados la liberan.
+     */
+    public static final java.util.List<EstadoEvento> ESTADOS_QUE_OCUPAN = java.util.List.of(
+        EstadoEvento.CONFIRMADO, EstadoEvento.EN_CURSO, EstadoEvento.FINALIZADO);
+
+    /**
      * Verifica si un turno específico está disponible para una fecha dada.
-     * Un turno está ocupado si existe un Evento que NO esté en estado CANCELADO.
+     * Un turno está ocupado si existe un Evento confirmado (o ya realizado) en él.
      */
     @Transactional(readOnly = true)
     public boolean esTurnoDisponible(LocalDate fecha, TurnoEvento turno) {
-        return !eventoRepository.existsByFechaAndTurnoAndEstadoNot(
-            fecha, turno, EstadoEvento.CANCELADO
-        );
+        return !eventoRepository.existsByFechaAndTurnoAndEstadoIn(fecha, turno, ESTADOS_QUE_OCUPAN);
+    }
+
+    /**
+     * Indica si la fecha y turno están ocupados por un evento distinto al indicado.
+     * Sirve para validar el propio evento al confirmarlo, editarlo o reprogramarlo.
+     */
+    @Transactional(readOnly = true)
+    public boolean estaOcupadoPorOtroEvento(LocalDate fecha, TurnoEvento turno, Long eventoId) {
+        if (eventoId == null) {
+            return !esTurnoDisponible(fecha, turno);
+        }
+        return eventoRepository.existsByFechaAndTurnoAndEstadoInAndIdNot(fecha, turno, ESTADOS_QUE_OCUPAN, eventoId);
     }
 
     /**

@@ -1,9 +1,11 @@
 package com.mycompany.presentacion;
 
 import com.example.negocio.NegocioApplication;
+import com.example.negocio.evento.usecase.ActualizarEstadosPorFechaUseCase;
 import com.mycompany.presentacion.config.ConfiguracionBD;
 import com.mycompany.presentacion.config.ConfiguracionBDDialog;
 import com.mycompany.presentacion.config.PrimerUsuarioDialog;
+import com.mycompany.presentacion.config.RegistroErrores;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import java.io.IOException;
 import java.util.Optional;
@@ -34,26 +36,33 @@ public class App extends Application {
 
         // Antes de arrancar Spring se confirma que hay conexión a MySQL. Si no
         // la hay (primera vez en este equipo, contraseña distinta, servidor
-        // apagado) se piden los datos en lugar de fallar al iniciar.
+        // apagado) se piden los datos en lugar de fallar al iniciar. Lo mismo
+        // si la conexión funciona pero el sistema no logra iniciar con esa base.
         ConfiguracionBD config = ConfiguracionBD.cargar();
         String error = config.probarConexion();
-        while (error != null) {
-            Optional<ConfiguracionBD> nueva = ConfiguracionBDDialog.mostrar(null, config, error);
-            if (nueva.isEmpty()) {
-                Platform.exit();
-                return;
+        boolean configuracionNueva = false;
+        ConfigurableApplicationContext contexto = null;
+        while (contexto == null) {
+            if (error != null) {
+                Optional<ConfiguracionBD> nueva = ConfiguracionBDDialog.mostrar(null, config, error);
+                if (nueva.isEmpty()) {
+                    Platform.exit();
+                    return;
+                }
+                config = nueva.get();
+                configuracionNueva = true;
             }
-            config = nueva.get();
-            error = config.probarConexion();
+            try {
+                contexto = arrancarSpring(config);
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = "La conexión funciona, pero el sistema no pudo iniciar con esta base de datos: "
+                        + RegistroErrores.causaRaiz(e);
+            }
         }
-
-        try {
-            iniciarSpring(config);
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarError("No se pudo iniciar el sistema", causaRaiz(e));
-            Platform.exit();
-            return;
+        usarContexto(contexto);
+        if (configuracionNueva) {
+            guardarConfiguracion(config);
         }
 
         PrimerUsuarioDialog.mostrarSiNoHayUsuarios(null, springContext);
@@ -83,8 +92,11 @@ public class App extends Application {
 
     /**
      * Abre la ventana de conexión a la base de datos desde la pantalla de
-     * inicio de sesión. Si el usuario guarda datos nuevos, el sistema se
-     * reinicia con esa conexión y vuelve a mostrar el inicio de sesión.
+     * inicio de sesión. Si el usuario indica datos nuevos, el sistema arranca
+     * con esa conexión y vuelve a mostrar el inicio de sesión.
+     *
+     * El sistema nuevo se arranca ANTES de cerrar el actual y de guardar la
+     * configuración: si no logra iniciar, todo queda como estaba.
      */
     public static void configurarConexion() {
         App app = instancia;
@@ -96,40 +108,69 @@ public class App extends Application {
         if (nueva.isEmpty()) {
             return;
         }
+        ConfigurableApplicationContext contextoNuevo;
         try {
-            if (app.springContext != null) {
-                app.springContext.close();
-            }
-            app.iniciarSpring(nueva.get());
+            contextoNuevo = arrancarSpring(nueva.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("No se pudo aplicar la nueva conexión",
+                    "La conexión funciona, pero el sistema no pudo iniciar con esa base de datos:\n"
+                    + RegistroErrores.causaRaiz(e) + "\n\nSe conserva la conexión anterior.");
+            return;
+        }
+        ConfigurableApplicationContext contextoAnterior = app.springContext;
+        app.usarContexto(contextoNuevo);
+        if (contextoAnterior != null) {
+            contextoAnterior.close();
+        }
+        guardarConfiguracion(nueva.get());
+        try {
             PrimerUsuarioDialog.mostrarSiNoHayUsuarios(app.primaryStage, app.springContext);
             app.primaryStage.getScene().setRoot(app.cargarLogin());
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarError("No se pudo aplicar la nueva conexión",
-                    causaRaiz(e) + "\n\nCierra el sistema y vuelve a abrirlo.");
+            mostrarError("No se pudo mostrar el inicio de sesión",
+                    RegistroErrores.causaRaiz(e) + "\n\nCierra el sistema y vuelve a abrirlo.");
         }
     }
 
-    private void iniciarSpring(ConfiguracionBD config) {
-        springContext = new SpringApplicationBuilder()
+    private static ConfigurableApplicationContext arrancarSpring(ConfiguracionBD config) {
+        return new SpringApplicationBuilder()
                 .sources(NegocioApplication.class)
                 .sources(PresentacionConfig.class)
+                // Spring Boot activa por defecto el modo "sin pantalla" de AWT, con el que
+                // java.awt.Desktop no puede abrir los PDF generados (contrato, comprobante).
+                .headless(false)
                 .run(config.argumentosSpring());
-        ViewSwitcher.setSpringContext(springContext);
+    }
+
+    private void usarContexto(ConfigurableApplicationContext contexto) {
+        springContext = contexto;
+        ViewSwitcher.setSpringContext(contexto);
+        try {
+            // Eventos confirmados cuya fecha ya llegó o pasó: en curso / finalizado.
+            contexto.getBean(ActualizarEstadosPorFechaUseCase.class).actualizar();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void guardarConfiguracion(ConfiguracionBD config) {
+        try {
+            config.guardar();
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("No se pudo guardar la configuración",
+                    "El sistema funciona con la conexión indicada, pero no se pudo guardar en "
+                    + ConfiguracionBD.rutaArchivo() + ":\n" + e.getMessage()
+                    + "\n\nLa próxima vez habrá que capturarla de nuevo.");
+        }
     }
 
     private Parent cargarLogin() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/mycompany/presentacion/views/Login.fxml"));
         loader.setControllerFactory(springContext::getBean);
         return loader.load();
-    }
-
-    private static String causaRaiz(Throwable e) {
-        Throwable causa = e;
-        while (causa.getCause() != null && causa.getCause() != causa) {
-            causa = causa.getCause();
-        }
-        return causa.getMessage() != null ? causa.getMessage() : causa.toString();
     }
 
     private static void mostrarError(String titulo, String mensaje) {

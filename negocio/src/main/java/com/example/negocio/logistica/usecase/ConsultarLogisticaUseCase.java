@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 public class ConsultarLogisticaUseCase {
 
     private final EventoRepository eventoRepository;
+    private final com.example.negocio.evento.usecase.ActualizarEstadosPorFechaUseCase actualizarEstadosPorFechaUseCase;
     private final LogisticaServicioRepository logisticaRepo;
     private final GenerarLogisticaEventoUseCase generarLogisticaEventoUseCase;
 
@@ -36,6 +37,8 @@ public class ConsultarLogisticaUseCase {
      */
     @Transactional(readOnly = true)
     public List<EventoDTO> obtenerEventosProximos() {
+        // Pone al día los estados (en curso / finalizado) según la fecha de hoy.
+        actualizarEstadosPorFechaUseCase.actualizar();
         LocalDate hoy = LocalDate.now();
         // Traemos todos los eventos entre hoy y 90 días adelante
         LocalDate limite = hoy.plusDays(90);

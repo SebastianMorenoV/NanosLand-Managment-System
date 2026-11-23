@@ -127,6 +127,7 @@ public class CotizacionController {
 
     private final ObservableList<CotizacionDTO> cotizacionesPanel = FXCollections.observableArrayList();
     private FilteredList<CotizacionDTO> cotizacionesFiltradas;
+    @FXML private ComboBox<MetodoPago> comboMetodoPago;
     @FXML private HBox boxBotonesNuevos;
     @FXML private HBox boxBotonesEdicion;
     @FXML private Button btnGuardarCambios;
@@ -180,6 +181,11 @@ public class CotizacionController {
     }
     @FXML
     public void initialize() {
+        if (comboMetodoPago != null) {
+            comboMetodoPago.getItems().setAll(MetodoPago.values());
+            comboMetodoPago.setValue(MetodoPago.EFECTIVO);
+        }
+
         if (txtAbono != null) {
             txtAbono.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
                 if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) return change;
@@ -316,25 +322,31 @@ public class CotizacionController {
         if (r == null) return;
 
         double pagado = registrarAnticipoUseCase.obtenerTotalAbonado(getCotizacionEnEdicionId());
-        if (pagado >= 3000) {
+        // Anticipo que confirma la cotización: $3,000, o el total si vale menos.
+        double minimo = registrarAnticipoUseCase.obtenerAnticipoMinimo(getCotizacionEnEdicionId());
+        if (pagado >= minimo) {
             guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
             Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado (Fechas bloqueadas).");
             ok.showAndWait();
             nuevaCotizacion();
         } else {
-            TextInputDialog dialog = new TextInputDialog("3000");
+            TextInputDialog dialog = new TextInputDialog(String.format(java.util.Locale.ROOT, "%.2f", minimo - pagado));
             dialog.setTitle("Confirmar Cotización");
-            dialog.setHeaderText("Mínimo $3,000 para confirmar y bloquear la fecha.");
+            dialog.setHeaderText(String.format("Anticipo mínimo de $%,.2f para confirmar y bloquear la fecha.", minimo));
             dialog.setContentText("Ingrese el monto a pagar:");
 
             dialog.showAndWait().ifPresent(montoStr -> {
                 try {
-                    double monto = Double.parseDouble(montoStr);
-                    if (pagado + monto < 3000) {
-                        mostrarError("El pago total no alcanza los $3,000 requeridos.");
+                    double monto = Double.parseDouble(montoStr.replace("$", "").replace(",", "").trim());
+                    if (pagado + monto < minimo) {
+                        mostrarError(String.format("El pago total no alcanza el anticipo mínimo de $%,.2f.", minimo));
                         return;
                     }
-                    registrarAnticipoUseCase.registrarAnticipo(getCotizacionEnEdicionId(), monto, MetodoPago.EFECTIVO);
+                    MetodoPago metodo = pedirMetodoPago();
+                    if (metodo == null) {
+                        return; // se canceló la selección del método de pago
+                    }
+                    registrarAnticipoUseCase.registrarAnticipo(getCotizacionEnEdicionId(), monto, metodo);
                     guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
                     actualizarPagosUI();
                     imprimirComprobante(getCotizacionEnEdicionId());
@@ -342,6 +354,8 @@ public class CotizacionController {
                     Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado exitosamente.");
                     ok.showAndWait();
                     nuevaCotizacion();
+                } catch(NumberFormatException e) {
+                    mostrarError("Monto inválido.");
                 } catch(Exception e) {
                     mostrarError(e.getMessage());
                 }
@@ -857,10 +871,17 @@ public class CotizacionController {
             return;
         }
 
-        CotizacionDTO seleccionada = listaCotizaciones != null
-            ? listaCotizaciones.getSelectionModel().getSelectedItem()
-            : null;
-        String folio = seleccionada != null && seleccionada.getFolio() != null ? seleccionada.getFolio() : "";
+        // El folio es el de la cotización EN EDICIÓN (la que se va a eliminar), no el de
+        // la fila seleccionada en la lista, que puede ser otra.
+        String folio = "";
+        try {
+            CotizacionDTO enEdicion = listarCotizacionesUseCase.obtenerPorId(getCotizacionEnEdicionId());
+            if (enEdicion != null && enEdicion.getFolio() != null) {
+                folio = enEdicion.getFolio();
+            }
+        } catch (RuntimeException ex) {
+            // Sin folio la confirmación sigue siendo válida.
+        }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Eliminar cotización");
@@ -1351,6 +1372,15 @@ public class CotizacionController {
         });
     }
     
+    /** Pregunta con qué método se recibe el pago; devuelve null si se cancela. */
+    private MetodoPago pedirMetodoPago() {
+        ChoiceDialog<MetodoPago> dialogo = new ChoiceDialog<>(MetodoPago.EFECTIVO, MetodoPago.values());
+        dialogo.setTitle("Método de pago");
+        dialogo.setHeaderText("¿Cómo se recibe el pago?");
+        dialogo.setContentText("Método:");
+        return dialogo.showAndWait().orElse(null);
+    }
+
     @FXML
     private void registrarAbonoCotizacion() {
         if (!isModoEdicion() || getCotizacionEnEdicionId() == null) {
@@ -1360,14 +1390,14 @@ public class CotizacionController {
         try {
             double monto = Double.parseDouble(txtAbono.getText().trim());
             double pagadoActual = registrarAnticipoUseCase.obtenerTotalAbonado(getCotizacionEnEdicionId());
-            if (pagadoActual == 0 && monto < 3000) {
-                mostrarError("El pago mínimo inicial (anticipo) debe ser de al menos $3,000.");
-                return;
-            } else if (pagadoActual < 3000 && (pagadoActual + monto) < 3000) {
-                mostrarError("El pago total acumulado no alcanza los $3,000 requeridos como mínimo.");
+            double minimo = registrarAnticipoUseCase.obtenerAnticipoMinimo(getCotizacionEnEdicionId());
+            if (pagadoActual < minimo && (pagadoActual + monto) < minimo) {
+                mostrarError(String.format("El pago acumulado no alcanza el anticipo mínimo de $%,.2f.", minimo));
                 return;
             }
-            registrarAnticipoUseCase.registrarAnticipo(getCotizacionEnEdicionId(), monto, MetodoPago.EFECTIVO);
+            MetodoPago metodo = comboMetodoPago != null && comboMetodoPago.getValue() != null
+                ? comboMetodoPago.getValue() : MetodoPago.EFECTIVO;
+            registrarAnticipoUseCase.registrarAnticipo(getCotizacionEnEdicionId(), monto, metodo);
             txtAbono.setText("");
             
             cargarCotizacionesPanel();

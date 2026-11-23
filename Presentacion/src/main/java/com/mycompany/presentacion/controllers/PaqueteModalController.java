@@ -152,7 +152,16 @@ public class PaqueteModalController {
         
         listaServicios.clear();
         if (paquete.getServicios() != null) {
-            listaServicios.addAll(paquete.getServicios());
+            // Se trabaja sobre copias: si el usuario cancela, el paquete de la tabla
+            // no debe quedar con las cantidades que se cambiaron en este modal.
+            for (PaqueteServicioDTO original : paquete.getServicios()) {
+                PaqueteServicioDTO copia = new PaqueteServicioDTO();
+                copia.setId(original.getId());
+                copia.setServicio(original.getServicio());
+                copia.setCantidad(original.getCantidad());
+                copia.setSubtotal(original.getSubtotal());
+                listaServicios.add(copia);
+            }
         }
     }
 

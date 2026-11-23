@@ -52,7 +52,9 @@ public class EliminarClienteUseCase {
         boolean tieneEventosVigentes = cotizacionRepository
                 .findByClienteId(id)
                 .stream()
-                .anyMatch(c -> c.getEstado() == EstadoCotizacion.VIGENTE);
+                .anyMatch(c -> c.getEstado() == EstadoCotizacion.VIGENTE
+                        && (c.getEvento() == null || c.getEvento().getEstado()
+                            != com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO));
 
         if (tieneEventosVigentes) {
             throw new CotizacionException(

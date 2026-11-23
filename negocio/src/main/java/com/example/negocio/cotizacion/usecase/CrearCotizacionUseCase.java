@@ -106,10 +106,11 @@ public class CrearCotizacionUseCase {
 
         // ── 5. Validación: no duplicar turno en la misma fecha ───────────────
         // Usamos EventoRepository en lugar de CotizacionRepository ya que la fecha vive en Evento.
-       boolean turnoOcupado = eventoRepository.existsByFechaAndTurnoAndEstadoNot(
+        // Solo ocupan el turno los eventos confirmados; otros borradores no lo apartan.
+        boolean turnoOcupado = eventoRepository.existsByFechaAndTurnoAndEstadoIn(
             dto.getFecha(),
             dto.getTurno(),
-            EstadoEvento.CANCELADO
+            com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase.ESTADOS_QUE_OCUPAN
         );
         if (turnoOcupado) {
             throw new CotizacionException("Ya existe un evento confirmado para esta fecha y turno. Seleccione otro turno.");

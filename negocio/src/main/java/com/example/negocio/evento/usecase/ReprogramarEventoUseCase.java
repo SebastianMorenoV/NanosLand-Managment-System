@@ -39,13 +39,22 @@ public class ReprogramarEventoUseCase {
         }
 
         // Verificar disponibilidad
-        boolean ocupado = eventoRepository.existsByFechaAndTurnoAndEstadoNot(nuevaFecha, nuevoTurno, EstadoEvento.CANCELADO);
+        // Solo lo ocupa OTRO evento confirmado; los borradores no apartan el turno.
+        boolean ocupado = eventoRepository.existsByFechaAndTurnoAndEstadoInAndIdNot(
+            nuevaFecha, nuevoTurno,
+            com.example.negocio.agenda.usecase.VerificarDisponibilidadTurnoUseCase.ESTADOS_QUE_OCUPAN,
+            evento.getId());
         if (ocupado) {
             throw new CotizacionException("El turno " + nuevoTurno.name() + " para la fecha " + nuevaFecha + " ya se encuentra ocupado.");
         }
 
+        boolean cambioTurno = evento.getTurno() != nuevoTurno;
         evento.setFecha(nuevaFecha);
         evento.setTurno(nuevoTurno);
+        // Un evento que ya tiene horario (confirmado) toma el del nuevo turno.
+        if (cambioTurno && evento.getHoraInicio() != null) {
+            HorarioTurno.asignar(evento);
+        }
 
         Evento guardado = eventoRepository.save(evento);
         return EventoMapper.toDTO(guardado);

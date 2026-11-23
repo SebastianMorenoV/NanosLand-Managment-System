@@ -18,9 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class GenerarReporteOportunidadesUseCase {
 
     private final EventoRepository eventoRepository;
+    private final com.example.negocio.evento.usecase.ActualizarEstadosPorFechaUseCase actualizarEstadosPorFechaUseCase;
 
     @Transactional(readOnly = true)
     public List<OportunidadDTO> generarReporte(int year, int month) {
+        // Pone al día los estados (en curso / finalizado) según la fecha de hoy.
+        actualizarEstadosPorFechaUseCase.actualizar();
         // Buscamos los eventos de hace exactamente un año (o el año pasado en ese mes)
         // Pero la lógica de recompra suele ser: "En este mes (ej. Julio), ¿quiénes tuvieron evento en Julio del año pasado?"
         // Así que el year y month ingresados serán los del evento original (ej. 2025, Julio).

@@ -119,11 +119,16 @@ public class NuevoUsuarioSistemaModalController {
                 usuarioCreado = registrarUsuarioUseCase.registrarUsuario(dto);
             } else {
                 // Editar existente
-                usuarioAEditar.setCorreo(correo);
-                usuarioAEditar.setContrasena(contrasena != null && !contrasena.trim().isEmpty() ? contrasena : null);
-                usuarioAEditar.setTelefono(telefono.isEmpty() ? null : telefono);
-                usuarioAEditar.setRol(rol);
-                usuarioCreado = actualizarUsuarioUseCase.actualizarUsuario(usuarioAEditar);
+                // Se envía una copia: si el guardado falla o se cancela, el usuario de la
+                // tabla no debe quedar con los datos que se teclearon aquí.
+                UsuarioSistemaDTO cambios = new UsuarioSistemaDTO();
+                cambios.setId(usuarioAEditar.getId());
+                cambios.setActivo(usuarioAEditar.isActivo());
+                cambios.setCorreo(correo);
+                cambios.setContrasena(contrasena != null && !contrasena.trim().isEmpty() ? contrasena : null);
+                cambios.setTelefono(telefono.isEmpty() ? null : telefono);
+                cambios.setRol(rol);
+                usuarioCreado = actualizarUsuarioUseCase.actualizarUsuario(cambios);
             }
             cerrarModal();
         } catch (CotizacionException ex) {

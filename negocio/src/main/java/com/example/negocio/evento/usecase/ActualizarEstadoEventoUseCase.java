@@ -49,9 +49,14 @@ public class ActualizarEstadoEventoUseCase {
                 throw new CotizacionException("Un evento finalizado no se puede cancelar.");
             }
 
+            // La cancelación tardía solo aplica a eventos ya confirmados: un borrador
+            // sin anticipo se cancela sin más, sea cual sea la fecha.
+            boolean confirmado = evento.getEstado() == EstadoEvento.CONFIRMADO
+                || evento.getEstado() == EstadoEvento.EN_CURSO;
             java.time.LocalDate hoy = java.time.LocalDate.now();
             java.time.LocalDate fechaEvento = evento.getFecha();
-            if (fechaEvento != null && (hoy.isEqual(fechaEvento) || hoy.isEqual(fechaEvento.minusDays(1)))) {
+            if (confirmado && fechaEvento != null
+                    && (hoy.isEqual(fechaEvento) || hoy.isEqual(fechaEvento.minusDays(1)))) {
                 nuevoEstado = EstadoEvento.CANCELADO_TARDIO;
             }
 
@@ -61,6 +66,18 @@ public class ActualizarEstadoEventoUseCase {
             if (cotizacion != null && cotizacion.getEstado() != EstadoCotizacion.ELIMINADA) {
                 cotizacion.setEstado(EstadoCotizacion.CANCELADA);
             }
+        }
+
+        if (nuevoEstado == EstadoEvento.FINALIZADO) {
+            if (evento.getEstado() != EstadoEvento.CONFIRMADO && evento.getEstado() != EstadoEvento.EN_CURSO) {
+                throw new CotizacionException("Solo se puede finalizar un evento confirmado o en curso.");
+            }
+            if (evento.getFecha() != null && evento.getFecha().isAfter(java.time.LocalDate.now())) {
+                throw new CotizacionException("No se puede finalizar un evento antes de su fecha.");
+            }
+        } else if (nuevoEstado != EstadoEvento.CANCELADO && nuevoEstado != EstadoEvento.CANCELADO_TARDIO) {
+            // Confirmar ocurre al registrar el anticipo y "en curso" es automático por fecha.
+            throw new CotizacionException("Ese cambio de estado no se puede hacer manualmente.");
         }
 
         evento.setEstado(nuevoEstado);

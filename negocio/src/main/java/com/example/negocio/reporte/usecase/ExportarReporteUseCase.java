@@ -46,14 +46,14 @@ public class ExportarReporteUseCase {
 
         // Calcular KPIs
         int totalEventos = eventos.size();
-        double totalIngresos = eventos.stream().mapToDouble(e -> e.getTotalCotizacion() + e.getTotalCargosExtras()).sum();
-        double ticketPromedio = totalEventos > 0 ? totalIngresos / totalEventos : 0.0;
-        double ingresosExtras = eventos.stream().mapToDouble(EventoDTO::getTotalCargosExtras).sum();
+        // Los importes solo cuentan ventas reales: eventos confirmados, en curso o
+        // finalizados. Un borrador sin anticipo o un evento cancelado no es ingreso.
+        List<EventoDTO> vendidos = eventos.stream().filter(ExportarReporteUseCase::esVenta).collect(Collectors.toList());
+        double totalIngresos = vendidos.stream().mapToDouble(e -> e.getTotalCotizacion() + e.getTotalCargosExtras()).sum();
+        double ticketPromedio = !vendidos.isEmpty() ? totalIngresos / vendidos.size() : 0.0;
+        double ingresosExtras = vendidos.stream().mapToDouble(EventoDTO::getTotalCargosExtras).sum();
 
-        long cerrados = eventos.stream()
-            .filter(e -> e.getEstadoEvento() == com.mycompany.persistencia.enums.EstadoEvento.CONFIRMADO || 
-                         e.getEstadoEvento() == com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO)
-            .count();
+        long cerrados = vendidos.size();
         double tasaCierre = totalEventos > 0 ? (cerrados * 100.0 / totalEventos) : 0.0;
 
         long matutinos = eventos.stream()
@@ -74,7 +74,7 @@ public class ExportarReporteUseCase {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String periodo;
         if (inicio == null && fin == null) {
-            periodo = "Todos los eventos (máx. 20)";
+            periodo = "Todos los eventos";
         } else if (inicio != null && fin == null) {
             periodo = "Desde: " + inicio.format(formatter);
         } else if (inicio == null && fin != null) {
@@ -221,7 +221,7 @@ public class ExportarReporteUseCase {
 
             // Bar Chart (Ingresos por Estado)
             DefaultCategoryDataset barDataset = new DefaultCategoryDataset();
-            Map<String, Double> ingresosPorEstado = eventos.stream()
+            Map<String, Double> ingresosPorEstado = eventos.stream().filter(ExportarReporteUseCase::esVenta)
                 .collect(Collectors.groupingBy(e -> e.getEstadoEvento() != null ? e.getEstadoEvento().toString() : "N/A",
                          Collectors.summingDouble(e -> e.getTotalCotizacion() + e.getTotalCargosExtras())));
             ingresosPorEstado.forEach((k, v) -> barDataset.addValue(v, "Ingresos", k));
@@ -304,11 +304,19 @@ public class ExportarReporteUseCase {
             addTableCell(table, e.getClienteNombre() != null ? e.getClienteNombre() : "", fontNormal, rowColor, Element.ALIGN_LEFT);
             addTableCell(table, e.getPaqueteNombre() != null ? e.getPaqueteNombre() : "", fontNormal, rowColor, Element.ALIGN_LEFT);
             addTableCell(table, e.getEstadoEvento() != null ? e.getEstadoEvento().toString() : "", fontNormal, rowColor, Element.ALIGN_CENTER);
-            addTableCell(table, String.format("$%,.2f", e.getTotalCotizacion()), fontNormal, rowColor, Element.ALIGN_RIGHT);
+            // Mismo importe que suman los indicadores: cotización más cargos extra.
+            addTableCell(table, String.format("$%,.2f", e.getTotalCotizacion() + e.getTotalCargosExtras()), fontNormal, rowColor, Element.ALIGN_RIGHT);
         }
 
         document.add(table);
         document.close();
+    }
+
+    /** Un evento cuenta como venta si está confirmado, en curso o finalizado. */
+    private static boolean esVenta(EventoDTO e) {
+        return e.getEstadoEvento() == com.mycompany.persistencia.enums.EstadoEvento.CONFIRMADO
+            || e.getEstadoEvento() == com.mycompany.persistencia.enums.EstadoEvento.EN_CURSO
+            || e.getEstadoEvento() == com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO;
     }
 
     private void addKPICell(PdfPTable table, String text, Font font, Color bgColor, int alignment) {

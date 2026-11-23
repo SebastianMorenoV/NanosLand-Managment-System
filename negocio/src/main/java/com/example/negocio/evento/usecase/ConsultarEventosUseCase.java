@@ -19,6 +19,7 @@ import java.util.Optional;
 public class ConsultarEventosUseCase {
 
     private final EventoRepository eventoRepository;
+    private final com.example.negocio.evento.usecase.ActualizarEstadosPorFechaUseCase actualizarEstadosPorFechaUseCase;
 
     /**
      * Obtiene todos los eventos del sistema con sus relaciones precargadas.
@@ -27,6 +28,8 @@ public class ConsultarEventosUseCase {
      */
     @Transactional(readOnly = true)
     public List<EventoDTO> listarTodosEventos() {
+        // Pone al día los estados (en curso / finalizado) según la fecha de hoy.
+        actualizarEstadosPorFechaUseCase.actualizar();
         List<Evento> eventos = eventoRepository.findAllWithRelations();
         return EventoMapper.toDTOList(eventos);
     }

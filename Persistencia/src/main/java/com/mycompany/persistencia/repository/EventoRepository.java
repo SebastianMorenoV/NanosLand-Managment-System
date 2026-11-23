@@ -48,6 +48,28 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
 
     boolean existsByFechaAndTurnoAndEstadoNot(LocalDate fecha, TurnoEvento turno, EstadoEvento estado);
 
+    boolean existsByFechaAndTurnoAndEstadoIn(LocalDate fecha, TurnoEvento turno,
+                                             java.util.Collection<EstadoEvento> estados);
+
+    boolean existsByFechaAndTurnoAndEstadoInAndIdNot(LocalDate fecha, TurnoEvento turno,
+                                                     java.util.Collection<EstadoEvento> estados, Long id);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(
+        "UPDATE Evento e SET e.estado = :nuevo WHERE e.estado IN :actuales AND e.fecha < :hoy")
+    int cambiarEstadoDeEventosAnterioresA(
+        @org.springframework.data.repository.query.Param("hoy") LocalDate hoy,
+        @org.springframework.data.repository.query.Param("actuales") java.util.Collection<EstadoEvento> actuales,
+        @org.springframework.data.repository.query.Param("nuevo") EstadoEvento nuevo);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(
+        "UPDATE Evento e SET e.estado = :nuevo WHERE e.estado = :actual AND e.fecha = :hoy")
+    int cambiarEstadoDeEventosDelDia(
+        @org.springframework.data.repository.query.Param("hoy") LocalDate hoy,
+        @org.springframework.data.repository.query.Param("actual") EstadoEvento actual,
+        @org.springframework.data.repository.query.Param("nuevo") EstadoEvento nuevo);
+
     /**
      * Consulta base para generar el reporte de eventos (CU-07).
      * Aplica filtros opcionales de turno y estado, asegurando recuperar los datos
