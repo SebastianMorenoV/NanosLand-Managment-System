@@ -36,7 +36,6 @@ public class EventosController {
 
     // Tarjetas KPI
     @FXML private Label lblKpiTotal;
-    @FXML private Label lblKpiTentativos;
     @FXML private Label lblKpiConfirmados;
     @FXML private Label lblKpiEnCurso;
     @FXML private Label lblKpiFinalizados;
@@ -238,7 +237,9 @@ public class EventosController {
     }
 
     private void configurarFiltros() {
-        cmbEstado.setItems(FXCollections.observableArrayList(EstadoEvento.values()));
+        // Los borradores (TENTATIVO) no son eventos: están en Cotizaciones.
+        cmbEstado.setItems(FXCollections.observableArrayList(EstadoEvento.CONFIRMADO, EstadoEvento.EN_CURSO,
+                EstadoEvento.FINALIZADO, EstadoEvento.CANCELADO, EstadoEvento.CANCELADO_TARDIO));
         cmbTurno.setItems(FXCollections.observableArrayList(TurnoEvento.values()));
 
         if (dpInicio != null) dpInicio.setEditable(false);
@@ -266,7 +267,7 @@ public class EventosController {
     @FXML
     public void recargarEventos() {
         try {
-            List<EventoDTO> eventos = consultarEventosUseCase.listarTodosEventos();
+            List<EventoDTO> eventos = consultarEventosUseCase.listarEventosConfirmados();
             masterData.clear();
             if (eventos != null) {
                 masterData.addAll(eventos);
@@ -285,7 +286,6 @@ public class EventosController {
 
     private void actualizarKpis(List<EventoDTO> eventos) {
         int total = eventos.size();
-        long tentativos = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.TENTATIVO).count();
         long confirmados = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.CONFIRMADO).count();
         long enCurso = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.EN_CURSO).count();
         long finalizados = eventos.stream().filter(e -> e.getEstadoEvento() == EstadoEvento.FINALIZADO).count();
@@ -293,7 +293,6 @@ public class EventosController {
                 || e.getEstadoEvento() == EstadoEvento.CANCELADO_TARDIO).count();
 
         lblKpiTotal.setText(String.valueOf(total));
-        lblKpiTentativos.setText(String.valueOf(tentativos));
         lblKpiConfirmados.setText(String.valueOf(confirmados));
         lblKpiEnCurso.setText(String.valueOf(enCurso));
         lblKpiFinalizados.setText(String.valueOf(finalizados));

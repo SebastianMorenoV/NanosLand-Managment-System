@@ -21,6 +21,10 @@ public interface PagoRepository extends JpaRepository<Pago, Long>{
 
     List<Pago> findByFechaHoraBetween(java.time.LocalDateTime inicio, java.time.LocalDateTime fin);
 
+    /** Cotizaciones que han recibido al menos un pago. */
+    @Query("SELECT DISTINCT p.cotizacion.id FROM Pago p WHERE p.cotizacion IS NOT NULL")
+    List<Long> findCotizacionIdsConPagos();
+
     /**
      * Verifica si ya existe un pago con el folio dado.
      * Usado en generarFolioPago() para garantizar unicidad ante race conditions.

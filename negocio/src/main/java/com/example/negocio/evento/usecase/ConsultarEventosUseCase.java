@@ -19,6 +19,7 @@ import java.util.Optional;
 public class ConsultarEventosUseCase {
 
     private final EventoRepository eventoRepository;
+    private final com.mycompany.persistencia.repository.PagoRepository pagoRepository;
     private final com.example.negocio.evento.usecase.ActualizarEstadosPorFechaUseCase actualizarEstadosPorFechaUseCase;
 
     /**
@@ -32,6 +33,37 @@ public class ConsultarEventosUseCase {
         actualizarEstadosPorFechaUseCase.actualizar();
         List<Evento> eventos = eventoRepository.findAllWithRelations();
         return EventoMapper.toDTOList(eventos);
+    }
+
+    /**
+     * Eventos ya vendidos: confirmados, en curso, finalizados y los cancelados que
+     * llegaron a recibir dinero. Los borradores, y los borradores cancelados sin
+     * pago, nunca fueron un evento: se consultan en Cotizaciones.
+     *
+     * @return Lista de EventoDTO ordenada por fecha descendente.
+     */
+    @Transactional(readOnly = true)
+    public List<EventoDTO> listarEventosConfirmados() {
+        actualizarEstadosPorFechaUseCase.actualizar();
+        java.util.Set<Long> conPagos = new java.util.HashSet<>(pagoRepository.findCotizacionIdsConPagos());
+        return EventoMapper.toDTOList(eventoRepository.findAllWithRelations().stream()
+            .filter(e -> esEventoVendido(e, conPagos))
+            .collect(java.util.stream.Collectors.toList()));
+    }
+
+    private static boolean esEventoVendido(Evento evento, java.util.Set<Long> cotizacionesConPagos) {
+        switch (evento.getEstado()) {
+            case CONFIRMADO:
+            case EN_CURSO:
+            case FINALIZADO:
+                return true;
+            case CANCELADO:
+            case CANCELADO_TARDIO:
+                return evento.getCotizacion() != null
+                    && cotizacionesConPagos.contains(evento.getCotizacion().getId());
+            default:
+                return false;
+        }
     }
 
     /**

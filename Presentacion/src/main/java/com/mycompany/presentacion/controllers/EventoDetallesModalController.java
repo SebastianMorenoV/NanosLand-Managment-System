@@ -163,6 +163,19 @@ public class EventoDetallesModalController {
         });
     }
 
+    /** Los pagos y el contrato se manejan desde la cotización del evento. */
+    @FXML
+    private void abrirCotizacion() {
+        if (evento == null || evento.getCotizacionId() == null) {
+            return;
+        }
+        var contexto = com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()
+                .getBean(com.mycompany.presentacion.context.CotizacionContext.class);
+        contexto.abrir(evento.getCotizacionId(), "Eventos.fxml");
+        cerrarModal();
+        com.mycompany.presentacion.utils.ViewSwitcher.cargarVista("Cotizacion.fxml");
+    }
+
     @FXML
     private void abrirReprogramarModal() {
         try {

@@ -15,7 +15,7 @@
                     <SVGPath content="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5z" fill="#1a82b8" scaleX="1.1" scaleY="1.1"/>
                 </graphic>
             </Label>
-            <Label text="Visualiza, filtra y administra el ciclo de vida de todos los eventos registrados." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+            <Label text="Eventos confirmados, en curso y ya realizados. Las cotizaciones sin confirmar están en Cotizaciones." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
         </VBox>
         <Button text="⟳ Actualizar" styleClass="boton-azul-claro" onAction="#recargarEventos" style="-fx-font-size: 13px;"/>
     </HBox>
@@ -26,12 +26,6 @@
         <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #2c3e50; -fx-border-left-width: 4px;">
             <Label text="TOTAL EVENTOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
             <Label fx:id="lblKpiTotal" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-        </VBox>
-
-        <!-- Tentativos -->
-        <VBox styleClass="tarjeta-blanca" HBox.hgrow="ALWAYS" spacing="2" style="-fx-padding: 10 14 10 14; -fx-border-left-color: #f39c12; -fx-border-left-width: 4px;">
-            <Label text="TENTATIVOS" style="-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
-            <Label fx:id="lblKpiTentativos" text="0" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
         </VBox>
 
         <!-- Confirmados -->
@@ -82,7 +76,7 @@
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
                 </columnResizePolicy>
                 <columns>
-                    <TableColumn fx:id="colFolio" text="Folio" prefWidth="90" maxWidth="120" style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="colFolio" text="Folio" prefWidth="130" maxWidth="150" style="-fx-alignment: CENTER;"/>
                     <TableColumn fx:id="colFecha" text="Fecha" prefWidth="100" maxWidth="120" style="-fx-alignment: CENTER;"/>
                     <TableColumn fx:id="colTurno" text="Turno" prefWidth="90" maxWidth="110" style="-fx-alignment: CENTER;"/>
                     <TableColumn fx:id="colCliente" text="Cliente" prefWidth="180" style="-fx-alignment: CENTER_LEFT;"/>

@@ -13,9 +13,10 @@
 
     <!-- CABECERA -->
     <HBox alignment="CENTER_LEFT" spacing="20">
+        <Button fx:id="btnVolver" text="← Elegir otra fecha" minWidth="-Infinity" styleClass="boton-azul-claro" onAction="#volver"/>
         <VBox HBox.hgrow="ALWAYS">
-            <Label text="Nueva Cotización" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-            <Label text="Llene los datos. Los cambios se calculan automáticamente." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+            <Label fx:id="lblTituloCotizacion" text="Nueva Cotización" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label fx:id="lblSubtituloCotizacion" text="Llene los datos. Los cambios se calculan automáticamente." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
         </VBox>
     </HBox>
 
@@ -23,33 +24,8 @@
     <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" minHeight="0" style="-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0; -fx-border-color: transparent;">
     <HBox spacing="16">
 
-        <!-- ── PANEL LATERAL COTIZACIONES ── -->
-        <VBox spacing="10" minWidth="260" prefWidth="280" HBox.hgrow="NEVER" styleClass="panel-cotizaciones">            
-            <Label text="COTIZACIONES" styleClass="titulo-seccion"/>
-            <TextField fx:id="txtBuscarCotizaciones"
-                       promptText="Buscar folio..."
-                       styleClass="text-field-moderno"/>
-
-            <ListView fx:id="listaCotizaciones"
-                      VBox.vgrow="ALWAYS"
-                      styleClass="lista-moderna"
-                      prefHeight="250"
-                      minHeight="50"/>
-
-            <HBox spacing="10" alignment="CENTER">
-                <Button fx:id="btnNuevaCotizacion" text="Nueva"
-                        styleClass="boton-azul-claro"
-                        onAction="#nuevaCotizacion"/>
-                <Button fx:id="btnEliminarCotizacion" text="Eliminar"
-                        styleClass="boton-azul"
-                        onAction="#eliminarCotizacion"
-                        disable="true"/>
-            </HBox>
-        </VBox>
-
-
                 <!-- ── COLUMNA IZQUIERDA ── -->
-                <VBox spacing="10" prefWidth="360" HBox.hgrow="NEVER">
+                <VBox spacing="10" prefWidth="440" HBox.hgrow="NEVER">
 
             <!-- ASIGNAR CLIENTE -->
             <VBox styleClass="tarjeta-blanca" spacing="8">
@@ -80,7 +56,7 @@
                         <Label text="FECHA" styleClass="label-pequeno"/>
                         <DatePicker fx:id="datePickerFecha" maxWidth="Infinity" minWidth="150" prefWidth="160" styleClass="text-field-moderno"/>
                     </VBox>
-                    <VBox spacing="4" minWidth="130" prefWidth="130">
+                    <VBox spacing="4" minWidth="170" prefWidth="190">
                         <Label text="TURNO" styleClass="label-pequeno"/>
                         <ComboBox fx:id="comboTurnos" promptText="Turno..." maxWidth="Infinity" styleClass="text-field-moderno"/>
                     </VBox>
@@ -148,7 +124,7 @@
 
                 <VBox styleClass="tarjeta-paquete-seleccionada" spacing="5">
                     <HBox alignment="CENTER_LEFT">
-                        <Label fx:id="lblNombrePaquete" text="Seleccione un paquete" style="-fx-font-weight: bold; -fx-font-size: 15px;"/>
+                        <Label fx:id="lblNombrePaquete" text="Seleccione un paquete" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #2c3e50;"/>
                         <Region HBox.hgrow="ALWAYS" />
                         <Label fx:id="lblPrecioPaquete" text=" &#36;0.00" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1a82b8;"/>
                     </HBox>
@@ -188,38 +164,42 @@
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <TextField fx:id="txtAbono" promptText="Monto a abonar..." styleClass="text-field-moderno"/>
                     <ComboBox fx:id="comboMetodoPago" promptText="Método de pago" styleClass="combo-box-base"/>
-                    <Button text="Registrar Abono" styleClass="boton-azul" onAction="#registrarAbonoCotizacion"/>
+                    <Button fx:id="btnRegistrarAbono" text="Registrar Abono" styleClass="boton-azul" onAction="#registrarAbonoCotizacion"/>
                     <Button text="Comprobante" styleClass="boton-azul-claro" onAction="#generarComprobante"/>
                 </HBox>
             </VBox>
-            <!-- BOTONES DE ACCIÓN -->
-            <HBox fx:id="boxBotonesNuevos" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20">
-                <Button fx:id="btnGuardarBorrador" text="Guardar Borrador" onAction="#guardarBorrador"
-                        styleClass="boton-texto-gris"
-                        minWidth="-Infinity"/>
-                <Button fx:id="btnConfirmarCotizacion" text="Confirmar Cotización" styleClass="boton-azul" onAction="#confirmarCotizacion"
-                        minWidth="-Infinity">
-                    <graphic>
-                        <SVGPath content="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="WHITE"/>
-                    </graphic>
-                </Button>
-            </HBox>
-
-            <HBox fx:id="boxBotonesEdicion" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20" visible="false" managed="false">
-                <Button fx:id="btnGenerarContratoEdicion" text="Generar Contrato" onAction="#generarContratoEnEdicion"
-                        styleClass="boton-azul-claro"
-                        minWidth="-Infinity"/>
-                <Button fx:id="btnDescartarCambios" text="Descartar Cambios" onAction="#nuevaCotizacion"
-                        styleClass="boton-texto-rojo"
-                        minWidth="-Infinity"/>
-                <Button fx:id="btnGuardarCambios" text="Guardar Cambios" styleClass="boton-azul" onAction="#guardarCambios"
-                        minWidth="-Infinity">
-                    <graphic>
-                        <SVGPath content="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="WHITE"/>
-                    </graphic>
-                </Button>
-            </HBox>
         </VBox>
     </HBox>
 </ScrollPane>
+    <!-- BOTONES DE ACCIÓN: fijos abajo, fuera del scroll -->
+    <HBox fx:id="boxBotonesNuevos" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="20">
+        <Button fx:id="btnGuardarBorrador" text="Guardar Borrador" onAction="#guardarBorrador"
+                styleClass="boton-texto-gris"
+                minWidth="-Infinity"/>
+        <Button fx:id="btnConfirmarCotizacion" text="Confirmar Cotización" styleClass="boton-azul" onAction="#confirmarCotizacion"
+                minWidth="-Infinity">
+            <graphic>
+                <SVGPath content="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="WHITE"/>
+            </graphic>
+        </Button>
+    </HBox>
+
+    <HBox fx:id="boxBotonesEdicion" styleClass="tarjeta-blanca" alignment="CENTER_RIGHT" spacing="14" visible="false" managed="false">
+        <Button fx:id="btnEliminarCotizacion" text="Eliminar" onAction="#eliminarCotizacion"
+                styleClass="boton-texto-rojo"
+                minWidth="-Infinity"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="btnGenerarContratoEdicion" text="Generar Contrato" onAction="#generarContratoEnEdicion"
+                styleClass="boton-azul-claro"
+                minWidth="-Infinity"/>
+        <Button fx:id="btnGuardarCambios" text="Guardar Cambios" styleClass="boton-azul" onAction="#guardarCambios"
+                minWidth="-Infinity">
+            <graphic>
+                <SVGPath content="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="WHITE"/>
+            </graphic>
+        </Button>
+        <Button fx:id="btnConfirmarEdicion" text="Confirmar Cotización" onAction="#confirmarCotizacion"
+                styleClass="boton-verde"
+                minWidth="-Infinity"/>
+    </HBox>
 </VBox>

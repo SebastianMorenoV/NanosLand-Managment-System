@@ -21,6 +21,13 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
     List<Cotizacion> findByEstado(EstadoCotizacion estado);
     boolean existsByPaqueteIdAndEstadoIn(Long paqueteId, Collection<EstadoCotizacion> estados);
 
+    /** Cotizaciones en el estado dado cuya fecha de evento es {@code desde} o posterior. */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT COUNT(c) FROM Cotizacion c JOIN c.evento e WHERE c.estado = :estado AND e.fecha >= :desde")
+    long contarPorEstadoDesde(
+        @org.springframework.data.repository.query.Param("estado") EstadoCotizacion estado,
+        @org.springframework.data.repository.query.Param("desde") java.time.LocalDate desde);
+
     /**
      * Indica si el paquete tiene cotizaciones todavía abiertas: en alguno de los
      * estados dados y cuyo evento aún no ha finalizado. Una venta ya realizada

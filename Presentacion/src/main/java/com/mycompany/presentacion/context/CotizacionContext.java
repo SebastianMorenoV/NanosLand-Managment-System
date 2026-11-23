@@ -33,6 +33,24 @@ public class CotizacionContext {
     private TurnoEvento turnoEdicionActual;
     private boolean modoEdicion = false;
 
+    /** Pantalla a la que se regresa al salir de una cotización abierta. */
+    private String vistaRegreso;
+    /** Pestaña que debe mostrar la lista de Cotizaciones la próxima vez que se abra. */
+    private FiltroCotizaciones filtroLista = FiltroCotizaciones.POR_CONFIRMAR;
+
+    /**
+     * Prepara abrir una cotización guardada. La pantalla de cotización la carga
+     * al abrirse.
+     *
+     * @param vistaRegreso FXML al que se vuelve al salir de ella.
+     */
+    public void abrir(Long cotizacionId, String vistaRegreso) {
+        limpiar();
+        this.modoEdicion = true;
+        this.cotizacionEnEdicionId = cotizacionId;
+        this.vistaRegreso = vistaRegreso;
+    }
+
     /**
      * Limpia completamente el estado de sesión.
      * Debe llamarse al salir del modo edición, cancelar, o crear nueva cotización.
@@ -44,5 +62,6 @@ public class CotizacionContext {
         this.fechaEdicionActual = null;
         this.turnoEdicionActual = null;
         this.modoEdicion = false;
+        this.vistaRegreso = null;
     }
 }

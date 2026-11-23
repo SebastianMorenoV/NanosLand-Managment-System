@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="14" minHeight="0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.InicioController">
+    <padding><Insets top="26" right="36" bottom="22" left="36"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox HBox.hgrow="ALWAYS" spacing="2">
+            <Label fx:id="lblFecha" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label text="Lo más importante de hoy y los próximos días." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+        <Button text="Registrar venta" minWidth="-Infinity" styleClass="boton-azul-claro" onAction="#irVentas"/>
+        <Button text="+ Nueva cotización" minWidth="-Infinity" styleClass="boton-azul" onAction="#nuevaCotizacion"/>
+    </HBox>
+
+    <HBox spacing="12">
+        <Button fx:id="tarjetaHoy" prefWidth="100" maxWidth="Infinity" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT" onAction="#irEventos"
+                style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 18 12 18; -fx-cursor: hand;">
+            <graphic>
+                <VBox spacing="1">
+                    <Label fx:id="lblEventosHoy" text="-" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+                    <Label text="Eventos hoy" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;"/>
+                </VBox>
+            </graphic>
+        </Button>
+        <Button fx:id="tarjetaProximos" prefWidth="100" maxWidth="Infinity" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT" onAction="#irEventos"
+                style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 18 12 18; -fx-cursor: hand;">
+            <graphic>
+                <VBox spacing="1">
+                    <Label fx:id="lblEventosProximos" text="-" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Label text="Próximos 7 días" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;"/>
+                </VBox>
+            </graphic>
+        </Button>
+        <Button fx:id="tarjetaConfirmar" prefWidth="100" maxWidth="Infinity" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT" onAction="#irCotizaciones"
+                style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 18 12 18; -fx-cursor: hand;">
+            <graphic>
+                <VBox spacing="1">
+                    <Label fx:id="lblPorConfirmar" text="-" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
+                    <Label text="Cotizaciones por confirmar" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;"/>
+                </VBox>
+            </graphic>
+        </Button>
+        <Button fx:id="tarjetaContactar" prefWidth="100" maxWidth="Infinity" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT" onAction="#irLogistica"
+                style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12 18 12 18; -fx-cursor: hand;">
+            <graphic>
+                <VBox spacing="1">
+                    <Label fx:id="lblPorContactar" text="-" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                    <Label text="Servicios por contactar" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;"/>
+                </VBox>
+            </graphic>
+        </Button>
+    </HBox>
+
+    <!-- Solo para el dueño -->
+    <HBox fx:id="boxDinero" spacing="30" alignment="CENTER_LEFT" style="-fx-background-color: #eafaf1; -fx-background-radius: 10; -fx-padding: 10 18 10 18;">
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <Label text="Ingresos de este mes:" style="-fx-font-size: 14px; -fx-text-fill: #2c3e50;"/>
+            <Label fx:id="lblIngresosMes" text="-" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+        </HBox>
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <Label text="Por cobrar:" style="-fx-font-size: 14px; -fx-text-fill: #2c3e50;"/>
+            <Label fx:id="lblPorCobrar" text="-" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+        </HBox>
+    </HBox>
+
+    <HBox spacing="14" VBox.vgrow="ALWAYS" minHeight="0">
+        <VBox styleClass="tarjeta-blanca" spacing="8" prefWidth="100" HBox.hgrow="ALWAYS" minHeight="0">
+            <Label text="Próximos eventos" style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label fx:id="lblSinEventos" text="No hay eventos en los próximos 7 días." visible="false" managed="false" style="-fx-text-fill: #95a5a6; -fx-font-size: 13px;"/>
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" minHeight="0" styleClass="scroll-pane">
+                <VBox fx:id="listaEventos" spacing="4"/>
+            </ScrollPane>
+        </VBox>
+        <VBox styleClass="tarjeta-blanca" spacing="8" prefWidth="100" HBox.hgrow="ALWAYS" minHeight="0">
+            <Label text="Pendientes" style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label fx:id="lblSinPendientes" text="Todo al día." visible="false" managed="false" style="-fx-text-fill: #27ae60; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS" minHeight="0" styleClass="scroll-pane">
+                <VBox fx:id="listaPendientes" spacing="4"/>
+            </ScrollPane>
+        </VBox>
+    </HBox>
+</VBox>

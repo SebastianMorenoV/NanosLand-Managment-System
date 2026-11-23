@@ -21,6 +21,10 @@ public class ViewSwitcher {
     @Getter
     private static ConfigurableApplicationContext springContext;
 
+    /** Avisa qué pantalla se abrió, para que el menú marque la opción correcta. */
+    @Setter
+    private static java.util.function.Consumer<String> alCambiarVista;
+
     public static void cargarVista(String fxmlFile) {
         cargarVistaInterna(fxmlFile);
     }
@@ -44,6 +48,9 @@ public class ViewSwitcher {
             loader.setControllerFactory(springContext::getBean);
             Parent vista = loader.load();
             contenedorPrincipal.setCenter(vista);
+            if (alCambiarVista != null) {
+                alCambiarVista.accept(fxmlFile);
+            }
             return loader;
         } catch (IOException | RuntimeException e) {
             // La aplicación instalada no tiene consola: el error se registra en

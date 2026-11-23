@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="15" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.CotizacionesController">
+    <padding><Insets top="28" right="36" bottom="24" left="36"/></padding>
+
+    <fx:define>
+        <ToggleGroup fx:id="grupoFiltro"/>
+    </fx:define>
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox HBox.hgrow="ALWAYS" spacing="2">
+            <Label text="Cotizaciones" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label text="Abre una cotización para editarla, registrar pagos o generar el contrato." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+        <Button text="+ Nueva cotización" minWidth="-Infinity" styleClass="boton-azul" onAction="#nuevaCotizacion"/>
+    </HBox>
+
+    <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="12">
+        <HBox spacing="8" alignment="CENTER_LEFT">
+            <ToggleButton fx:id="btnPorConfirmar" text="Por confirmar" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
+            <ToggleButton fx:id="btnConfirmadas" text="Confirmadas" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
+            <ToggleButton fx:id="btnVencidas" text="Vencidas" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
+            <ToggleButton fx:id="btnCanceladas" text="Canceladas" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="txtBuscar" promptText="Buscar folio, cliente o festejado..." prefWidth="300" styleClass="text-field-moderno"/>
+        </HBox>
+
+        <TableView fx:id="tablaCotizaciones" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="100" maxWidth="120" style="-fx-alignment: CENTER;"/>
+                <TableColumn fx:id="colTurno" text="Turno" prefWidth="90" maxWidth="110" style="-fx-alignment: CENTER;"/>
+                <TableColumn fx:id="colFolio" text="Folio" prefWidth="120" maxWidth="140" style="-fx-alignment: CENTER;"/>
+                <TableColumn fx:id="colCliente" text="Cliente" prefWidth="220" style="-fx-alignment: CENTER_LEFT;"/>
+                <TableColumn fx:id="colFestejado" text="Festejado / Temática" prefWidth="220" style="-fx-alignment: CENTER_LEFT;"/>
+                <TableColumn fx:id="colTotal" text="Total" prefWidth="110" maxWidth="130" style="-fx-alignment: CENTER_RIGHT;"/>
+                <TableColumn fx:id="colAccion" text="" sortable="false" prefWidth="90" maxWidth="100" style="-fx-alignment: CENTER;"/>
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

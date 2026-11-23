@@ -38,7 +38,13 @@ public class MainShellController {
     @FXML
     private ToggleGroup navGroup;
     @FXML
+    private ToggleButton btnInicio;
+    @FXML
     private ToggleButton btnCotizacion;
+    @FXML
+    private ToggleButton btnCotizaciones;
+    @FXML
+    private ToggleButton btnVentas;
     @FXML
     private ToggleButton btnEventos;
     @FXML
@@ -73,6 +79,7 @@ public class MainShellController {
     @FXML
     public void initialize() {
         ViewSwitcher.setContenedorPrincipal(rootPane);
+        ViewSwitcher.setAlCambiarVista(this::marcarMenu);
 
         try {
             imgLogo.setImage(new Image(getClass().getResourceAsStream("/Logo Nanos.png")));
@@ -106,8 +113,8 @@ public class MainShellController {
             }
         }
 
-        btnCotizacion.setSelected(true);
-        navCotizacion();
+        btnInicio.setSelected(true);
+        navInicio();
 
         navGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) oldVal.setSelected(true);
@@ -131,6 +138,37 @@ public class MainShellController {
             clock.play();
             reloj = clock;
         }
+    }
+
+    /** Marca en el menú la pantalla abierta, también cuando se llegó desde un botón de otra pantalla. */
+    private void marcarMenu(String vista) {
+        ToggleButton opcion;
+        switch (vista) {
+            case "Inicio.fxml": opcion = btnInicio; break;
+            case "SeleccionarFecha.fxml": opcion = btnCotizacion; break;
+            case "Cotizaciones.fxml": opcion = btnCotizaciones; break;
+            case "Cotizacion.fxml":
+                opcion = ViewSwitcher.getSpringContext().getBean(CotizacionContext.class).isModoEdicion()
+                        ? btnCotizaciones : btnCotizacion;
+                break;
+            case "Eventos.fxml": opcion = btnEventos; break;
+            case "Logistica.fxml": opcion = btnLogistica; break;
+            case "Ventas.fxml": opcion = btnVentas; break;
+            default: return;
+        }
+        if (!opcion.isSelected()) {
+            opcion.setSelected(true);
+        }
+    }
+
+    @FXML
+    private void navInicio() {
+        ViewSwitcher.cargarVista("Inicio.fxml");
+    }
+
+    @FXML
+    private void navCotizaciones() {
+        ViewSwitcher.cargarVista("Cotizaciones.fxml");
     }
 
     @FXML

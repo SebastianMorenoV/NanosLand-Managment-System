@@ -73,12 +73,16 @@
 
     <Separator/>
 
+    <HBox alignment="CENTER_LEFT">
+        <Button fx:id="btnVerCotizacion" text="Ver cotización y pagos" minWidth="-Infinity" styleClass="boton-azul-claro" onAction="#abrirCotizacion"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Cerrar" minWidth="-Infinity" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+    </HBox>
+
     <!-- Estado del Evento y Acciones -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="Cancelar Evento" styleClass="boton-rojo" onAction="#cancelarEvento" fx:id="btnCancelar"/>
-        <Button text="Reprogramar Fecha" styleClass="boton-azul" onAction="#abrirReprogramarModal" fx:id="btnReprogramar"/>
-        <Button text="Finalizar Evento" styleClass="boton-verde" onAction="#finalizarEvento" fx:id="btnFinalizar"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="Cerrar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+        <Button text="Cancelar Evento" minWidth="-Infinity" styleClass="boton-rojo" onAction="#cancelarEvento" fx:id="btnCancelar"/>
+        <Button text="Reprogramar Fecha" minWidth="-Infinity" styleClass="boton-azul" onAction="#abrirReprogramarModal" fx:id="btnReprogramar"/>
+        <Button text="Finalizar Evento" minWidth="-Infinity" styleClass="boton-verde" onAction="#finalizarEvento" fx:id="btnFinalizar"/>
     </HBox>
 </VBox>

@@ -109,7 +109,12 @@ public class ConsultarEstadoCuentaUseCase {
 
     @Transactional(readOnly = true)
     public List<Evento> obtenerEventosCobranza() {
-        List<Evento> eventos = eventoRepository.findByEstadoNot(com.mycompany.persistencia.enums.EstadoEvento.CANCELADO);
+        // Un borrador (TENTATIVO) todavía no es una venta: se maneja desde Cotizaciones.
+        List<Evento> eventos = eventoRepository.findByEstadoIn(List.of(
+            com.mycompany.persistencia.enums.EstadoEvento.CONFIRMADO,
+            com.mycompany.persistencia.enums.EstadoEvento.EN_CURSO,
+            com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO,
+            com.mycompany.persistencia.enums.EstadoEvento.CANCELADO_TARDIO));
         eventos.forEach(e -> {
             if (e.getCotizacion() != null) {
                 org.hibernate.Hibernate.initialize(e.getCotizacion());

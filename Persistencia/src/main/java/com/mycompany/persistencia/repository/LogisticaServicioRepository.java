@@ -19,6 +19,8 @@ public interface LogisticaServicioRepository extends JpaRepository<LogisticaServ
 
     List<LogisticaServicio> findByEventoId(Long eventoId);
 
+    long countByEventoIdAndEstado(Long eventoId, com.mycompany.persistencia.enums.EstadoLogistica estado);
+
     List<LogisticaServicio> findByEventoIdOrderByIdAsc(Long eventoId);
 
     @Query("SELECT ls FROM LogisticaServicio ls " +

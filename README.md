@@ -4,11 +4,13 @@ Aplicación de escritorio para administrar el negocio de **NanosLand**, un saló
 
 ## ¿Qué hace?
 
+- **Inicio**: resumen de lo que hay hoy, los próximos 7 días y los pendientes (cobrar, confirmar, contactar servicios).
 - **Inicio de sesión y usuarios**: acceso con correo y contraseña, con roles de *Dueño* y *Administrador*, y gestión de las cuentas del sistema.
 - **Clientes**: registro y consulta de clientes con sus datos de contacto y dirección.
 - **Catálogo de servicios y paquetes**: alta, edición y baja de servicios (shows, brincolines, decoración, fotografía, etc.) y de paquetes que agrupan varios servicios.
 - **Cotizaciones**: armado de una cotización para un cliente a partir de paquetes y servicios, con selección de fecha y turno según la disponibilidad de la agenda.
-- **Eventos**: agenda de eventos, consulta de detalles, cancelación y reprogramación.
+- **Lista de cotizaciones**: por confirmar, confirmadas, vencidas y canceladas, desde donde se abren para editarlas, cobrar o generar el contrato.
+- **Eventos**: eventos confirmados, en curso y realizados, con detalle, cancelación y reprogramación.
 - **Logística**: seguimiento del estado de cada servicio contratado para un evento.
 - **Estado de cuenta**: pagos recibidos, cargos extra y saldo pendiente de cada evento.
 - **Ventas extra**: venta de productos aparte de los eventos (por ejemplo, calcetines), que cuenta como ingreso del negocio sin afectar a ningún evento.

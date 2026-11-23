@@ -21,12 +21,12 @@ import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
+import com.mycompany.presentacion.context.FiltroCotizaciones;
 import com.mycompany.presentacion.utils.ViewSwitcher;
-import javafx.concurrent.Task;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener; 
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets; 
@@ -108,13 +108,11 @@ public class CotizacionController {
     @FXML private ListView<ServicioAgrupado> listaServiciosExtras;
     @FXML private Label lblSubtotalExtras;
 
-    // ─── PANEL LATERAL COTIZACIONES ─────────────────────────────────────
-    @FXML
-    private TextField txtBuscarCotizaciones;
-    @FXML
-    private ListView<CotizacionDTO> listaCotizaciones;
-    @FXML
-    private Button btnNuevaCotizacion;
+    @FXML private Button btnVolver;
+    @FXML private Label lblTituloCotizacion;
+    @FXML private Label lblSubtituloCotizacion;
+    @FXML private Button btnRegistrarAbono;
+    @FXML private Button btnConfirmarEdicion;
     @FXML
     private Button btnEliminarCotizacion;
 
@@ -125,13 +123,10 @@ public class CotizacionController {
     @FXML
     private Button btnConfirmarCotizacion;
 
-    private final ObservableList<CotizacionDTO> cotizacionesPanel = FXCollections.observableArrayList();
-    private FilteredList<CotizacionDTO> cotizacionesFiltradas;
     @FXML private ComboBox<MetodoPago> comboMetodoPago;
     @FXML private HBox boxBotonesNuevos;
     @FXML private HBox boxBotonesEdicion;
     @FXML private Button btnGuardarCambios;
-    @FXML private Button btnDescartarCambios;
 
     private final ObservableList<ServicioDTO> serviciosSeleccionados = FXCollections.observableArrayList();
     private final ObservableList<ServicioAgrupado> serviciosAgrupados = FXCollections.observableArrayList();
@@ -194,7 +189,7 @@ public class CotizacionController {
         if (r != null) {
             Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cambios guardados exitosamente.");
             ok.showAndWait();
-            nuevaCotizacion();
+            volverAlListado(FiltroCotizaciones.de(r.getEstado(), r.getFecha()));
         }
     }
     @FXML
@@ -247,8 +242,6 @@ public class CotizacionController {
             mostrarError("No fue posible obtener el catálogo de servicios/paquetes. El flujo se cancela.");
             deshabilitarFlujoPorCatalogo();
         }
-
-        configurarPanelCotizaciones();
 
         LocalDate fechaSeleccionada = cotizacionContext.getFechaSeleccionada();
         if (fechaSeleccionada != null && datePickerFecha != null) {
@@ -321,6 +314,11 @@ public class CotizacionController {
             btnGuardarBorrador.setDisable(true);
             btnConfirmarCotizacion.setDisable(true);
         }
+
+        // Se llegó desde Cotizaciones, Eventos o Inicio para abrir una ya guardada.
+        if (isModoEdicion() && getCotizacionEnEdicionId() != null) {
+            abrirCotizacionGuardada(getCotizacionEnEdicionId());
+        }
     }
 
     // ─── GUARDAR/ACTUALIZAR COTIZACIÓN ──────────────────────────────────────
@@ -328,9 +326,9 @@ public class CotizacionController {
     private void guardarBorrador() {
         CotizacionDTO r = guardarOActualizarCotizacion(EstadoCotizacion.BORRADOR);
         if(r != null) {
-            actualizarPagosUI();
             Alert ok = new Alert(Alert.AlertType.INFORMATION, "Borrador guardado. Folio: " + r.getFolio());
             ok.showAndWait();
+            volverAlListado(FiltroCotizaciones.de(r.getEstado(), r.getFecha()));
         }
     }
 
@@ -354,7 +352,7 @@ public class CotizacionController {
             guardarOActualizarCotizacion(EstadoCotizacion.VIGENTE);
             Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado (Fechas bloqueadas).");
             ok.showAndWait();
-            nuevaCotizacion();
+            volverAlListado(FiltroCotizaciones.CONFIRMADAS);
         } else {
             TextInputDialog dialog = new TextInputDialog(String.format(java.util.Locale.ROOT, "%.2f", minimo - pagado));
             dialog.setTitle("Confirmar Cotización");
@@ -379,13 +377,17 @@ public class CotizacionController {
 
                     Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización confirmada y evento creado exitosamente.");
                     ok.showAndWait();
-                    nuevaCotizacion();
+                    volverAlListado(FiltroCotizaciones.CONFIRMADAS);
                 } catch(NumberFormatException e) {
                     mostrarError("Monto inválido.");
                 } catch(Exception e) {
                     mostrarError(e.getMessage());
                 }
             });
+            // Si no se completó el pago, la cotización ya quedó guardada: se muestra como tal.
+            if (isModoEdicion() && getCotizacionEnEdicionId() != null) {
+                abrirCotizacionGuardada(getCotizacionEnEdicionId());
+            }
         }
     }
 
@@ -404,7 +406,6 @@ public class CotizacionController {
                 cotizacionContext.setTurnoEdicionActual(resultado.getTurno());
                 cotizacionContext.setEstadoEdicionActual(resultado.getEstado());
             }
-            cargarCotizacionesPanel();
             return resultado;
         } catch (CotizacionException ex) {
             mostrarError(ex.getMessage());
@@ -593,157 +594,6 @@ public class CotizacionController {
         if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(true);
     }
 
-    // ─── PANEL LATERAL COTIZACIONES ────────────────────────────────────────
-    private void configurarPanelCotizaciones() {
-        if (listaCotizaciones == null) return;
-
-        cotizacionesFiltradas = new FilteredList<>(cotizacionesPanel, c -> true);
-        listaCotizaciones.setItems(cotizacionesFiltradas);
-
-        listaCotizaciones.setCellFactory(lv -> new ListCell<CotizacionDTO>() {
-            @Override
-            protected void updateItem(CotizacionDTO item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
-
-                Label folio = new Label(item.getFolio() != null ? item.getFolio() : "");
-                folio.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-                Label cliente = new Label(item.getNombreCliente() != null ? item.getNombreCliente() : "");
-                cliente.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px;");
-                Label fecha = new Label(item.getFecha() != null ? item.getFecha().toString() : "");
-                fecha.setStyle("-fx-text-fill: #95a5a6; -fx-font-size: 10px;");
-
-                Label estado = new Label(item.getEstado() != null ? item.getEstado().name() : "");
-                estado.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 4 8 4 8; -fx-background-radius: 12;");
-                if (item.getEstado() == EstadoCotizacion.BORRADOR) {
-                    estado.setStyle(estado.getStyle() + " -fx-background-color: #ecf0f1; -fx-text-fill: #7f8c8d;");
-                } else if (item.getEstado() == EstadoCotizacion.VIGENTE) {
-                    estado.setStyle(estado.getStyle() + " -fx-background-color: #e8f4fa; -fx-text-fill: #1a82b8;");
-                } else if (item.getEstado() == EstadoCotizacion.CANCELADA) {
-                    estado.setStyle(estado.getStyle() + " -fx-background-color: #fdecea; -fx-text-fill: #e74c3c;");
-                } else {
-                    estado.setStyle(estado.getStyle() + " -fx-background-color: #f0f4f8; -fx-text-fill: #bdc3c7;");
-                }
-
-                Label total = new Label(String.format("$%,.2f", item.getTotal()));
-                total.setStyle("-fx-font-weight: bold; -fx-text-fill: #1a82b8;");
-
-                // Lógica de fechas
-                boolean esPasada = item.getFecha() != null && item.getFecha().isBefore(LocalDate.now());
-                boolean esBorrador = (item.getEstado() == EstadoCotizacion.BORRADOR);
-                boolean esVigenteFutura = (item.getEstado() == EstadoCotizacion.VIGENTE && !esPasada);
-                boolean esEditable = esBorrador || esVigenteFutura;
-
-                // Estilo para pasadas
-                if (esPasada) {
-                    folio.setStyle("-fx-font-weight: bold; -fx-text-fill: #95a5a6;");
-                    cliente.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 11px;");
-                    fecha.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 10px;");
-                    Label lblPasada = new Label("[Pasada]");
-                    lblPasada.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 10px; -fx-font-weight: bold;");
-                    folio.setGraphic(lblPasada);
-                    folio.setContentDisplay(ContentDisplay.RIGHT);
-                }
-
-                // NUEVO BOTÓN EDITAR EN CADA CELDA
-                Button btnEditar = new Button(esEditable ? "Editar" : "Ver");
-                btnEditar.setStyle("-fx-font-size: 10px; -fx-background-color: #ecf0f1; -fx-cursor: hand;");
-                btnEditar.setOnAction(e -> {
-                    cotizacionContext.setModoEdicion(true);
-                    cotizacionContext.setCotizacionEnEdicionId(item.getId());
-                    cotizacionContext.setFechaEdicionActual(item.getFecha());
-                    cotizacionContext.setTurnoEdicionActual(item.getTurno());
-                    cotizacionContext.setEstadoEdicionActual(item.getEstado()); // Guardamos el estado original
-                    btnEliminarCotizacion.setDisable(item.getEstado() != EstadoCotizacion.BORRADOR);
-                    
-                    cargarCotizacionEnFormulario(item);
-                    cambiarModoInterfaz(true); // Mostrar botones de Guardar/Descartar
-
-                    // Si no es editable, dejar en modo de solo lectura (ocultando guardado y bloqueando campos)
-                    boolean esBorradorLocal = (item.getEstado() == EstadoCotizacion.BORRADOR);
-                    boolean esVigenteFuturaLocal = (item.getEstado() == EstadoCotizacion.VIGENTE && item.getFecha() != null && !item.getFecha().isBefore(LocalDate.now()));
-                    boolean esEditableLocal = esBorradorLocal || esVigenteFuturaLocal;
-
-                    if (btnGuardarCambios != null) btnGuardarCambios.setDisable(!esEditableLocal);
-                    if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(!esBorradorLocal);
-                    if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(!esBorradorLocal);
-                    
-                    setSoloLectura(!esEditableLocal);
-                });
-
-                VBox left = new VBox(4, folio, cliente, fecha);
-                VBox right = new VBox(6, total, estado, btnEditar); // Agregamos el botón aquí
-                right.setAlignment(Pos.TOP_RIGHT);
-
-                HBox row = new HBox(10, left, right);
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.setPadding(new Insets(8, 8, 8, 8));
-                
-                // Asegurar que HBox ocupe el espacio
-                HBox.setHgrow(left, Priority.ALWAYS);
-                
-                setGraphic(row);
-            }
-        });
-        if (txtBuscarCotizaciones != null) {
-            txtBuscarCotizaciones.textProperty().addListener((obs, old, nuevo) -> {
-                String filtro = nuevo != null ? nuevo.trim().toUpperCase() : "";
-                cotizacionesFiltradas.setPredicate(c -> {
-                    if (filtro.isEmpty()) return true;
-                    return c.getFolio() != null && c.getFolio().toUpperCase().contains(filtro);
-                });
-            });
-        }
-
-        cargarCotizacionesPanel();
-    }
-
-    /**
-     * Fix #1 — Carga asincrónica del panel de cotizaciones.
-     * Ejecuta la query en un hilo de fondo (Task) para no bloquear el
-     * Application Thread de JavaFX. La ObservableList se actualiza
-     * en setOnSucceeded, que ya corre en el FX Thread, por lo que
-     * NO es necesario envolver con Platform.runLater().
-     */
-    private void cargarCotizacionesPanel() {
-        if (listarCotizacionesUseCase == null || cotizacionesPanel == null) return;
-
-        Task<List<CotizacionDTO>> task = new Task<>() {
-            @Override
-            protected List<CotizacionDTO> call() {
-                return listarCotizacionesUseCase.obtenerCotizaciones();
-            }
-        };
-        task.setOnSucceeded(e -> {
-            java.util.List<CotizacionDTO> lista = new java.util.ArrayList<>(task.getValue());
-            LocalDate hoy = LocalDate.now();
-            lista.sort((c1, c2) -> {
-                LocalDate f1 = c1.getFecha() != null ? c1.getFecha() : LocalDate.MIN;
-                LocalDate f2 = c2.getFecha() != null ? c2.getFecha() : LocalDate.MIN;
-                boolean f1Futura = !f1.isBefore(hoy);
-                boolean f2Futura = !f2.isBefore(hoy);
-                
-                if (f1Futura && !f2Futura) return -1;
-                if (!f1Futura && f2Futura) return 1;
-                if (f1Futura && f2Futura) {
-                    return f1.compareTo(f2); // Mas cercana a hoy primero (ascendente)
-                } else {
-                    return f2.compareTo(f1); // Mas reciente primero (descendente)
-                }
-            });
-            cotizacionesPanel.setAll(lista);
-        });
-        task.setOnFailed(e -> {
-            System.err.println("[CotizacionController] Error cargando panel: " + task.getException().getMessage());
-            com.mycompany.presentacion.config.RegistroErrores.avisar("No se pudo cargar la lista de cotizaciones", task.getException());
-        });
-        new Thread(task, "hilo-carga-cotizaciones").start();
-    }
-
     // ─── CARGAR COTIZACIÓN EN FORMULARIO (Flujo 2.2.6) ─────────────────────
     private void cargarCotizacionEnFormulario(CotizacionDTO cotizacion) {
         if (cotizacion == null) return;
@@ -815,51 +665,111 @@ public class CotizacionController {
         lblDetallesPaquete.setText(detalles);
     }
 
-    // ─── NUEVA COTIZACIÓN / SALIR DE EDICIÓN ──────────────────────────────
+    // ─── ABRIR COTIZACIÓN GUARDADA / SALIR ─────────────────────────────────
+    private void abrirCotizacionGuardada(Long id) {
+        CotizacionDTO cotizacion = listarCotizacionesUseCase.obtenerPorId(id);
+        if (cotizacion == null || cotizacion.getEstado() == EstadoCotizacion.ELIMINADA) {
+            mostrarError("Esta cotización ya no existe.");
+            // Después de terminar de cargar esta pantalla, para no pisar la navegación.
+            Platform.runLater(() -> volverAlListado(FiltroCotizaciones.POR_CONFIRMAR));
+            return;
+        }
+        cotizacionContext.setFechaEdicionActual(cotizacion.getFecha());
+        cotizacionContext.setTurnoEdicionActual(cotizacion.getTurno());
+        cotizacionContext.setEstadoEdicionActual(cotizacion.getEstado());
+
+        cargarCotizacionEnFormulario(cotizacion);
+        cambiarModoInterfaz(true);
+
+        boolean esBorrador = cotizacion.getEstado() == EstadoCotizacion.BORRADOR;
+        boolean esVigenteFutura = cotizacion.getEstado() == EstadoCotizacion.VIGENTE
+                && cotizacion.getFecha() != null && !cotizacion.getFecha().isBefore(LocalDate.now());
+        boolean editable = esBorrador || esVigenteFutura;
+        btnGuardarCambios.setDisable(!editable);
+        setSoloLectura(!editable);
+        if (!editable) {
+            ocultarErrorTurnos(); // en una cotización de solo consulta no aplica elegir turno
+        }
+
+        lblTituloCotizacion.setText("Cotización " + (cotizacion.getFolio() != null ? cotizacion.getFolio() : ""));
+        btnVolver.setText("← Volver sin guardar");
+        actualizarAccionesPorEstado(cotizacion);
+    }
+
+    /** Muestra solo lo que se puede hacer con la cotización en su estado actual. */
+    private void actualizarAccionesPorEstado(CotizacionDTO cotizacion) {
+        EstadoCotizacion estado = cotizacion.getEstado();
+        boolean esBorrador = estado == EstadoCotizacion.BORRADOR;
+        boolean cancelada = estado == EstadoCotizacion.CANCELADA;
+        boolean fechaPasada = cotizacion.getFecha() != null && cotizacion.getFecha().isBefore(LocalDate.now());
+
+        btnEliminarCotizacion.setDisable(!esBorrador);
+        btnEliminarCotizacion.setVisible(esBorrador);
+        btnEliminarCotizacion.setManaged(esBorrador);
+        btnConfirmarEdicion.setVisible(esBorrador);
+        btnConfirmarEdicion.setManaged(esBorrador);
+
+        txtAbono.setDisable(cancelada);
+        comboMetodoPago.setDisable(cancelada);
+        btnRegistrarAbono.setDisable(cancelada);
+
+        String mensaje;
+        if (cancelada) {
+            mensaje = "Cancelada. Solo se puede consultar.";
+        } else if (esBorrador) {
+            mensaje = fechaPasada
+                    ? "La fecha ya pasó. Elige otra fecha para poder confirmarla."
+                    : "Sin confirmar. Registra el anticipo para apartar la fecha.";
+        } else {
+            mensaje = fechaPasada
+                    ? "Este evento ya pasó. Se puede consultar y registrar pagos."
+                    : "Confirmada. Aquí puedes registrar pagos y generar el contrato.";
+        }
+        lblSubtituloCotizacion.setText(mensaje);
+    }
+
     @FXML
-    private void nuevaCotizacion() {
-        // Fix #7: limpiar TODO el estado de sesión con una sola llamada al contexto.
-        // Esto garantiza que ninguna fecha/turno/id de una cotización anterior persista.
+    private void volver() {
+        if (isModoEdicion()) {
+            volverAlListado(FiltroCotizaciones.de(getEstadoEdicion(), getFechaEdicion()));
+            return;
+        }
+        if (hayDatosCapturados()) {
+            ButtonType salir = new ButtonType("Sí, salir", ButtonBar.ButtonData.OK_DONE);
+            ButtonType seguir = new ButtonType("Seguir capturando", ButtonBar.ButtonData.CANCEL_CLOSE);
+            Alert confirmar = new Alert(Alert.AlertType.CONFIRMATION, "", salir, seguir);
+            confirmar.setTitle("Salir de la cotización");
+            confirmar.setHeaderText("¿Salir sin guardar?");
+            confirmar.setContentText("Se perderá lo que capturaste en esta cotización.");
+            if (confirmar.showAndWait().orElse(seguir) != salir) {
+                return;
+            }
+        }
         cotizacionContext.limpiar();
+        ViewSwitcher.cargarVista("SeleccionarFecha.fxml");
+    }
 
-        cambiarModoInterfaz(false);
-        if (panelPagos != null) {
-            panelPagos.setVisible(false);
-            panelPagos.setManaged(false);
+    private boolean hayDatosCapturados() {
+        return comboClientes.getValue() != null || comboPaquetes.getValue() != null
+                || !serviciosSeleccionados.isEmpty()
+                || !textoVacio(txtNombreFestejado.getText()) || !textoVacio(txtTematica.getText())
+                || !textoVacio(textAreaNotas.getText());
+    }
+
+    private static boolean textoVacio(String texto) {
+        return texto == null || texto.isBlank();
+    }
+
+    /** Sale de la cotización hacia donde se vino; si es nueva, a la lista de Cotizaciones. */
+    private void volverAlListado(FiltroCotizaciones filtro) {
+        String regreso = cotizacionContext.getVistaRegreso();
+        cotizacionContext.limpiar();
+        if (regreso != null && !regreso.equals("Cotizaciones.fxml")) {
+            ViewSwitcher.cargarVista(regreso);
+            return;
         }
-        if (listaCotizaciones != null) {
-            listaCotizaciones.getSelectionModel().clearSelection();
-        }
-        btnEliminarCotizacion.setDisable(true);
-
-        comboClientes.setValue(null);
-        comboPaquetes.setValue(null);
-        if (datePickerFecha != null) {
-            datePickerFecha.setValue(null);
-            comboTurnos.setDisable(true);
-        }
-        if (comboTurnos != null) {
-            comboTurnos.setValue(null);
-        }
-
-        textAreaNotas.setText("");
-        txtNombreFestejado.setText("");
-        txtTematica.setText("");
-
-        if (listaServiciosExtras != null) {
-            serviciosSeleccionados.clear();
-        }
-
-        lblNombrePaquete.setText("Seleccione un paquete");
-        lblPrecioPaquete.setText(" $0.00");
-        lblDetallesPaquete.setText("Los detalles aparecerán aquí");
-        actualizarTotalEstimado();
-
-        // Restaurar botones por si se había abierto una en solo lectura
-        if (btnGuardarCambios != null) btnGuardarCambios.setDisable(false);
-        
-        setSoloLectura(false);
-        validarFormularioCompleto();
+        cotizacionContext.setFiltroLista(filtro);
+        ViewSwitcher.cargarVista("Cotizaciones.fxml");
     }
 
     private void setSoloLectura(boolean soloLectura) {
@@ -930,8 +840,7 @@ public class CotizacionController {
                 Alert ok = new Alert(Alert.AlertType.INFORMATION, "Cotización eliminada correctamente.");
                 ok.showAndWait();
 
-                cargarCotizacionesPanel();
-                nuevaCotizacion();
+                volverAlListado(FiltroCotizaciones.POR_CONFIRMAR);
             } catch (CotizacionException ex) {
                 mostrarError(ex.getMessage());
             } catch (Exception ex) {
@@ -1436,7 +1345,6 @@ public class CotizacionController {
             registrarAnticipoUseCase.registrarAnticipo(getCotizacionEnEdicionId(), monto, metodo);
             txtAbono.setText("");
             
-            cargarCotizacionesPanel();
             actualizarPagosUI();
             imprimirComprobante(getCotizacionEnEdicionId());
             
@@ -1474,12 +1382,10 @@ public class CotizacionController {
             double restante = registrarAnticipoUseCase.obtenerSaldoPendiente(getCotizacionEnEdicionId());
 
             // Un abono puede cambiar el estado (BORRADOR -> VIGENTE): se refleja en
-            // el contexto y en el botón Eliminar, que solo aplica a borradores.
+            // el contexto y en las acciones disponibles.
             if (cot != null) {
                 cotizacionContext.setEstadoEdicionActual(cot.getEstado());
-                if (btnEliminarCotizacion != null) {
-                    btnEliminarCotizacion.setDisable(cot.getEstado() != EstadoCotizacion.BORRADOR);
-                }
+                actualizarAccionesPorEstado(cot);
             }
 
             lblPagado.setText(String.format("Pagado: $%,.2f", pagado));
