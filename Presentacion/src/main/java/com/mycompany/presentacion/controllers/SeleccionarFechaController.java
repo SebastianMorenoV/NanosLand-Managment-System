@@ -295,6 +295,9 @@ public class SeleccionarFechaController {
     @FXML
     private void continuar() {
         if (fechaSeleccionada != null) {
+            // Se entra a capturar una cotización NUEVA: se descarta cualquier
+            // cotización que hubiera quedado en edición, para no sobrescribirla.
+            cotizacionContext.limpiar();
             cotizacionContext.setFechaSeleccionada(fechaSeleccionada);
             ViewSwitcher.cargarVista("Cotizacion.fxml");
         }

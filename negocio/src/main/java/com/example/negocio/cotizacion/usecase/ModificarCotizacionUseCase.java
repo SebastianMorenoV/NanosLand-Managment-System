@@ -56,6 +56,11 @@ public class ModificarCotizacionUseCase {
         Cotizacion existente = cotizacionRepository.findById(cotizacionId)
             .orElseThrow(() -> new CotizacionException("No existe la cotización indicada."));
 
+        if (existente.getEstado() == EstadoCotizacion.CANCELADA
+                || existente.getEstado() == EstadoCotizacion.ELIMINADA) {
+            throw new CotizacionException("La cotización está cancelada y ya no se puede modificar.");
+        }
+
         // ── Validaciones de campos obligatorios ─────────────────────────────
         if (dto.getClienteId() == null) {
             throw new CotizacionException("Debe seleccionar un cliente para la cotización.");
@@ -121,9 +126,9 @@ public class ModificarCotizacionUseCase {
         
         existente.setNotas(dto.getNotas());
 
-        if (dto.getEstado() != null) {
-            existente.setEstado(dto.getEstado());
-        }
+        // El estado NO se toma del DTO: solo cambia al registrar pagos (VIGENTE)
+        // o al cancelar/eliminar. Así una cotización ya pagada no puede volver
+        // a BORRADOR porque la pantalla tenga un estado desactualizado.
 
         // ── Persistencia de servicios extra + recálculo total ────────────
         List<DetalleCotizacionDTO> detallesDTO = dto.getDetalles();

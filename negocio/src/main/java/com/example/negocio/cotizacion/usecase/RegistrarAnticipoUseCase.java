@@ -1,6 +1,7 @@
 package com.example.negocio.cotizacion.usecase;
 
 import com.example.negocio.exception.CotizacionException;
+import com.mycompany.persistencia.dominio.CargoExtra;
 import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.dominio.Pago;
@@ -36,11 +37,25 @@ public class RegistrarAnticipoUseCase {
         Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
             .orElseThrow(() -> new CotizacionException("No existe la cotización indicada."));
 
+        // No se recibe dinero de una cotización cancelada/eliminada ni de un evento cancelado:
+        // el turno pudo haberse asignado ya a otro cliente.
+        if (cotizacion.getEstado() == EstadoCotizacion.CANCELADA
+                || cotizacion.getEstado() == EstadoCotizacion.ELIMINADA) {
+            throw new CotizacionException("La cotización está cancelada y no admite pagos.");
+        }
+        Evento eventoCotizacion = cotizacion.getEvento();
+        if (eventoCotizacion != null
+                && (eventoCotizacion.getEstado() == EstadoEvento.CANCELADO
+                    || eventoCotizacion.getEstado() == EstadoEvento.CANCELADO_TARDIO)) {
+            throw new CotizacionException("El evento de esta cotización está cancelado y no admite pagos.");
+        }
+
         List<Pago> pagosExistentes = pagoRepository.findByCotizacionId(cotizacionId);
         double anticipoExistente = pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(Pago::getCantidad).sum();
 
-        double saldo = cotizacion.getTotal() - anticipoExistente;
-        if (cantidad > saldo) {
+        // El saldo incluye los cargos extra del evento, para que se puedan cobrar.
+        double saldo = calcularSaldo(cotizacion, anticipoExistente);
+        if (redondear(cantidad) > saldo) {
             throw new CotizacionException("El abono excede el saldo pendiente.");
         }
 
@@ -80,6 +95,31 @@ public class RegistrarAnticipoUseCase {
     public double obtenerTotalAbonado(Long cotizacionId) {
         List<Pago> pagosExistentes = pagoRepository.findByCotizacionId(cotizacionId);
         return pagosExistentes == null ? 0.0 : pagosExistentes.stream().mapToDouble(Pago::getCantidad).sum();
+    }
+
+    /**
+     * Saldo pendiente de una cotización: total cotizado más los cargos extra
+     * de su evento, menos lo ya abonado. Es el mismo saldo que limita los abonos.
+     */
+    @Transactional(readOnly = true)
+    public double obtenerSaldoPendiente(Long cotizacionId) {
+        Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
+            .orElseThrow(() -> new CotizacionException("No existe la cotización indicada."));
+        return calcularSaldo(cotizacion, obtenerTotalAbonado(cotizacionId));
+    }
+
+    private double calcularSaldo(Cotizacion cotizacion, double abonado) {
+        double cargosExtra = 0.0;
+        Evento evento = cotizacion.getEvento();
+        if (evento != null && evento.getCargosExtras() != null) {
+            cargosExtra = evento.getCargosExtras().stream().mapToDouble(CargoExtra::getSubtotal).sum();
+        }
+        return Math.max(0.0, redondear(cotizacion.getTotal() + cargosExtra - abonado));
+    }
+
+    /** Redondea a centavos para que los residuos de punto flotante no alteren las comparaciones. */
+    private static double redondear(double monto) {
+        return Math.round(monto * 100.0) / 100.0;
     }
 
     /**

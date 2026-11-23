@@ -1364,9 +1364,18 @@ public class CotizacionController {
         try {
             // Fix #3: obtener el total desde BD, NO desde el texto del Label
             CotizacionDTO cot = listarCotizacionesUseCase.obtenerPorId(getCotizacionEnEdicionId());
-            double total   = cot != null ? cot.getTotal() : 0.0;
             double pagado  = registrarAnticipoUseCase.obtenerTotalAbonado(getCotizacionEnEdicionId());
-            double restante = Math.max(0, total - pagado);
+            // Incluye los cargos extra del evento: es el mismo saldo que limita los abonos.
+            double restante = registrarAnticipoUseCase.obtenerSaldoPendiente(getCotizacionEnEdicionId());
+
+            // Un abono puede cambiar el estado (BORRADOR -> VIGENTE): se refleja en
+            // el contexto y en el botón Eliminar, que solo aplica a borradores.
+            if (cot != null) {
+                cotizacionContext.setEstadoEdicionActual(cot.getEstado());
+                if (btnEliminarCotizacion != null) {
+                    btnEliminarCotizacion.setDisable(cot.getEstado() != EstadoCotizacion.BORRADOR);
+                }
+            }
 
             lblPagado.setText(String.format("Pagado: $%,.2f", pagado));
             lblRestante.setText(String.format("Restante: $%,.2f", restante));

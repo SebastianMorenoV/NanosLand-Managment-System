@@ -1,5 +1,6 @@
 package com.mycompany.presentacion.controllers;
 
+import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.SesionContext;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.fxml.FXML;
@@ -189,6 +190,8 @@ public class MainShellController {
     @FXML
     private void cerrarSesion() {
         sesionContext.cerrarSesion();
+        // La cotización en edición no debe pasar a la sesión del siguiente usuario.
+        ViewSwitcher.getSpringContext().getBean(CotizacionContext.class).limpiar();
 
         try {
             FXMLLoader loader = new FXMLLoader(getClass()

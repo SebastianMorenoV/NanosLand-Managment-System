@@ -3,7 +3,9 @@ package com.example.negocio.evento.usecase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.EventoDTO;
 import com.mycompany.common.mapper.EventoMapper;
+import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
+import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.repository.EventoRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,10 +41,25 @@ public class ActualizarEstadoEventoUseCase {
                 .orElseThrow(() -> new CotizacionException("No se encontró el evento con ID " + eventoId));
 
         if (nuevoEstado == EstadoEvento.CANCELADO) {
+            if (evento.getEstado() == EstadoEvento.CANCELADO
+                    || evento.getEstado() == EstadoEvento.CANCELADO_TARDIO) {
+                throw new CotizacionException("El evento ya está cancelado.");
+            }
+            if (evento.getEstado() == EstadoEvento.FINALIZADO) {
+                throw new CotizacionException("Un evento finalizado no se puede cancelar.");
+            }
+
             java.time.LocalDate hoy = java.time.LocalDate.now();
             java.time.LocalDate fechaEvento = evento.getFecha();
             if (fechaEvento != null && (hoy.isEqual(fechaEvento) || hoy.isEqual(fechaEvento.minusDays(1)))) {
                 nuevoEstado = EstadoEvento.CANCELADO_TARDIO;
+            }
+
+            // Cancelar el evento cancela también su cotización, en la misma
+            // transacción: deja de admitir cambios y pagos.
+            Cotizacion cotizacion = evento.getCotizacion();
+            if (cotizacion != null && cotizacion.getEstado() != EstadoCotizacion.ELIMINADA) {
+                cotizacion.setEstado(EstadoCotizacion.CANCELADA);
             }
         }
 

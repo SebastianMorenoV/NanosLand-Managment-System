@@ -3,6 +3,7 @@ package com.mycompany.presentacion;
 import com.example.negocio.NegocioApplication;
 import com.mycompany.presentacion.config.ConfiguracionBD;
 import com.mycompany.presentacion.config.ConfiguracionBDDialog;
+import com.mycompany.presentacion.config.PrimerUsuarioDialog;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import java.io.IOException;
 import java.util.Optional;
@@ -55,6 +56,8 @@ public class App extends Application {
             return;
         }
 
+        PrimerUsuarioDialog.mostrarSiNoHayUsuarios(null, springContext);
+
         Scene scene = new Scene(cargarLogin(), 1280, 720);
 
         primaryStage.setTitle("Sistema de Gestión NanosLand");
@@ -98,6 +101,7 @@ public class App extends Application {
                 app.springContext.close();
             }
             app.iniciarSpring(nueva.get());
+            PrimerUsuarioDialog.mostrarSiNoHayUsuarios(app.primaryStage, app.springContext);
             app.primaryStage.getScene().setRoot(app.cargarLogin());
         } catch (Exception e) {
             e.printStackTrace();
