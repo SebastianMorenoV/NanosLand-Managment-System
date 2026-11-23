@@ -42,3 +42,13 @@ jobs:
         uses: shannah/jdeploy@master
         with:
           github_token: ${{ github.token }}
+
+      # jDeploy deja el release del tag como borrador; aquí se publica y se le
+      # ponen como notas los enlaces de descarga de los instaladores.
+      - name: Publicar el release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" -p jdeploy-release-notes.md --clobber
+          gh release edit "$GITHUB_REF_NAME" --draft=false --latest --notes-file jdeploy-release-notes.md
