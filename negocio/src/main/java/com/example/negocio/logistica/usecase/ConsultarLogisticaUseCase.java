@@ -29,6 +29,7 @@ public class ConsultarLogisticaUseCase {
 
     private final EventoRepository eventoRepository;
     private final LogisticaServicioRepository logisticaRepo;
+    private final GenerarLogisticaEventoUseCase generarLogisticaEventoUseCase;
 
     /**
      * Devuelve los eventos confirmados cuya fecha es hoy o en el futuro.
@@ -41,7 +42,8 @@ public class ConsultarLogisticaUseCase {
         List<Evento> eventos = eventoRepository.findByFechaBetweenWithRelations(hoy, limite);
 
         return eventos.stream()
-                .filter(e -> e.getEstado() != EstadoEvento.CANCELADO)
+                // Solo los eventos confirmados tienen servicios que coordinar.
+                .filter(e -> e.getEstado() == EstadoEvento.CONFIRMADO || e.getEstado() == EstadoEvento.EN_CURSO)
                 .sorted((a, b) -> {
                     if (a.getFecha() == null) return 1;
                     if (b.getFecha() == null) return -1;
@@ -54,8 +56,13 @@ public class ConsultarLogisticaUseCase {
     /**
      * Devuelve los registros de logística para un evento específico.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<LogisticaDTO> obtenerServiciosPorEvento(Long eventoId) {
+        // Un evento confirmado antes de que existiera la generación automática
+        // no tiene bitácora: se crea la primera vez que se consulta.
+        eventoRepository.findById(eventoId)
+            .ifPresent(evento -> generarLogisticaEventoUseCase.sincronizar(evento, true));
+        eventoRepository.flush();
         return LogisticaMapper.toDTOList(logisticaRepo.findByEventoIdWithServicio(eventoId));
     }
 }

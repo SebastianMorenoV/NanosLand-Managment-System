@@ -42,6 +42,8 @@ public interface EventoRepository extends JpaRepository<Evento, Long>{
 
     List<Evento> findByEstadoNot(EstadoEvento estado);
 
+    List<Evento> findByEstadoIn(java.util.Collection<EstadoEvento> estados);
+
     List<Evento> findByEstadoAndFechaBetween(EstadoEvento estado, LocalDate inicio, LocalDate fin);
 
     boolean existsByFechaAndTurnoAndEstadoNot(LocalDate fecha, TurnoEvento turno, EstadoEvento estado);

@@ -1,6 +1,7 @@
 package com.example.negocio.cotizacion.usecase;
 
 import com.example.negocio.exception.CotizacionException;
+import com.example.negocio.logistica.usecase.GenerarLogisticaEventoUseCase;
 import com.mycompany.persistencia.dominio.CargoExtra;
 import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
@@ -27,6 +28,7 @@ public class RegistrarAnticipoUseCase {
     private final CotizacionRepository cotizacionRepository;
     private final PagoRepository pagoRepository;
     private final EventoRepository eventoRepository;
+    private final GenerarLogisticaEventoUseCase generarLogisticaEventoUseCase;
 
     @Transactional
     public Pago registrarAnticipo(Long cotizacionId, double cantidad, MetodoPago tipoPago) {
@@ -87,6 +89,10 @@ public class RegistrarAnticipoUseCase {
                     if (evento.getHoraFin() == null) evento.setHoraFin(LocalTime.of(20, 0));
                 }
                 eventoRepository.save(evento);
+
+                // Con el evento confirmado se abre su bitácora de logística:
+                // un registro por cada servicio del paquete y cada extra.
+                generarLogisticaEventoUseCase.sincronizar(evento, false);
             }
         }
         return pagoGuardado;

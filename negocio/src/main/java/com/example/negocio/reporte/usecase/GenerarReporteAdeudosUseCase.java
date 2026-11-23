@@ -22,11 +22,17 @@ public class GenerarReporteAdeudosUseCase {
 
     @Transactional(readOnly = true)
     public List<AdeudoDTO> generarReporteAdeudos() {
-        // Obtenemos eventos que no estén cancelados
-        List<Evento> eventosActivos = eventoRepository.findByEstadoNot(EstadoEvento.CANCELADO);
+        // Solo deben dinero los eventos confirmados (o ya realizados). Un borrador sin
+        // anticipo (TENTATIVO) todavía no es una venta, y a un evento cancelado ya no
+        // se le cobra.
+        List<Evento> eventosActivos = eventoRepository.findByEstadoIn(
+            List.of(EstadoEvento.CONFIRMADO, EstadoEvento.EN_CURSO, EstadoEvento.FINALIZADO));
         List<AdeudoDTO> adeudos = new ArrayList<>();
 
         for (Evento evento : eventosActivos) {
+            if (evento.getCotizacion() == null) {
+                continue; // sin cotización no hay nada que cobrar
+            }
             try {
                 EstadoCuentaDTO estado = consultarEstadoCuentaUseCase.generarEstadoCuenta(evento.getId());
                 

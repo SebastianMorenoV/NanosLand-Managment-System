@@ -20,4 +20,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long>{
     Optional<Usuario> findByCorreoAndActivoTrue(String correo);
     
     java.util.List<Usuario> findByActivoTrue();
+
+    long countByRolAndActivoTrue(com.mycompany.persistencia.enums.RolUsuario rol);
 }

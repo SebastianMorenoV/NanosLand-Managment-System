@@ -5,6 +5,7 @@
 package com.example.negocio.cotizacion.usecase;
 
 import com.example.negocio.exception.CotizacionException;
+import com.example.negocio.logistica.usecase.GenerarLogisticaEventoUseCase;
 import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.dtos.DetalleCotizacionDTO;
 import com.mycompany.common.mapper.CotizacionMapper;
@@ -43,6 +44,7 @@ public class ModificarCotizacionUseCase {
     private final ServicioRepository servicioRepository;
     private final EventoRepository eventoRepository;
     private final PagoRepository pagoRepository;
+    private final GenerarLogisticaEventoUseCase generarLogisticaEventoUseCase;
 
     @Transactional
     public CotizacionDTO modificarCotizacion(Long cotizacionId, CotizacionDTO dto) {
@@ -190,6 +192,10 @@ public class ModificarCotizacionUseCase {
         }
         
         existente.setTotal(total);
+
+        // Si el evento ya está confirmado, su logística sigue a los servicios contratados:
+        // se agregan los nuevos y se quitan los que salieron de la cotización.
+        generarLogisticaEventoUseCase.sincronizar(eventoExistente, false);
 
         Cotizacion guardada = cotizacionRepository.save(existente);
         return CotizacionMapper.toDTO(guardada);

@@ -135,6 +135,14 @@ public class CotizacionController {
     private final ObservableList<ServicioDTO> serviciosSeleccionados = FXCollections.observableArrayList();
     private final ObservableList<ServicioAgrupado> serviciosAgrupados = FXCollections.observableArrayList();
 
+    /**
+     * Datos de cada extra seleccionado que no caben en ServicioDTO: hora,
+     * especificaciones, desglose y ubicación. La clave es la instancia concreta
+     * que está en serviciosSeleccionados (por identidad, no por id), porque el
+     * mismo servicio puede agregarse varias veces con datos distintos.
+     */
+    private final java.util.Map<ServicioDTO, DetalleCotizacionDTO> datosDeExtras = new java.util.IdentityHashMap<>();
+
     public static class ServicioAgrupado {
         public ServicioDTO servicio;
         public int cantidad;
@@ -186,6 +194,8 @@ public class CotizacionController {
         serviciosSeleccionados.addListener((javafx.collections.ListChangeListener.Change<? extends ServicioDTO> c) -> {
             java.util.Map<Long, java.util.List<ServicioDTO>> map = serviciosSeleccionados.stream()
                 .collect(java.util.stream.Collectors.groupingBy(ServicioDTO::getId));
+            // Se olvidan los datos de los extras que ya no están seleccionados.
+            datosDeExtras.keySet().removeIf(k -> serviciosSeleccionados.stream().noneMatch(s -> s == k));
             serviciosAgrupados.clear();
             for (java.util.List<ServicioDTO> group : map.values()) {
                 serviciosAgrupados.add(new ServicioAgrupado(group.get(0), group.size()));
@@ -727,19 +737,24 @@ public class CotizacionController {
         if (listaServiciosExtras != null) {
             serviciosSeleccionados.clear();
             if (cotizacion.getDetalles() != null) {
-                // Obtenemos el catálogo completo para buscar las coincidencias
-                List<ServicioDTO> catalogo = consultarCatalogoUseCase.obtenerTodosLosServicios();
-                
+                // Los extras se reconstruyen desde lo GUARDADO en la cotización (nombre,
+                // precio pactado y datos de logística), no desde el catálogo actual: así
+                // editar no cambia el precio si el servicio subió después, ni pierde los
+                // extras cuyo servicio fue desactivado.
+                List<ServicioDTO> guardados = new ArrayList<>();
                 for (DetalleCotizacionDTO detalle : cotizacion.getDetalles()) {
                     if (detalle == null || detalle.getServicioId() == null) continue;
-                    ServicioDTO match = catalogo.stream()
-                        .filter(s -> s.getId() != null && s.getId().equals(detalle.getServicioId()))
-                        .findFirst()
-                        .orElse(null);
-                    if (match != null) {
-                        serviciosSeleccionados.add(match);
+                    int cantidad = Math.max(1, detalle.getCantidad());
+                    for (int i = 0; i < cantidad; i++) {
+                        ServicioDTO extra = new ServicioDTO();
+                        extra.setId(detalle.getServicioId());
+                        extra.setNombre(detalle.getNombreServicio());
+                        extra.setPrecio(detalle.getPrecioUnitario());
+                        datosDeExtras.put(extra, detalle);
+                        guardados.add(extra);
                     }
                 }
+                serviciosSeleccionados.addAll(guardados);
             }
         }
 
@@ -919,6 +934,13 @@ public class CotizacionController {
             d.setPrecioUnitario(s.getPrecio());
             d.setCantidad(1);
             d.setSubtotal(s.getPrecio());
+            DetalleCotizacionDTO datos = datosDeExtras.get(s);
+            if (datos != null) {
+                d.setHoraSugerida(datos.getHoraSugerida());
+                d.setEspecificacionesCliente(datos.getEspecificacionesCliente());
+                d.setDesgloseOpciones(datos.getDesgloseOpciones());
+                d.setUbicacionMontaje(datos.getUbicacionMontaje());
+            }
             detalles.add(d);
         }
         dto.setDetalles(detalles);
@@ -1166,6 +1188,10 @@ public class CotizacionController {
     }
 
     // ─── ACCIÓN DEL BOTÓN AÑADIR SERVICIO A LA COTIZACIÓN ─────────────────────
+    private static String textoONull(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
+    }
+
     @FXML
     private void abrirDialogoAgregarServicio() {
         List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerTodosLosServicios();
@@ -1290,12 +1316,25 @@ public class CotizacionController {
                     List<ServicioDTO> listaAEnviar = new ArrayList<>();
                     int cant = comboCantidad.getValue() != null ? comboCantidad.getValue() : 1;
                     
-                    // Nota: Los datos operativos (Hora, Ubicacion, etc.) se capturan en la UI
-                    // y están listos para ser usados cuando el DTO 'ServicioDTO' o 'Logistica' 
-                    // los soporte en backend. Por ahora, duplicamos el DTO para el cálculo del total.
+                    // Los datos operativos viajan con cada extra y se guardan en el detalle
+                    // de la cotización; al confirmar el evento pasan a su bitácora de logística.
+                    DetalleCotizacionDTO datos = new DetalleCotizacionDTO();
+                    datos.setEspecificacionesCliente(textoONull(txtEspecificaciones.getText()));
+                    datos.setDesgloseOpciones(textoONull(txtDesglose.getText()));
+                    datos.setUbicacionMontaje(textoONull(txtUbicacion.getText()));
+                    if (comboHora.getValue() != null) {
+                        datos.setHoraSugerida(java.time.LocalTime.parse(comboHora.getValue()));
+                    }
 
                     for(int i = 0; i < cant; i++) {
-                        listaAEnviar.add(s);
+                        // Una instancia por unidad, para que cada una conserve sus datos.
+                        ServicioDTO unidad = new ServicioDTO();
+                        unidad.setId(s.getId());
+                        unidad.setNombre(s.getNombre());
+                        unidad.setDescripcion(s.getDescripcion());
+                        unidad.setPrecio(s.getPrecio());
+                        datosDeExtras.put(unidad, datos);
+                        listaAEnviar.add(unidad);
                     }
                     return listaAEnviar;
                 }

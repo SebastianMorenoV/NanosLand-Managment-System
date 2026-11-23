@@ -1,5 +1,6 @@
 package com.mycompany.presentacion.utils;
 
+import com.mycompany.presentacion.config.RegistroErrores;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -44,9 +45,13 @@ public class ViewSwitcher {
             Parent vista = loader.load();
             contenedorPrincipal.setCenter(vista);
             return loader;
-        } catch (IOException e) {
-            System.out.println("Error al cargar la vista: " + fxmlFile);
+        } catch (IOException | RuntimeException e) {
+            // La aplicación instalada no tiene consola: el error se registra en
+            // el archivo y se le avisa al usuario en lugar de dejar la pantalla anterior
+            // sin explicación.
+            System.err.println("Error al cargar la vista: " + fxmlFile);
             e.printStackTrace();
+            RegistroErrores.avisar("No se pudo abrir la pantalla", e);
             return null;
         }
     }

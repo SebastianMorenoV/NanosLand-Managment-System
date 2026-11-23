@@ -205,6 +205,7 @@ public class MainShellController {
             stage.setMaximized(true);
         } catch (Exception e) {
             e.printStackTrace();
+            com.mycompany.presentacion.config.RegistroErrores.avisar("No se pudo cerrar la sesión", e);
         }
     }
 }

@@ -4,6 +4,7 @@ import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.UsuarioSistemaDTO;
 import com.mycompany.common.mapper.UsuarioSistemaMapper;
 import com.mycompany.persistencia.dominio.Usuario;
+import com.mycompany.persistencia.enums.RolUsuario;
 import com.mycompany.persistencia.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,15 @@ public class ActualizarUsuarioSistemaUseCase {
         Optional<Usuario> otro = usuarioRepository.findByCorreo(dto.getCorreo().trim());
         if (otro.isPresent() && !otro.get().getId().equals(dto.getId())) {
             throw new CotizacionException("Ya existe otro usuario con ese correo electrónico.");
+        }
+
+        // El sistema no puede quedarse sin un dueño activo: solo el dueño ve la
+        // gestión de usuarios, así que nadie podría volver a asignar el rol.
+        if (existente.getRol() == RolUsuario.DUEÑO && existente.isActivo()
+                && dto.getRol() != RolUsuario.DUEÑO
+                && usuarioRepository.countByRolAndActivoTrue(RolUsuario.DUEÑO) <= 1) {
+            throw new CotizacionException(
+                "No se puede cambiar el rol del único dueño activo. Registre antes a otro dueño.");
         }
 
         existente.setCorreo(dto.getCorreo().trim());
