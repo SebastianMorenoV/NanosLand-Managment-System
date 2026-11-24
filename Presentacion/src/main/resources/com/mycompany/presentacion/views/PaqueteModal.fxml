@@ -61,7 +61,7 @@
         
         <!-- Botones -->
         <HBox alignment="CENTER_RIGHT" spacing="20">
-            <Button text="Cancelar" styleClass="boton-azul-claro" onAction="#cerrarModal"/>
+            <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
             <Button text="Guardar Paquete" styleClass="boton-azul" onAction="#guardarPaquete"/>
         </HBox>
     </VBox>

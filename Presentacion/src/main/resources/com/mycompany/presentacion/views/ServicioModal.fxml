@@ -25,7 +25,7 @@
     </VBox>
 
     <HBox alignment="CENTER_RIGHT" spacing="15">
-        <Button text="Cancelar" styleClass="boton-azul-claro" onAction="#cerrarModal"/>
+        <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
         <Button text="Guardar Servicio" styleClass="boton-azul" onAction="#guardarServicio"/>
     </HBox>
 </VBox>

@@ -22,6 +22,7 @@ import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.FiltroCotizaciones;
+import com.mycompany.presentacion.utils.ModalHelper;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -36,10 +37,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
-import javafx.scene.layout.GridPane; 
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -354,12 +357,7 @@ public class CotizacionController {
             ok.showAndWait();
             volverAlListado(FiltroCotizaciones.CONFIRMADAS);
         } else {
-            TextInputDialog dialog = new TextInputDialog(String.format(java.util.Locale.ROOT, "%.2f", minimo - pagado));
-            dialog.setTitle("Confirmar Cotización");
-            dialog.setHeaderText(String.format("Anticipo mínimo de $%,.2f para confirmar y bloquear la fecha.", minimo));
-            dialog.setContentText("Ingrese el monto a pagar:");
-
-            dialog.showAndWait().ifPresent(montoStr -> {
+            pedirMontoAnticipo(minimo, minimo - pagado).ifPresent(montoStr -> {
                 try {
                     double monto = Double.parseDouble(montoStr.replace("$", "").replace(",", "").trim());
                     if (pagado + monto < minimo) {
@@ -1158,6 +1156,12 @@ public class CotizacionController {
         return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
+    private static Label etiqueta(String texto, String claseCss) {
+        Label lbl = new Label(texto);
+        lbl.getStyleClass().add(claseCss);
+        return lbl;
+    }
+
     @FXML
     private void abrirDialogoAgregarServicio() {
         List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerTodosLosServicios();
@@ -1169,26 +1173,14 @@ public class CotizacionController {
 
         // Creamos el Dialog esperando una lista de servicios (para poder agregar varios según la 'cantidad')
         Dialog<List<ServicioDTO>> dialog = new Dialog<>();
-        dialog.setTitle("Servicios Extras");
-        dialog.setHeaderText(null); 
+        dialog.setTitle("Añadir Servicio Extra");
 
         ButtonType agregarButtonType = new ButtonType("Añadir Servicio Extra", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, agregarButtonType);
 
-        VBox vbox = new VBox(15);
-        vbox.setPadding(new Insets(20));
-
         // --- SECCIÓN 1: DATOS DEL COBRO ---
-        Label lblCobro = new Label("DATOS DEL COBRO:");
-        lblCobro.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-        
-        GridPane gridCobro = new GridPane();
-        gridCobro.setHgap(10); 
-        gridCobro.setVgap(10);
-
         ComboBox<ServicioDTO> comboServicio = new ComboBox<>(FXCollections.observableArrayList(todosLosServicios));
         comboServicio.setPromptText("Seleccione un servicio...");
-        comboServicio.setPrefWidth(250);
         comboServicio.setConverter(new StringConverter<ServicioDTO>() {
             @Override
             public String toString(ServicioDTO s) {
@@ -1200,79 +1192,89 @@ public class CotizacionController {
 
         ComboBox<Integer> comboCantidad = new ComboBox<>(FXCollections.observableArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
         comboCantidad.getSelectionModel().selectFirst();
-        comboCantidad.setPrefWidth(80);
 
-        TextField txtCosto = new TextField();
-        txtCosto.setPromptText("$0.00");
-        txtCosto.setEditable(false);
-        txtCosto.setStyle("-fx-background-color: #f2f2f2; -fx-text-fill: #333333;");
+        VBox campoServicio = ModalHelper.campo("SERVICIO DEL CATÁLOGO *", comboServicio);
+        HBox.setHgrow(campoServicio, Priority.ALWAYS);
+        VBox campoCantidad = ModalHelper.campo("CANTIDAD", comboCantidad);
+        campoCantidad.setMinWidth(110);
+        campoCantidad.setPrefWidth(110);
+        HBox filaServicio = new HBox(12, campoServicio, campoCantidad);
 
-        gridCobro.add(new Label("Servicio del catálogo:"), 0, 0);
-        gridCobro.add(comboServicio, 1, 0);
-        gridCobro.add(new Label("Cantidad:"), 0, 1);
-        gridCobro.add(comboCantidad, 1, 1);
-        gridCobro.add(new Label("Precio Unit:"), 0, 2);
-        gridCobro.add(txtCosto, 1, 2);
+        // Resumen del cobro: precio unitario y total según la cantidad
+        Label lblPrecioUnitario = etiqueta("—", "resumen-cobro-valor");
+        Label lblTotalTitulo = etiqueta("TOTAL", "label-pequeno");
+        Label lblTotal = etiqueta("$0.00", "resumen-cobro-total");
+        VBox bloquePrecio = new VBox(2, etiqueta("PRECIO UNITARIO", "label-pequeno"), lblPrecioUnitario);
+        VBox bloqueTotal = new VBox(2, lblTotalTitulo, lblTotal);
+        bloqueTotal.setAlignment(Pos.CENTER_RIGHT);
+        Region espacioResumen = new Region();
+        HBox.setHgrow(espacioResumen, Priority.ALWAYS);
+        HBox resumenCobro = new HBox(bloquePrecio, espacioResumen, bloqueTotal);
+        resumenCobro.setAlignment(Pos.CENTER_LEFT);
+        resumenCobro.getStyleClass().add("resumen-cobro");
+
+        VBox seccionCobro = new VBox(10, etiqueta("DATOS DEL COBRO", "titulo-seccion"), filaServicio, resumenCobro);
 
         // --- SECCIÓN 2: DETALLES OPERATIVOS (LOGÍSTICA) ---
-        Label lblLogistica = new Label("DETALLES OPERATIVOS (LOGÍSTICA)");
-        lblLogistica.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-        
-        GridPane gridLogistica = new GridPane();
-        gridLogistica.setHgap(10); 
-        gridLogistica.setVgap(10);
+        TextField txtEspecificaciones = ModalHelper.campoTexto("Ej. Colores, temática...");
+        TextField txtDesglose = ModalHelper.campoTexto("Opcional");
+        TextField txtUbicacion = ModalHelper.campoTexto("Ej. Junto a la pista");
+        TextField txtResponsable = ModalHelper.campoTexto("Opcional");
 
-        TextField txtEspecificaciones = new TextField();
-        txtEspecificaciones.setPromptText("Ej. Colores, temática...");
-        
-        TextField txtDesglose = new TextField();
-        txtDesglose.setPromptText("Opcional");
-        
         ComboBox<String> comboHora = new ComboBox<>();
         for(int i = 0; i <= 23; i++) {
             comboHora.getItems().add(String.format("%02d:00", i));
             comboHora.getItems().add(String.format("%02d:30", i));
         }
         comboHora.setPromptText("Seleccione hora");
+        comboHora.setVisibleRowCount(8);
 
-        TextField txtUbicacion = new TextField();
-        
-        TextField txtResponsable = new TextField();
-        txtResponsable.setPromptText("Opcional");
+        // Dos columnas del mismo ancho; las especificaciones ocupan la fila completa
+        GridPane gridLogistica = new GridPane();
+        gridLogistica.setHgap(12);
+        gridLogistica.setVgap(10);
+        for (int i = 0; i < 2; i++) {
+            ColumnConstraints mitad = new ColumnConstraints();
+            mitad.setPercentWidth(50);
+            mitad.setHgrow(Priority.ALWAYS);
+            gridLogistica.getColumnConstraints().add(mitad);
+        }
+        gridLogistica.add(ModalHelper.campo("ESPECIFICACIONES / TEMÁTICA", txtEspecificaciones), 0, 0, 2, 1);
+        gridLogistica.add(ModalHelper.campo("DESGLOSE O VARIEDADES", txtDesglose), 0, 1);
+        gridLogistica.add(ModalHelper.campo("UBICACIÓN EN SALÓN", txtUbicacion), 1, 1);
+        gridLogistica.add(ModalHelper.campo("HORA DE ENTREGA / INICIO", comboHora), 0, 2);
+        gridLogistica.add(ModalHelper.campo("RESPONSABLE ASIGNADO", txtResponsable), 1, 2);
 
-        gridLogistica.add(new Label("Especificaciones/Temática:"), 0, 0);
-        gridLogistica.add(txtEspecificaciones, 1, 0);
-        gridLogistica.add(new Label("Desglose o variedades:"), 0, 1);
-        gridLogistica.add(txtDesglose, 1, 1);
-        gridLogistica.add(new Label("Hora de entrega/inicio:"), 0, 2);
-        gridLogistica.add(comboHora, 1, 2);
-        gridLogistica.add(new Label("Ubicación en salón:"), 0, 3);
-        gridLogistica.add(txtUbicacion, 1, 3);
-        gridLogistica.add(new Label("Responsable asignado:"), 0, 4);
-        gridLogistica.add(txtResponsable, 1, 4);
+        VBox seccionLogistica = new VBox(10, etiqueta("DETALLES OPERATIVOS (LOGÍSTICA)", "titulo-seccion"), gridLogistica);
 
-        vbox.getChildren().addAll(lblCobro, gridCobro, new Separator(), lblLogistica, gridLogistica);
-        dialog.getDialogPane().setContent(vbox);
+        // Espaciado compacto para que quepa en pantallas de 1280x720
+        VBox contenido = new VBox(14,
+                ModalHelper.encabezado("Añadir Servicio Extra",
+                        "Seleccione un servicio del catálogo y capture los detalles para logística."),
+                seccionCobro, new Separator(), seccionLogistica);
+        contenido.setPrefWidth(520);
+        dialog.getDialogPane().setContent(contenido);
+        ModalHelper.aplicarEstilo(dialog, btnAnadirServicio.getScene().getWindow());
 
-        // --- ESTILOS DE BOTONES ---
         Button agregarBtn = (Button) dialog.getDialogPane().lookupButton(agregarButtonType);
-        agregarBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
         agregarBtn.setDisable(true); // Bloqueado hasta que seleccione un servicio
-        
-        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
-        cancelBtn.setText("Cancelar");
-        cancelBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-cursor: hand;");
 
         // --- LÓGICA DE ACTUALIZACIÓN DE PRECIOS ---
-        comboServicio.valueProperty().addListener((obs, old, newVal) -> {
-            if (newVal != null) {
-                txtCosto.setText(String.format("$%,.2f", newVal.getPrecio()));
-                agregarBtn.setDisable(false);
+        Runnable actualizarResumen = () -> {
+            ServicioDTO s = comboServicio.getValue();
+            int cant = comboCantidad.getValue() != null ? comboCantidad.getValue() : 1;
+            lblTotalTitulo.setText(cant > 1 ? "TOTAL (" + cant + " UNIDADES)" : "TOTAL");
+            if (s != null) {
+                lblPrecioUnitario.setText(String.format("$%,.2f", s.getPrecio()));
+                lblTotal.setText(String.format("$%,.2f", s.getPrecio() * cant));
             } else {
-                txtCosto.setText("$0.00");
-                agregarBtn.setDisable(true);
+                lblPrecioUnitario.setText("—");
+                lblTotal.setText("$0.00");
             }
-        });
+            agregarBtn.setDisable(s == null);
+        };
+        comboServicio.valueProperty().addListener((obs, old, newVal) -> actualizarResumen.run());
+        comboCantidad.valueProperty().addListener((obs, old, newVal) -> actualizarResumen.run());
 
         // --- CONVERTIR RESULTADO (Se agregan los servicios X veces según la cantidad elegida) ---
         dialog.setResultConverter(dialogButton -> {
@@ -1317,12 +1319,54 @@ public class CotizacionController {
         });
     }
     
+    /**
+     * Pide el monto del anticipo con el que se confirma la cotización.
+     *
+     * @param minimo   anticipo mínimo para confirmar.
+     * @param sugerido monto con el que se llena el campo (lo que falta para el mínimo).
+     * @return el texto capturado, o vacío si se cancela.
+     */
+    private java.util.Optional<String> pedirMontoAnticipo(double minimo, double sugerido) {
+        TextField txtMonto = ModalHelper.campoTexto("0.00");
+        txtMonto.setText(String.format(java.util.Locale.ROOT, "%.2f", sugerido));
+
+        Dialog<String> dialogo = new Dialog<>();
+        dialogo.setTitle("Confirmar Cotización");
+        ButtonType continuarButtonType = new ButtonType("Continuar", ButtonBar.ButtonData.OK_DONE);
+        dialogo.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, continuarButtonType);
+
+        VBox contenido = new VBox(18,
+                ModalHelper.encabezado("Confirmar Cotización",
+                        String.format("Se requiere un anticipo mínimo de $%,.2f para confirmar y bloquear la fecha.", minimo)),
+                ModalHelper.campo("MONTO A PAGAR ($) *", txtMonto));
+        contenido.setPrefWidth(400);
+        dialogo.getDialogPane().setContent(contenido);
+        ModalHelper.aplicarEstilo(dialogo, btnConfirmarCotizacion.getScene().getWindow());
+        dialogo.setResultConverter(boton -> boton == continuarButtonType ? txtMonto.getText() : null);
+        dialogo.setOnShown(e -> Platform.runLater(() -> {
+            txtMonto.requestFocus();
+            txtMonto.selectAll();
+        }));
+        return dialogo.showAndWait();
+    }
+
     /** Pregunta con qué método se recibe el pago; devuelve null si se cancela. */
     private MetodoPago pedirMetodoPago() {
-        ChoiceDialog<MetodoPago> dialogo = new ChoiceDialog<>(MetodoPago.EFECTIVO, MetodoPago.values());
+        ComboBox<MetodoPago> comboMetodo = new ComboBox<>(FXCollections.observableArrayList(MetodoPago.values()));
+        comboMetodo.setValue(MetodoPago.EFECTIVO);
+
+        Dialog<MetodoPago> dialogo = new Dialog<>();
         dialogo.setTitle("Método de pago");
-        dialogo.setHeaderText("¿Cómo se recibe el pago?");
-        dialogo.setContentText("Método:");
+        ButtonType aceptarButtonType = new ButtonType("Aceptar", ButtonBar.ButtonData.OK_DONE);
+        dialogo.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, aceptarButtonType);
+
+        VBox contenido = new VBox(18,
+                ModalHelper.encabezado("Método de pago", "¿Cómo se recibe el pago?"),
+                ModalHelper.campo("MÉTODO DE PAGO", comboMetodo));
+        contenido.setPrefWidth(360);
+        dialogo.getDialogPane().setContent(contenido);
+        ModalHelper.aplicarEstilo(dialogo, btnConfirmarCotizacion.getScene().getWindow());
+        dialogo.setResultConverter(boton -> boton == aceptarButtonType ? comboMetodo.getValue() : null);
         return dialogo.showAndWait().orElse(null);
     }
 

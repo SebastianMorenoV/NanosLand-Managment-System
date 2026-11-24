@@ -2,37 +2,29 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<?import java.lang.String?>
 
-<VBox spacing="20" prefWidth="400" styleClass="tarjeta-blanca" stylesheets="@../styles/styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ReprogramarEventoModalController">
+<VBox spacing="20" prefWidth="420" stylesheets="@../styles/styles.css" style="-fx-background-color: #ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ReprogramarEventoModalController">
     <padding><Insets top="25" right="30" bottom="25" left="30"/></padding>
 
     <!-- Cabecera -->
-    <VBox spacing="5">
-        <Label text="Reprogramar Evento" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
-        <Label text="Seleccione la nueva fecha y turno para el evento." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+    <VBox spacing="4">
+        <Label text="Reprogramar Evento" styleClass="titulo-modal"/>
+        <Label text="Seleccione la nueva fecha y turno para el evento." styleClass="subtitulo-modal"/>
     </VBox>
 
-    <Separator/>
-
     <!-- Formulario -->
-    <GridPane hgap="15" vgap="15">
-        <columnConstraints>
-            <ColumnConstraints minWidth="100" prefWidth="120"/>
-            <ColumnConstraints hgrow="ALWAYS"/>
-        </columnConstraints>
+    <VBox spacing="5">
+        <Label text="NUEVA FECHA *" styleClass="label-pequeno"/>
+        <DatePicker fx:id="dpNuevaFecha" promptText="Seleccionar fecha" maxWidth="Infinity"/>
+    </VBox>
 
-        <Label text="Nueva Fecha:" styleClass="titulo-seccion" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <DatePicker fx:id="dpNuevaFecha" promptText="Seleccionar fecha" GridPane.rowIndex="0" GridPane.columnIndex="1" maxWidth="Infinity"/>
-
-        <Label text="Nuevo Turno:" styleClass="titulo-seccion" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <ComboBox fx:id="cmbNuevoTurno" promptText="Seleccionar turno" GridPane.rowIndex="1" GridPane.columnIndex="1" maxWidth="Infinity"/>
-    </GridPane>
-
-    <Separator/>
+    <VBox spacing="5">
+        <Label text="NUEVO TURNO *" styleClass="label-pequeno"/>
+        <ComboBox fx:id="cmbNuevoTurno" promptText="Seleccionar turno" maxWidth="Infinity"/>
+    </VBox>
 
     <!-- Acciones -->
-    <HBox spacing="10" alignment="CENTER_RIGHT">
+    <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
         <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
         <Button text="Guardar Cambios" styleClass="boton-azul" onAction="#guardarReprogramacion"/>
     </HBox>
