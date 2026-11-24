@@ -26,6 +26,13 @@ public class CotizacionDTO {
     private TurnoEvento turno;
     private Long paqueteId;
     private String nombrePaquete;
+    /** Comida elegida (paquetes con tabla de precios). */
+    private Long comidaId;
+    private String comidaNombre;
+    /** Rango de personas elegido (paquetes con tabla de precios). */
+    private Integer personas;
+    /** Precio pactado del paquete. Solo de salida: el servidor lo calcula y no lo toma del DTO. */
+    private Double precioPaquete;
     private String tematica;
     private Long usuarioId;
     private List<DetalleCotizacionDTO> detalles;

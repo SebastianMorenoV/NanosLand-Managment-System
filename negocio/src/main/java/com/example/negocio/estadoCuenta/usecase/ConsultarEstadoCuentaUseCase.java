@@ -53,13 +53,14 @@ public class ConsultarEstadoCuentaUseCase {
             dto.setEstadoEvento(evento.getEstado().name());
         }
 
-        // Paquete Base
+        // Paquete Base, con su comida y personas (el precio pactado se asigna abajo)
         if (cotizacion.getPaquete() != null) {
-            dto.setNombrePaqueteBase(cotizacion.getPaquete().getNombre());
-            dto.setPrecioPaqueteBase(cotizacion.getPaquete().getCosto());
+            dto.setNombrePaqueteBase(com.mycompany.common.util.DescripcionPaquete.de(
+                    cotizacion.getPaquete().getNombre(),
+                    cotizacion.getComida() != null ? cotizacion.getComida().getNombre() : null,
+                    cotizacion.getPersonas()));
         } else {
             dto.setNombrePaqueteBase("Sin Paquete");
-            dto.setPrecioPaqueteBase(0.0);
         }
 
         // Servicios Extras de la Cotización
@@ -99,7 +100,9 @@ public class ConsultarEstadoCuentaUseCase {
         // Se parte del total GUARDADO en la cotización (lo pactado con el cliente), no del
         // precio actual del paquete: así un cambio posterior en el catálogo no altera
         // lo que debe un evento ya vendido. El paquete se muestra a su precio pactado.
-        dto.setPrecioPaqueteBase(cotizacion.getTotal() - totalExtras);
+        dto.setPrecioPaqueteBase(cotizacion.getPaquete() != null
+                ? com.example.negocio.precio.CalcularPrecioPaqueteUseCase.precioPactado(cotizacion)
+                : 0.0);
         double granTotal = cotizacion.getTotal() + totalCargos;
         dto.setGranTotal(granTotal);
         dto.setSaldoPendiente(granTotal - totalPagado);

@@ -99,6 +99,12 @@ public class GenerarComprobanteUseCase {
             addRow(datos, "TURNO:", evento != null && evento.getTurno() != null ? evento.getTurno().name() : "-", boldFont, normalFont);
             addRow(datos, "FESTEJADO:", evento != null && evento.getNombreFestejado() != null ? evento.getNombreFestejado() : "-", boldFont, normalFont);
             addRow(datos, "PAQUETE:", paquete != null ? paquete.getNombre() : "-", boldFont, normalFont);
+            if (cotizacion.getComida() != null) {
+                addRow(datos, "COMIDA:", cotizacion.getComida().getNombre(), boldFont, normalFont);
+            }
+            if (cotizacion.getPersonas() != null) {
+                addRow(datos, "PERSONAS:", String.valueOf(cotizacion.getPersonas()), boldFont, normalFont);
+            }
 
             document.add(datos);
             document.add(new Paragraph(" "));

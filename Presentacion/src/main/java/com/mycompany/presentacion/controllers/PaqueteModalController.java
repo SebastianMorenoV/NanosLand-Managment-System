@@ -2,41 +2,60 @@ package com.mycompany.presentacion.controllers;
 
 import com.example.negocio.catalogo.usecase.ConsultarServiciosUseCase;
 import com.example.negocio.paquete.usecase.ActualizarPaqueteUseCase;
+import com.example.negocio.paquete.usecase.ConsultarPaquetesUseCase;
 import com.example.negocio.paquete.usecase.RegistrarPaqueteUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.common.dtos.PaquetePrecioDTO;
 import com.mycompany.common.dtos.PaqueteServicioDTO;
 import com.mycompany.common.dtos.ServicioDTO;
+import com.mycompany.persistencia.enums.CategoriaServicio;
+import com.mycompany.presentacion.utils.EditorTablaPrecios;
+import com.mycompany.presentacion.utils.TablaPreciosPaquete;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
+/**
+ * Alta y edición de un paquete: datos generales, precio (fijo o tabla por comida y
+ * personas) y servicios incluidos. Una instancia por ventana.
+ */
 @Controller
+@Scope("prototype")
 @RequiredArgsConstructor
 public class PaqueteModalController {
 
     private final RegistrarPaqueteUseCase registrarPaqueteUseCase;
     private final ActualizarPaqueteUseCase actualizarPaqueteUseCase;
     private final ConsultarServiciosUseCase consultarServiciosUseCase;
+    private final ConsultarPaquetesUseCase consultarPaquetesUseCase;
 
     // Columna Izquierda
     @FXML private Label lblTitulo;
     @FXML private TextField txtNombre;
+    @FXML private RadioButton rbPrecioFijo;
+    @FXML private RadioButton rbTablaPrecios;
     @FXML private TextField txtPrecio;
+    @FXML private HBox boxTablaPrecios;
+    @FXML private Label lblResumenTabla;
     @FXML private TextArea txtDescripcion;
 
     // Columna Derecha
+    @FXML private Label lblAvisoCotizaciones;
+    @FXML private HBox boxAgregarServicio;
     @FXML private ComboBox<ServicioDTO> cmbServicios;
     @FXML private TextField txtCantidad;
 
@@ -50,45 +69,34 @@ public class PaqueteModalController {
     private PaqueteDTO paqueteAEditar;
     @Getter
     private PaqueteDTO paqueteCreado;
-    
+    /** Con cotizaciones abiertas no se pueden cambiar los servicios incluidos. */
+    private boolean serviciosBloqueados;
+
     private final ObservableList<PaqueteServicioDTO> listaServicios = FXCollections.observableArrayList();
-    private final ObservableList<ServicioDTO> catalogoServicios = FXCollections.observableArrayList();
+    private List<PaquetePrecioDTO> tablaPrecios = new ArrayList<>();
 
     @FXML
     public void initialize() {
-        if (txtPrecio != null) {
-            txtPrecio.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
-                if (change.getControlNewText().matches("\\d*(\\.\\d*)?")) return change;
-                return null;
-            }));
-        }
-        if (txtCantidad != null) {
-            txtCantidad.setTextFormatter(new javafx.scene.control.TextFormatter<>(change -> {
-                if (change.getControlNewText().matches("\\d*")) return change;
-                return null;
-            }));
-        }
-        // Reset singleton state so a new modal open starts clean
-        paqueteAEditar = null;
-        paqueteCreado = null;
-        txtNombre.setText("");
-        txtPrecio.setText("");
-        txtDescripcion.setText("");
-        lblTitulo.setText("Nuevo Paquete");
-        listaServicios.clear();
+        txtPrecio.setTextFormatter(new TextFormatter<>(change ->
+            change.getControlNewText().matches("\\d{0,7}(\\.\\d{0,2})?") ? change : null));
+        txtCantidad.setTextFormatter(new TextFormatter<>(change ->
+            change.getControlNewText().matches("\\d{0,4}") ? change : null));
 
-        // Cargar catálogo de servicios (clear first to avoid duplicates)
-        catalogoServicios.clear();
-        List<ServicioDTO> servicios = consultarServiciosUseCase.obtenerTodos();
-        if (servicios != null) {
-            catalogoServicios.addAll(servicios);
-        }
-        cmbServicios.setItems(catalogoServicios);
-        
+        ToggleGroup grupoPrecio = new ToggleGroup();
+        rbPrecioFijo.setToggleGroup(grupoPrecio);
+        rbTablaPrecios.setToggleGroup(grupoPrecio);
+        grupoPrecio.selectedToggleProperty().addListener((obs, anterior, nuevo) -> aplicarModoPrecio());
+        aplicarModoPrecio();
+
+        // Las comidas no se incluyen aquí: van en la tabla de precios.
+        cmbServicios.setItems(FXCollections.observableArrayList(consultarServiciosUseCase.obtenerParaComposicion()));
         cmbServicios.setConverter(new StringConverter<ServicioDTO>() {
             @Override
-            public String toString(ServicioDTO object) {
-                return object == null ? "" : object.getNombre() + " ($" + object.getPrecio() + ")";
+            public String toString(ServicioDTO s) {
+                if (s == null) return "";
+                return s.getCategoria() == CategoriaServicio.INCLUIDO && s.getPrecio() == 0
+                    ? s.getNombre() + " (solo en paquetes)"
+                    : s.getNombre() + " (" + TablaPreciosPaquete.dinero(s.getPrecio()) + ")";
             }
 
             @Override
@@ -98,71 +106,94 @@ public class PaqueteModalController {
         });
 
         // Configurar Tabla
-        colServicioNombre.setCellValueFactory(cellData -> 
+        colServicioNombre.setCellValueFactory(cellData ->
             new javafx.beans.property.SimpleStringProperty(cellData.getValue().getServicio().getNombre()));
-        
-        colPrecioUnitario.setCellValueFactory(cellData -> 
+        colPrecioUnitario.setCellValueFactory(cellData ->
             new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getServicio().getPrecio()));
-            
         colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
         colSubtotal.setCellValueFactory(new PropertyValueFactory<>("subtotal"));
+        colPrecioUnitario.setCellFactory(c -> celdaDinero());
+        colSubtotal.setCellFactory(c -> celdaDinero());
 
         configurarColumnaEliminar();
-        
         tablaServicios.setItems(listaServicios);
     }
 
-    private void configurarColumnaEliminar() {
-        Callback<TableColumn<PaqueteServicioDTO, Void>, TableCell<PaqueteServicioDTO, Void>> cellFactory = new Callback<>() {
+    private static TableCell<PaqueteServicioDTO, Double> celdaDinero() {
+        return new TableCell<>() {
             @Override
-            public TableCell<PaqueteServicioDTO, Void> call(final TableColumn<PaqueteServicioDTO, Void> param) {
-                return new TableCell<>() {
-                    private final Button btn = new Button("X");
-
-                    {
-                        btn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
-                        btn.setOnAction((event) -> {
-                            PaqueteServicioDTO ps = getTableView().getItems().get(getIndex());
-                            listaServicios.remove(ps);
-                        });
-                    }
-
-                    @Override
-                    public void updateItem(Void item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            setGraphic(btn);
-                        }
-                    }
-                };
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : TablaPreciosPaquete.dinero(item));
             }
         };
-        colEliminar.setCellFactory(cellFactory);
     }
 
+    private void configurarColumnaEliminar() {
+        colEliminar.setCellFactory(param -> new TableCell<>() {
+            private final Button btn = new Button("X");
+
+            {
+                btn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+                btn.setOnAction(event -> listaServicios.remove(getTableView().getItems().get(getIndex())));
+            }
+
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty || serviciosBloqueados ? null : btn);
+            }
+        });
+    }
+
+    /** Se llama antes de mostrar la ventana. */
     public void setPaqueteAEditar(PaqueteDTO paquete) {
         this.paqueteAEditar = paquete;
         lblTitulo.setText("Editar Paquete");
 
         txtNombre.setText(paquete.getNombre());
-        txtPrecio.setText(String.valueOf(paquete.getCostoBase()));
         txtDescripcion.setText(paquete.getDescripcion() != null ? paquete.getDescripcion() : "");
-        
+        tablaPrecios = copiarPrecios(paquete.getPrecios());
+        if (paquete.isTablaPrecios()) {
+            rbTablaPrecios.setSelected(true);
+        } else {
+            rbPrecioFijo.setSelected(true);
+            txtPrecio.setText(String.format(Locale.ROOT, "%.2f", paquete.getCostoBase()));
+        }
+        aplicarModoPrecio();
+
         listaServicios.clear();
         if (paquete.getServicios() != null) {
             // Se trabaja sobre copias: si el usuario cancela, el paquete de la tabla
             // no debe quedar con las cantidades que se cambiaron en este modal.
             for (PaqueteServicioDTO original : paquete.getServicios()) {
-                PaqueteServicioDTO copia = new PaqueteServicioDTO();
-                copia.setId(original.getId());
-                copia.setServicio(original.getServicio());
-                copia.setCantidad(original.getCantidad());
-                copia.setSubtotal(original.getSubtotal());
-                listaServicios.add(copia);
+                listaServicios.add(new PaqueteServicioDTO(original.getId(), original.getServicio(),
+                    original.getCantidad(), original.getSubtotal()));
             }
         }
+
+        serviciosBloqueados = consultarPaquetesUseCase.tieneCotizacionesAbiertas(paquete.getId());
+        lblAvisoCotizaciones.setVisible(serviciosBloqueados);
+        lblAvisoCotizaciones.setManaged(serviciosBloqueados);
+        boxAgregarServicio.setDisable(serviciosBloqueados);
+        tablaServicios.refresh();
+    }
+
+    private void aplicarModoPrecio() {
+        boolean tabla = rbTablaPrecios.isSelected();
+        txtPrecio.setVisible(!tabla);
+        boxTablaPrecios.setVisible(tabla);
+        lblResumenTabla.setText(TablaPreciosPaquete.resumen(tablaPrecios));
+    }
+
+    @FXML
+    private void editarTablaPrecios() {
+        EditorTablaPrecios.mostrar(txtNombre.getScene().getWindow(),
+                consultarServiciosUseCase.obtenerComidas(), tablaPrecios)
+            .ifPresent(nueva -> {
+                tablaPrecios = nueva;
+                aplicarModoPrecio();
+            });
     }
 
     @FXML
@@ -175,7 +206,7 @@ public class PaqueteModalController {
             return;
         }
 
-        int cantidad = 0;
+        int cantidad;
         try {
             cantidad = Integer.parseInt(cantText);
             if (cantidad <= 0) throw new NumberFormatException();
@@ -203,7 +234,6 @@ public class PaqueteModalController {
         }
 
         tablaServicios.refresh();
-        
         cmbServicios.getSelectionModel().clearSelection();
         txtCantidad.setText("");
     }
@@ -211,51 +241,61 @@ public class PaqueteModalController {
     @FXML
     private void guardarPaquete() {
         String nombre = txtNombre.getText().trim();
-        String precioStr = txtPrecio.getText().trim();
         String desc = txtDescripcion.getText().trim();
+        boolean conTabla = rbTablaPrecios.isSelected();
 
-        if (nombre.isEmpty() || precioStr.isEmpty()) {
-            mostrarError("El nombre y el precio base son obligatorios.");
+        if (nombre.isEmpty()) {
+            mostrarError("El nombre del paquete es obligatorio.");
             return;
         }
 
-        double precioBase;
-        try {
-            precioBase = Double.parseDouble(precioStr);
-            if (precioBase < 0) {
-                mostrarError("El precio base no puede ser negativo.");
+        double precioFijo = 0;
+        if (conTabla) {
+            if (tablaPrecios.isEmpty()) {
+                mostrarError("Capture la tabla de precios con el botón «Editar tabla…».");
                 return;
             }
-        } catch (NumberFormatException e) {
-            mostrarError("El precio base debe ser un número válido.");
-            return;
+        } else {
+            try {
+                precioFijo = Double.parseDouble(txtPrecio.getText().trim());
+            } catch (NumberFormatException e) {
+                mostrarError("Capture el precio del paquete.");
+                return;
+            }
+            if (precioFijo <= 0) {
+                mostrarError("El precio del paquete debe ser mayor a cero.");
+                return;
+            }
         }
 
+        // Se arma un DTO nuevo: si el servidor rechaza los cambios, el paquete de la lista no se altera.
+        PaqueteDTO datos = new PaqueteDTO();
+        datos.setId(paqueteAEditar != null ? paqueteAEditar.getId() : null);
+        datos.setNombre(nombre);
+        datos.setDescripcion(desc);
+        datos.setCostoBase(conTabla ? 0 : precioFijo);
+        datos.setPrecios(conTabla ? new ArrayList<>(tablaPrecios) : new ArrayList<>());
+        // null = sin cambios: con cotizaciones abiertas los servicios no se tocan.
+        datos.setServicios(serviciosBloqueados ? null : new ArrayList<>(listaServicios));
+
         try {
-            if (paqueteAEditar == null) {
-                // Modo Crear
-                PaqueteDTO nuevo = new PaqueteDTO();
-                nuevo.setNombre(nombre);
-                nuevo.setCostoBase(precioBase);
-                nuevo.setDescripcion(desc);
-                nuevo.setServicios(new ArrayList<>(listaServicios));
-
-                paqueteCreado = registrarPaqueteUseCase.registrarPaquete(nuevo);
-            } else {
-                // Modo Editar
-                paqueteAEditar.setNombre(nombre);
-                paqueteAEditar.setCostoBase(precioBase);
-                paqueteAEditar.setDescripcion(desc);
-                paqueteAEditar.setServicios(new ArrayList<>(listaServicios));
-
-                paqueteCreado = actualizarPaqueteUseCase.actualizarPaquete(paqueteAEditar);
-            }
-
+            paqueteCreado = paqueteAEditar == null
+                ? registrarPaqueteUseCase.registrarPaquete(datos)
+                : actualizarPaqueteUseCase.actualizarPaquete(datos);
             cerrarModal();
-
         } catch (CotizacionException e) {
             mostrarError(e.getMessage());
         }
+    }
+
+    private static List<PaquetePrecioDTO> copiarPrecios(List<PaquetePrecioDTO> precios) {
+        List<PaquetePrecioDTO> copia = new ArrayList<>();
+        if (precios != null) {
+            for (PaquetePrecioDTO p : precios) {
+                copia.add(new PaquetePrecioDTO(p.getId(), p.getComidaId(), p.getComidaNombre(), p.getPersonas(), p.getPrecio()));
+            }
+        }
+        return copia;
     }
 
     @FXML

@@ -6,6 +6,7 @@ package com.mycompany.common.mapper;
 
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.common.dtos.ServicioDTO;
+import com.mycompany.persistencia.enums.CategoriaServicio;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,6 +19,7 @@ public class ServicioMapper {
         dto.setNombre(servicio.getNombre());
         dto.setDescripcion(servicio.getDescripcion());
         dto.setPrecio(servicio.getPrecio());
+        dto.setCategoria(servicio.getCategoria() != null ? servicio.getCategoria() : CategoriaServicio.EXTRA);
         return dto;
     }
 
@@ -28,6 +30,7 @@ public class ServicioMapper {
         servicio.setNombre(dto.getNombre());
         servicio.setDescripcion(dto.getDescripcion());
         servicio.setPrecio(dto.getPrecio());
+        servicio.setCategoria(dto.getCategoria() != null ? dto.getCategoria() : CategoriaServicio.EXTRA);
         return servicio;
     }
 }

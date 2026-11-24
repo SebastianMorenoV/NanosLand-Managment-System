@@ -51,6 +51,23 @@ public class Cotizacion {
     @JoinColumn(name = "paquete_id")
     private Paquete paquete;
 
+    /** Comida elegida, solo en paquetes con tabla de precios (servicio de categoría COMIDA). */
+    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comida_id")
+    private Servicio comida;
+
+    /** Número de personas elegido (uno de los rangos de la tabla), solo en paquetes con tabla de precios. */
+    private Integer personas;
+
+    /**
+     * Precio pactado del paquete. Se calcula al crear la cotización y no cambia aunque
+     * después cambie el catálogo, salvo que se elija otro paquete, comida o número de personas.
+     * Nulo solo en cotizaciones de antes de este campo, hasta que la corrección al arrancar lo llena.
+     */
+    @Column(name = "precio_paquete")
+    private Double precioPaquete;
+
     @ToString.Exclude
     @OneToOne(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private Evento evento;

@@ -140,7 +140,7 @@ public class EventosController {
             return new javafx.beans.property.SimpleStringProperty(fest + tema);
         });
 
-        colPaquete.setCellValueFactory(new PropertyValueFactory<>("paqueteNombre"));
+        colPaquete.setCellValueFactory(new PropertyValueFactory<>("paqueteDetalle"));
 
         colTotal.setCellValueFactory(cellData -> {
             EventoDTO dto = cellData.getValue();
@@ -313,7 +313,7 @@ public class EventosController {
                 boolean coincideCliente = e.getClienteNombre() != null && e.getClienteNombre().toLowerCase().contains(texto);
                 boolean coincideFestejado = e.getNombreFestejado() != null && e.getNombreFestejado().toLowerCase().contains(texto);
                 boolean coincideTematica = e.getTematica() != null && e.getTematica().toLowerCase().contains(texto);
-                boolean coincidePaquete = e.getPaqueteNombre() != null && e.getPaqueteNombre().toLowerCase().contains(texto);
+                boolean coincidePaquete = e.getPaqueteDetalle() != null && e.getPaqueteDetalle().toLowerCase().contains(texto);
 
                 if (!coincideFolio && !coincideCliente && !coincideFestejado && !coincideTematica && !coincidePaquete) {
                     return false;

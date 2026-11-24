@@ -46,6 +46,10 @@ public class GenerarContratoUseCase {
         String folio = cotizacion.getFolio();
         var cliente = cotizacion.getCliente();
         var paquete = cotizacion.getPaquete();
+        String descripcionPaquete = paquete == null ? "" : com.mycompany.common.util.DescripcionPaquete.de(
+            paquete.getNombre(),
+            cotizacion.getComida() != null ? cotizacion.getComida().getNombre() : null,
+            cotizacion.getPersonas());
         var evento = cotizacion.getEvento();
         var detalles = cotizacion.getServiciosExtra();
 
@@ -149,7 +153,7 @@ public class GenerarContratoUseCase {
             tableEvento.addCell(lblHoras);
             tableEvento.addCell(cellHoras);
 
-            addRow(tableEvento, "TIPO DE PAQUETE:", paquete != null ? paquete.getNombre() : "", boldFont, normalFont);
+            addRow(tableEvento, "TIPO DE PAQUETE:", paquete != null ? descripcionPaquete : "", boldFont, normalFont);
             addRow(tableEvento, "COSTO TOTAL:", money.format(total), boldFont, normalFont);
             addRow(tableEvento, "ANTICIPO:", money.format(anticipo), boldFont, normalFont);
             addRow(tableEvento, "SALDO RESTANTE:", money.format(saldo), boldFont, normalFont);
@@ -160,6 +164,10 @@ public class GenerarContratoUseCase {
             document.add(new Paragraph("SU RENTA O PAQUETE INCLUYE:", subtitleFont));
             if (paquete != null && paquete.getDescripcion() != null) {
                 document.add(new Paragraph(paquete.getDescripcion(), normalFont));
+            }
+            if (cotizacion.getComida() != null) {
+                document.add(new Paragraph("Comida: " + cotizacion.getComida().getNombre()
+                    + (cotizacion.getPersonas() != null ? " para " + cotizacion.getPersonas() + " personas" : ""), normalFont));
             }
             if (detalles != null && !detalles.isEmpty()) {
                 document.add(new Paragraph("Servicios Extra Contratados:", smallBoldFont));

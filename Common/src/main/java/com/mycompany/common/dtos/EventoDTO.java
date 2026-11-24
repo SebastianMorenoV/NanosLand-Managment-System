@@ -28,7 +28,12 @@ public class EventoDTO {
     private Long cotizacionId;
     private String folioCotizacion;
     private String clienteNombre;
+    /** Solo el nombre del paquete (los reportes agrupan por él). */
     private String paqueteNombre;
+    private String comidaNombre;
+    private Integer personas;
+    /** Paquete con su comida y personas para mostrar, p. ej. "Paquete Full · Barbacoa · 100 personas". */
+    private String paqueteDetalle;
     private com.mycompany.persistencia.enums.EstadoEvento estadoEvento;
     private double totalCotizacion;
     private double totalCargosExtras;

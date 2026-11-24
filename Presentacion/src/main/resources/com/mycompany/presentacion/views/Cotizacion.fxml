@@ -122,6 +122,18 @@
                     <SearchableComboBox fx:id="comboPaquetes" promptText="Seleccione un paquete..." styleClass="combo-box-base" prefWidth="230"/>
                 </HBox>
 
+                <!-- Solo en paquetes con tabla de precios: el precio depende de la comida y las personas -->
+                <HBox fx:id="boxOpcionesPaquete" spacing="12" alignment="BOTTOM_LEFT" visible="false" managed="false">
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="COMIDA *" styleClass="label-pequeno"/>
+                        <ComboBox fx:id="comboComida" promptText="Elija la comida..." maxWidth="Infinity" styleClass="combo-box-base"/>
+                    </VBox>
+                    <VBox spacing="5" prefWidth="170">
+                        <Label text="PERSONAS *" styleClass="label-pequeno"/>
+                        <ComboBox fx:id="comboPersonas" promptText="Elija..." maxWidth="Infinity" styleClass="combo-box-base"/>
+                    </VBox>
+                </HBox>
+
                 <VBox styleClass="tarjeta-paquete-seleccionada" spacing="5">
                     <HBox alignment="CENTER_LEFT">
                         <Label fx:id="lblNombrePaquete" text="Seleccione un paquete" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #2c3e50;"/>

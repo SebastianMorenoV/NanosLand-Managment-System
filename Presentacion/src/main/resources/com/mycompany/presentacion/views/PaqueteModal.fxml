@@ -14,12 +14,23 @@
 
         <VBox spacing="5">
             <Label text="Nombre" styleClass="label-pequeno"/>
-            <TextField fx:id="txtNombre" promptText="Ej: Paquete Básico" styleClass="text-field-moderno"/>
+            <TextField fx:id="txtNombre" promptText="Ej: Paquete Full" styleClass="text-field-moderno"/>
         </VBox>
 
-        <VBox spacing="5">
-            <Label text="Costo del Paquete" styleClass="label-pequeno"/>
-            <TextField fx:id="txtPrecio" promptText="Ej: 1500.00" styleClass="text-field-moderno"/>
+        <VBox spacing="8">
+            <Label text="Precio" styleClass="label-pequeno"/>
+            <HBox spacing="18">
+                <RadioButton fx:id="rbPrecioFijo" text="Precio fijo" selected="true"/>
+                <RadioButton fx:id="rbTablaPrecios" text="Por comida y personas"/>
+            </HBox>
+            <!-- Ambas opciones ocupan el mismo lugar: el modal se dimensiona una sola vez al abrir. -->
+            <StackPane alignment="CENTER_LEFT">
+                <TextField fx:id="txtPrecio" promptText="Ej: 9800.00" styleClass="text-field-moderno"/>
+                <HBox fx:id="boxTablaPrecios" spacing="10" alignment="CENTER_LEFT" visible="false">
+                    <Label fx:id="lblResumenTabla" text="Sin tabla de precios" wrapText="true" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-text-fill: #2c3e50;"/>
+                    <Button text="Editar tabla…" styleClass="boton-azul-claro" onAction="#editarTablaPrecios" minWidth="-Infinity"/>
+                </HBox>
+            </StackPane>
         </VBox>
 
         <VBox spacing="5" VBox.vgrow="ALWAYS">
@@ -34,9 +45,12 @@
     <!-- Columna Derecha: Gestión de Servicios -->
     <VBox spacing="15" prefWidth="550" VBox.vgrow="ALWAYS">
         <Label text="Servicios Incluidos" styleClass="titulo-seccion"/>
-        
+        <Label fx:id="lblAvisoCotizaciones" wrapText="true" visible="false" managed="false"
+               text="Este paquete tiene cotizaciones abiertas: puede cambiar el nombre, la descripción y los precios, pero no los servicios incluidos. Para otros servicios cree un paquete nuevo."
+               style="-fx-text-fill: #b9770e; -fx-background-color: #fef5e7; -fx-background-radius: 6; -fx-padding: 8 10;"/>
+
         <!-- Formulario para agregar servicio -->
-        <HBox spacing="10" alignment="BOTTOM_LEFT">
+        <HBox fx:id="boxAgregarServicio" spacing="10" alignment="BOTTOM_LEFT">
             <VBox spacing="5" HBox.hgrow="ALWAYS">
                 <Label text="Seleccionar Servicio" styleClass="label-pequeno"/>
                 <ComboBox fx:id="cmbServicios" promptText="Elija un servicio..." maxWidth="Infinity" styleClass="combo-box-base"/>
@@ -45,7 +59,7 @@
                 <Label text="Cantidad" styleClass="label-pequeno"/>
                 <TextField fx:id="txtCantidad" promptText="1" styleClass="text-field-moderno"/>
             </VBox>
-            <Button text="Añadir" styleClass="boton-azul-claro" onAction="#agregarServicio"/>
+            <Button text="Añadir" styleClass="boton-azul-claro" onAction="#agregarServicio" minWidth="-Infinity"/>
         </HBox>
 
         <!-- Tabla de Servicios -->
@@ -58,7 +72,7 @@
                 <TableColumn fx:id="colEliminar" text="" prefWidth="60" style="-fx-alignment: CENTER;" />
             </columns>
         </TableView>
-        
+
         <!-- Botones -->
         <HBox alignment="CENTER_RIGHT" spacing="20">
             <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>

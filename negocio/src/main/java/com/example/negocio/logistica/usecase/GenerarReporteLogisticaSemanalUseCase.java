@@ -107,7 +107,10 @@ public class GenerarReporteLogisticaSemanalUseCase {
         }
         dto.setFestejado(evento.getNombreFestejado());
         dto.setTematica(evento.getTematica());
-        dto.setPaquete(cotizacion.getPaquete() != null ? cotizacion.getPaquete().getNombre() : null);
+        dto.setPaquete(cotizacion.getPaquete() == null ? null : com.mycompany.common.util.DescripcionPaquete.de(
+            cotizacion.getPaquete().getNombre(),
+            cotizacion.getComida() != null ? cotizacion.getComida().getNombre() : null,
+            cotizacion.getPersonas()));
         dto.setNotas(evento.getNotas() != null && !evento.getNotas().isBlank()
             ? evento.getNotas() : cotizacion.getNotas());
         dto.setTurno(evento.getTurno());

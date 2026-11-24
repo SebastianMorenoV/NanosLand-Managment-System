@@ -38,6 +38,8 @@ public class EliminarPaqueteUseCase {
         Paquete p = opt.get();
         p.setActivo(false);
         p.getServicios().clear(); // Desvincula los servicios asociados
+        // La tabla de precios se conserva: no estorba (las comidas en uso solo se revisan
+        // en paquetes activos) y deja ver con qué precios se vendió el paquete.
         paqueteRepository.save(p);
     }
 }

@@ -6,9 +6,12 @@ package com.mycompany.common.mapper;
 
 
 
+import com.mycompany.common.dtos.PaquetePrecioDTO;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.persistencia.dominio.PaquetePrecio;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ public class PaqueteMapper {
         dto.setNombre(paquete.getNombre());
         dto.setDescripcion(paquete.getDescripcion());
         dto.setCostoBase(paquete.getCosto());
+        dto.setActivo(paquete.isActivo());
         if (paquete.getServicios() != null) {
             dto.setServicios(paquete.getServicios().stream()
                 .map(ps -> {
@@ -33,9 +37,28 @@ public class PaqueteMapper {
                 })
                 .collect(Collectors.toList()));
         }
+        dto.setPrecios(paquete.getPrecios() == null ? List.of() : paquete.getPrecios().stream()
+                .map(PaqueteMapper::toDTO)
+                .sorted(Comparator.comparing((PaquetePrecioDTO p) -> p.getComidaNombre(), Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparingInt(PaquetePrecioDTO::getPersonas))
+                .collect(Collectors.toList()));
         return dto;
     }
 
+    public static PaquetePrecioDTO toDTO(PaquetePrecio precio) {
+        if (precio == null) return null;
+        PaquetePrecioDTO dto = new PaquetePrecioDTO();
+        dto.setId(precio.getId());
+        if (precio.getComida() != null) {
+            dto.setComidaId(precio.getComida().getId());
+            dto.setComidaNombre(precio.getComida().getNombre());
+        }
+        dto.setPersonas(precio.getPersonas());
+        dto.setPrecio(precio.getPrecio());
+        return dto;
+    }
+
+    /** Solo los datos generales; los servicios y precios los arman los casos de uso. */
     public static Paquete toEntity(PaqueteDTO dto) {
         if (dto == null) return null;
         Paquete paquete = new Paquete();

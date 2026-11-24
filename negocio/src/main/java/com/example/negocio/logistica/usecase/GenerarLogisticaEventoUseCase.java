@@ -19,7 +19,8 @@ import java.util.Map;
 
 /**
  * Genera y mantiene la bitácora de logística de un evento confirmado: un
- * registro por cada servicio contratado, ya sea parte del paquete o extra.
+ * registro por cada servicio contratado, ya sea parte del paquete, la comida
+ * elegida o un extra.
  *
  * Debe llamarse dentro de la transacción que confirma o modifica el evento.
  */
@@ -69,9 +70,15 @@ public class GenerarLogisticaEventoUseCase {
         }
 
         for (Contratado c : contratados.values()) {
-            boolean yaExiste = registros.stream()
-                .anyMatch(r -> r.getServicio() != null && r.getServicio().getId().equals(c.servicio.getId()));
-            if (yaExiste) {
+            LogisticaServicio existente = registros.stream()
+                .filter(r -> r.getServicio() != null && r.getServicio().getId().equals(c.servicio.getId()))
+                .findFirst().orElse(null);
+            if (existente != null) {
+                if (!soloSiVacia) {
+                    // La cantidad pudo cambiar (p. ej. otro número de personas): se actualiza
+                    // sin tocar lo demás que se haya escrito en las especificaciones.
+                    existente.setEspecificaciones(conCantidad(existente.getEspecificaciones(), c.cantidad));
+                }
                 continue;
             }
             LogisticaServicio registro = new LogisticaServicio();
@@ -85,17 +92,25 @@ public class GenerarLogisticaEventoUseCase {
                 registro.setUbicacionMontaje(c.detalle.getUbicacionMontaje());
                 especificaciones = c.detalle.getEspecificacionesCliente();
             }
-            if (c.cantidad > 1) {
-                String cantidad = "Cantidad: " + c.cantidad;
-                especificaciones = (especificaciones == null || especificaciones.isBlank())
-                    ? cantidad : cantidad + ". " + especificaciones;
-            }
-            registro.setEspecificaciones(especificaciones);
+            registro.setEspecificaciones(conCantidad(especificaciones, c.cantidad));
             registros.add(registro);
         }
     }
 
-    /** Servicios contratados en una cotización (paquete + extras), por id de servicio. */
+    private static final java.util.regex.Pattern PREFIJO_CANTIDAD =
+        java.util.regex.Pattern.compile("^Cantidad: \\d+\\.?\\s*");
+
+    /** Pone (o quita, si es 1) el prefijo "Cantidad: N. " de las especificaciones. */
+    static String conCantidad(String especificaciones, int cantidad) {
+        String resto = especificaciones == null ? "" : PREFIJO_CANTIDAD.matcher(especificaciones).replaceFirst("");
+        if (cantidad <= 1) {
+            return resto.isBlank() ? null : resto;
+        }
+        String prefijo = "Cantidad: " + cantidad;
+        return resto.isBlank() ? prefijo : prefijo + ". " + resto;
+    }
+
+    /** Servicios contratados en una cotización (paquete + comida + extras), por id de servicio. */
     public Map<Long, Contratado> serviciosContratados(Cotizacion cotizacion) {
         Map<Long, Contratado> contratados = new LinkedHashMap<>();
 
@@ -106,6 +121,14 @@ public class GenerarLogisticaEventoUseCase {
                 c.servicio = ps.getServicio();
                 c.cantidad += Math.max(1, ps.getCantidad());
             }
+        }
+
+        // La comida elegida (paquetes con tabla de precios): una porción por persona.
+        if (cotizacion.getComida() != null) {
+            Servicio comida = cotizacion.getComida();
+            Contratado c = contratados.computeIfAbsent(comida.getId(), id -> new Contratado());
+            c.servicio = comida;
+            c.cantidad += Math.max(1, cotizacion.getPersonas() != null ? cotizacion.getPersonas() : 0);
         }
 
         if (cotizacion.getServiciosExtra() != null) {

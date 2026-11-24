@@ -1,14 +1,16 @@
 package com.example.negocio.cotizacion.usecase;
 
 import com.example.negocio.exception.CotizacionException;
+import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
+import com.example.negocio.precio.Dinero;
 import com.mycompany.common.dtos.CotizacionDTO;
-import com.mycompany.common.dtos.DetalleCotizacionDTO;
 import com.mycompany.common.mapper.CotizacionMapper;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.dominio.Paquete;
+import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.repository.ClienteRepository;
@@ -21,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Year;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Caso de uso: Crear una nueva cotización.
@@ -33,7 +35,8 @@ import java.util.List;
  * - Verificar que la fecha del evento sea futura (no en el pasado).
  * - Verificar que el turno no esté duplicado en la misma fecha.
  * - Generar un folio único con formato COT-YYYY-NNNN.
- * - Calcular el total base desde el costo del paquete.
+ * - Calcular el precio del paquete (fijo o por comida y personas) y guardarlo como precio pactado.
+ * - Total = precio del paquete + servicios extra.
  * - Asignar el estado inicial BORRADOR.
  * - Persistir la cotización.
  */
@@ -47,6 +50,7 @@ public class CrearCotizacionUseCase {
     private final ServicioRepository servicioRepository;
     private final com.mycompany.persistencia.repository.EventoRepository eventoRepository;
     private final com.mycompany.persistencia.repository.UsuarioRepository usuarioRepository;
+    private final CalcularPrecioPaqueteUseCase calcularPrecioPaqueteUseCase;
 
     /**
      * Crea y persiste una cotización con estado BORRADOR.
@@ -99,11 +103,16 @@ public class CrearCotizacionUseCase {
                 "El cliente con ID " + dto.getClienteId() + " no existe en el sistema."
             ));
 
-        // ── 4. Verificación de existencia del paquete ────────────────────────
+        // ── 4. Verificación del paquete y su precio ──────────────────────────
         Paquete paquete = paqueteRepository.findById(dto.getPaqueteId())
             .orElseThrow(() -> new CotizacionException(
                 "El paquete con ID " + dto.getPaqueteId() + " no existe en el catálogo."
             ));
+        // Valida también que esté activo y que la comida y las personas correspondan a su forma de precio.
+        double precioPaquete = calcularPrecioPaqueteUseCase.precioDeLista(
+            paquete, dto.getComidaId(), dto.getPersonas(), dto.getFecha());
+        Servicio comida = dto.getComidaId() == null ? null : servicioRepository.findById(dto.getComidaId())
+            .orElseThrow(() -> new CotizacionException("La comida seleccionada no existe en el catálogo."));
 
         // ── 5. Validación: no duplicar turno en la misma fecha ───────────────
         // Usamos EventoRepository en lugar de CotizacionRepository ya que la fecha vive en Evento.
@@ -121,6 +130,9 @@ public class CrearCotizacionUseCase {
         Cotizacion cotizacion = CotizacionMapper.toEntity(dto);
         cotizacion.setCliente(cliente);
         cotizacion.setPaquete(paquete);
+        cotizacion.setComida(comida);
+        cotizacion.setPersonas(dto.getPersonas());
+        cotizacion.setPrecioPaquete(precioPaquete);
         EstadoCotizacion estado = dto.getEstado() != null ? dto.getEstado() : EstadoCotizacion.BORRADOR;
         cotizacion.setEstado(estado);
         if (dto.getUsuarioId() != null) {
@@ -141,49 +153,12 @@ public class CrearCotizacionUseCase {
         String folio = generarFolio();
         cotizacion.setFolio(folio);
 
-        // ── 8. Cálculo del total base (costo del paquete) + extras ───────────
-        double total = paquete.getCosto();
-
-        // Persistimos los servicios extra (si se capturaron) y recalculamos el total.
-        List<DetalleCotizacionDTO> detallesDTO = dto.getDetalles();
-        List<DetalleCotizacion> detallesEntidad = new ArrayList<>();
-        if (detallesDTO != null && !detallesDTO.isEmpty()) {
-            for (DetalleCotizacionDTO detalleDTO : detallesDTO) {
-                if (detalleDTO == null) continue;
-                if (detalleDTO.getServicioId() == null) {
-                    throw new CotizacionException("Un servicio extra no tiene id asociado.");
-                }
-
-                var servicio = servicioRepository.findById(detalleDTO.getServicioId())
-                    .orElseThrow(() -> new CotizacionException(
-                        "El servicio con ID " + detalleDTO.getServicioId() + " no existe en el catálogo."
-                    ));
-
-                int cantidad = detalleDTO.getCantidad() > 0 ? detalleDTO.getCantidad() : 1;
-                double precioUnitario = detalleDTO.getPrecioUnitario();
-                double subtotal = detalleDTO.getSubtotal();
-                if (subtotal <= 0) {
-                    subtotal = precioUnitario * cantidad;
-                }
-
-                DetalleCotizacion detalle = new DetalleCotizacion();
-                detalle.setServicio(servicio);
-                detalle.setCotizacion(cotizacion);
-                detalle.setPrecioUnitario(precioUnitario);
-                detalle.setCantidad(cantidad);
-                detalle.setSubtotal(subtotal);
-                detalle.setHoraSugerida(detalleDTO.getHoraSugerida());
-                detalle.setEspecificacionesCliente(detalleDTO.getEspecificacionesCliente());
-                detalle.setDesgloseOpciones(detalleDTO.getDesgloseOpciones());
-                detalle.setUbicacionMontaje(detalleDTO.getUbicacionMontaje());
-
-                detallesEntidad.add(detalle);
-                total += subtotal;
-            }
-        }
+        // ── 8. Total = precio del paquete + servicios extra ──────────────────
+        List<DetalleCotizacion> detallesEntidad = LineasExtraCotizacion.construir(
+            dto.getDetalles(), cotizacion, servicioRepository, Set.of());
 
         cotizacion.setServiciosExtra(detallesEntidad);
-        cotizacion.setTotal(total);
+        cotizacion.setTotal(Dinero.aCentavos(precioPaquete + LineasExtraCotizacion.total(detallesEntidad)));
 
         // ── 9. Persistencia ──────────────────────────────────────────────────
         Cotizacion guardada = cotizacionRepository.save(cotizacion);

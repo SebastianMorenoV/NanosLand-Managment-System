@@ -4,6 +4,7 @@
  */
 package com.mycompany.persistencia.dominio;
 
+import com.mycompany.persistencia.enums.CategoriaServicio;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,5 +37,12 @@ public class Servicio {
 
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean activo = true;
+
+    // varchar y no ENUM nativo: ddl-auto=update no modifica columnas ENUM existentes.
+    // El default llena las filas que ya existían al agregar la columna; sin él MySQL
+    // les pondría '' y Hibernate no podría leer esos servicios.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'EXTRA'")
+    private CategoriaServicio categoria = CategoriaServicio.EXTRA;
 
 }

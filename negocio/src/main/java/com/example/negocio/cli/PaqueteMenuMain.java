@@ -75,11 +75,15 @@ public class PaqueteMenuMain {
         if (lista.isEmpty()) {
             System.out.println("  (no hay paquetes activos)");
         } else {
-            System.out.printf("  %-5s %-25s %-10s %-30s%n", "ID", "Nombre", "Costo Base", "Descripción");
-            System.out.println("  " + "─".repeat(75));
+            System.out.printf("  %-5s %-25s %-16s %-30s%n", "ID", "Nombre", "Precio", "Descripción");
+            System.out.println("  " + "─".repeat(81));
             for (PaqueteDTO p : lista) {
-                System.out.printf("  %-5d %-25s $%-9.2f %-30s%n",
-                        p.getId(), truncar(p.getNombre(), 24), p.getCostoBase(), truncar(p.getDescripcion(), 29));
+                // Los paquetes con tabla de precios (comida y personas) se editan desde la aplicación.
+                String precio = p.isTablaPrecios()
+                        ? String.format("desde $%.2f", p.getPrecioDesde())
+                        : String.format("$%.2f", p.getCostoBase());
+                System.out.printf("  %-5d %-25s %-16s %-30s%n",
+                        p.getId(), truncar(p.getNombre(), 24), precio, truncar(p.getDescripcion(), 29));
                 if (p.getServicios() != null && !p.getServicios().isEmpty()) {
                     System.out.println("      Incluye: ");
                     p.getServicios().forEach(ps -> 

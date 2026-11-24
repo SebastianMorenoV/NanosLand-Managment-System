@@ -7,18 +7,31 @@ package com.mycompany.common.dtos;
 
 import java.util.List;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class PaqueteDTO {
     private Long id;
     private String nombre;
     private String descripcion;
+    /** Precio de un paquete de precio fijo; 0 en los paquetes con tabla de precios. */
     private double costoBase;
+    private boolean activo = true;
+    /** Servicios incluidos. Al actualizar, {@code null} significa "sin cambios". */
     private List<PaqueteServicioDTO> servicios;
-    
+    /** Tabla de precios por comida y personas; vacía en paquetes de precio fijo. Al actualizar, {@code null} significa "sin cambios". */
+    private List<PaquetePrecioDTO> precios;
+
+    /** Indica si el precio depende de la comida y el número de personas. */
+    public boolean isTablaPrecios() {
+        return precios != null && !precios.isEmpty();
+    }
+
+    /** Precio más bajo del paquete: el de la tabla si tiene, o el precio fijo. */
+    public double getPrecioDesde() {
+        if (!isTablaPrecios()) return costoBase;
+        return precios.stream().mapToDouble(PaquetePrecioDTO::getPrecio).min().orElse(0);
+    }
 }

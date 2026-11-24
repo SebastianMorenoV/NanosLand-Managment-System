@@ -3,6 +3,7 @@ package com.mycompany.presentacion.controllers;
 import com.example.negocio.catalogo.usecase.GestionarServicioUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.ServicioDTO;
+import com.mycompany.persistencia.enums.CategoriaServicio;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -34,6 +35,7 @@ public class ServiciosController {
 
     @FXML private TableColumn<ServicioDTO, Long> colId;
     @FXML private TableColumn<ServicioDTO, String> colNombre;
+    @FXML private TableColumn<ServicioDTO, String> colCategoria;
     @FXML private TableColumn<ServicioDTO, String> colDescripcion;
     @FXML private TableColumn<ServicioDTO, Double> colPrecio;
     @FXML private Pagination paginacion;
@@ -60,14 +62,20 @@ public class ServiciosController {
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
+        colCategoria.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(
+            cd.getValue().getCategoria() != null ? cd.getValue().getCategoria().getEtiqueta() : ""));
 
-        // Formatear columna de precio como moneda
+        // Formatear columna de precio como moneda; las comidas no tienen precio propio
+        // (lo pone la tabla de precios de cada paquete).
         colPrecio.setCellFactory(column -> new TableCell<ServicioDTO, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
+                ServicioDTO fila = empty || getTableRow() == null ? null : getTableRow().getItem();
                 if (empty || item == null) {
                     setText(null);
+                } else if (fila != null && fila.getCategoria() == CategoriaServicio.COMIDA) {
+                    setText("Según paquete");
                 } else {
                     setText(String.format("$%,.2f", item));
                 }
@@ -100,6 +108,8 @@ public class ServiciosController {
                 if (servicio.getNombre() != null && servicio.getNombre().toLowerCase().contains(filtro)) {
                     return true;
                 } else if (servicio.getDescripcion() != null && servicio.getDescripcion().toLowerCase().contains(filtro)) {
+                    return true;
+                } else if (servicio.getCategoria() != null && servicio.getCategoria().getEtiqueta().toLowerCase().contains(filtro)) {
                     return true;
                 }
 

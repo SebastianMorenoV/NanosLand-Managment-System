@@ -5,6 +5,7 @@
 package com.mycompany.common.dtos;
 
 
+import com.mycompany.persistencia.enums.CategoriaServicio;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,5 +16,6 @@ public class ServicioDTO {
     private String nombre;
     private String descripcion;
     private double precio;
-    
+    private CategoriaServicio categoria = CategoriaServicio.EXTRA;
+
 }

@@ -23,6 +23,8 @@ public class PaqueteDetallesModalController {
     @FXML private Label lblNombre;
     @FXML private Label lblCostoBase;
     @FXML private Label lblDescripcion;
+    @FXML private javafx.scene.layout.VBox boxTablaPrecios;
+    @FXML private javafx.scene.layout.VBox contenedorTablaPrecios;
 
     // Tabla
     @FXML private TableView<PaqueteServicioDTO> tablaServicios;
@@ -33,7 +35,6 @@ public class PaqueteDetallesModalController {
 
     private PaqueteDTO paquete;
     private final ObservableList<PaqueteServicioDTO> listaServicios = FXCollections.observableArrayList();
-    private final ObservableList<ServicioDTO> catalogoServicios = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -46,6 +47,8 @@ public class PaqueteDetallesModalController {
             
         colCantidad.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
         colSubtotal.setCellValueFactory(new PropertyValueFactory<>("subtotal"));
+        colPrecioUnitario.setCellFactory(c -> celdaDinero());
+        colSubtotal.setCellFactory(c -> celdaDinero());
         
         tablaServicios.setItems(listaServicios);
     }
@@ -55,7 +58,12 @@ public class PaqueteDetallesModalController {
         
         // Llenar labels
         lblNombre.setText(paquete.getNombre());
-        lblCostoBase.setText("$" + String.format("%.2f", paquete.getCostoBase()));
+        lblCostoBase.setText(com.mycompany.presentacion.utils.TablaPreciosPaquete.precioParaMostrar(paquete));
+        boolean conTabla = paquete.isTablaPrecios();
+        boxTablaPrecios.setVisible(conTabla);
+        boxTablaPrecios.setManaged(conTabla);
+        contenedorTablaPrecios.getChildren().setAll(
+                com.mycompany.presentacion.utils.TablaPreciosPaquete.soloLectura(paquete.getPrecios()));
         lblDescripcion.setText(paquete.getDescripcion() != null ? paquete.getDescripcion() : "-");
 
         // Llenar tabla
@@ -63,6 +71,16 @@ public class PaqueteDetallesModalController {
         if (paquete.getServicios() != null) {
             listaServicios.addAll(paquete.getServicios());
         }
+    }
+
+    private static TableCell<PaqueteServicioDTO, Double> celdaDinero() {
+        return new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : com.mycompany.presentacion.utils.TablaPreciosPaquete.dinero(item));
+            }
+        };
     }
 
     @FXML

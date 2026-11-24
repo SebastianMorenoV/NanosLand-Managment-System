@@ -32,7 +32,7 @@
                 <columns>
                     <TableColumn fx:id="colId" text="ID" prefWidth="50" maxWidth="80" />
                     <TableColumn fx:id="colNombre" text="Nombre del Paquete" prefWidth="250" />
-                    <TableColumn fx:id="colPrecio" text="Costo Base" prefWidth="120" />
+                    <TableColumn fx:id="colPrecio" text="Precio" prefWidth="150" />
                     <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="300" />
                     <TableColumn fx:id="colAcciones" text="Acciones" prefWidth="120" style="-fx-alignment: CENTER;" />
                 </columns>

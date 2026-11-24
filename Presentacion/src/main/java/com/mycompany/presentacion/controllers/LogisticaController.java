@@ -98,7 +98,7 @@ public class LogisticaController {
                 Label lblTurno = new Label("Turno: " + turnoStr);
                 lblTurno.setStyle("-fx-text-fill: #95a5a6; -fx-font-size: 10px;");
 
-                Label lblPaquete = new Label(item.getPaqueteNombre() != null ? "📦 " + item.getPaqueteNombre() : "");
+                Label lblPaquete = new Label(item.getPaqueteDetalle() != null && !item.getPaqueteDetalle().isBlank() ? "📦 " + item.getPaqueteDetalle() : "");
                 lblPaquete.setStyle("-fx-text-fill: #1a82b8; -fx-font-size: 11px;");
 
                 VBox vbox = new VBox(4, lblFecha, lblCliente, lblPaquete, lblTurno);

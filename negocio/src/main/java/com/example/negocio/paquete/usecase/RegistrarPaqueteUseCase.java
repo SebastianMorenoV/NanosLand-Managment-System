@@ -1,49 +1,42 @@
 package com.example.negocio.paquete.usecase;
 
 import com.mycompany.common.dtos.PaqueteDTO;
-import com.mycompany.common.dtos.PaqueteServicioDTO;
 import com.mycompany.common.mapper.PaqueteMapper;
-import com.mycompany.common.mapper.ServicioMapper;
 import com.mycompany.persistencia.dominio.Paquete;
-import com.mycompany.persistencia.dominio.PaqueteServicio;
 import com.mycompany.persistencia.repository.PaqueteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
-
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Da de alta un paquete con sus servicios incluidos y, si su precio depende de la comida
+ * y el número de personas, su tabla de precios (en ese caso el precio fijo queda en 0).
+ */
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class RegistrarPaqueteUseCase {
 
-    @Autowired
-    private PaqueteRepository paqueteRepository;
+    private final PaqueteRepository paqueteRepository;
+    private final ValidadorPaquete validador;
 
+    @Transactional
     public PaqueteDTO registrarPaquete(PaqueteDTO paqueteDTO) {
-        if (paqueteDTO.getNombre() == null || paqueteDTO.getNombre().isBlank()) {
-            throw new IllegalArgumentException("El nombre del paquete es obligatorio.");
-        }
-        if (paqueteDTO.getCostoBase() < 0) {
-            throw new IllegalArgumentException("El costo base no puede ser negativo.");
-        }
+        List<ValidadorPaquete.Precio> precios = validador.precios(paqueteDTO == null ? null : paqueteDTO.getPrecios());
+        boolean conTabla = !precios.isEmpty();
+        validador.validarDatosGenerales(paqueteDTO, conTabla);
+        List<ValidadorPaquete.Incluido> incluidos = validador.serviciosIncluidos(paqueteDTO.getServicios());
 
         Paquete p = PaqueteMapper.toEntity(paqueteDTO);
+        p.setId(null);
+        p.setNombre(paqueteDTO.getNombre().trim());
+        p.setCosto(conTabla ? 0 : com.example.negocio.precio.Dinero.aCentavos(paqueteDTO.getCostoBase()));
         p.setActivo(true);
         p.setServicios(new ArrayList<>());
-
-        if (paqueteDTO.getServicios() != null) {
-            for (PaqueteServicioDTO psDTO : paqueteDTO.getServicios()) {
-                PaqueteServicio ps = new PaqueteServicio();
-                ps.setPaquete(p);
-                ps.setServicio(ServicioMapper.toEntity(psDTO.getServicio()));
-                ps.setCantidad(psDTO.getCantidad());
-                double precioSvc = psDTO.getServicio() != null ? psDTO.getServicio().getPrecio() : 0.0;
-                ps.setSubtotal(precioSvc * psDTO.getCantidad()); // Mostrar el valor real del subtotal en la base de datos
-                p.getServicios().add(ps);
-            }
-        }
+        p.setPrecios(new ArrayList<>());
+        validador.aplicarServicios(p, incluidos);
+        validador.aplicarPrecios(p, precios);
 
         Paquete guardado = paqueteRepository.save(p);
         return PaqueteMapper.toDTO(guardado);

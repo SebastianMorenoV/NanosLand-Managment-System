@@ -43,6 +43,24 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
         @org.springframework.data.repository.query.Param("finalizado") com.mycompany.persistencia.enums.EstadoEvento finalizado);
 
     /**
+     * Folio, id de comida y personas de las cotizaciones todavía abiertas del paquete
+     * (mismo criterio que {@link #existeCotizacionAbiertaConPaquete}). Cada fila es
+     * {@code Object[]{String folio, Long comidaId, Integer personas}}; comida y personas
+     * son nulas en cotizaciones de un paquete de precio fijo.
+     */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT c.folio, co.id, c.personas FROM Cotizacion c LEFT JOIN c.comida co LEFT JOIN c.evento e " +
+        "WHERE c.paquete.id = :paqueteId AND c.estado IN :estados " +
+        "AND (e IS NULL OR e.estado <> :finalizado) ORDER BY c.folio")
+    List<Object[]> combinacionesAbiertasDePaquete(
+        @org.springframework.data.repository.query.Param("paqueteId") Long paqueteId,
+        @org.springframework.data.repository.query.Param("estados") Collection<EstadoCotizacion> estados,
+        @org.springframework.data.repository.query.Param("finalizado") com.mycompany.persistencia.enums.EstadoEvento finalizado);
+
+    /** Cotizaciones anteriores al precio pactado, para la corrección al arrancar. */
+    List<Cotizacion> findByPrecioPaqueteIsNull();
+
+    /**
      * NOTA: Las consultas de disponibilidad por fecha y turno han sido
      * movidas a EventoRepository, ya que Evento ahora es la entidad dueña de la fecha.
      */

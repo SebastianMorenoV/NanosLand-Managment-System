@@ -70,7 +70,16 @@ public class PaquetesController {
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        colPrecio.setCellValueFactory(new PropertyValueFactory<>("costoBase"));
+        // Valor numérico (para ordenar) y texto "Desde $X" en los paquetes con tabla de precios.
+        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioDesde"));
+        colPrecio.setCellFactory(columna -> new TableCell<PaqueteDTO, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                PaqueteDTO fila = empty || getTableRow() == null ? null : getTableRow().getItem();
+                setText(fila == null ? null : com.mycompany.presentacion.utils.TablaPreciosPaquete.precioParaMostrar(fila));
+            }
+        });
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         configurarColumnaAcciones();
 

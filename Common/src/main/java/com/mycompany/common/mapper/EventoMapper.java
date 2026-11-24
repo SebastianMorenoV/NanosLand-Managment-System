@@ -33,7 +33,12 @@ public class EventoMapper {
             dto.setCotizacionId(evento.getCotizacion().getId());
             dto.setFolioCotizacion(evento.getCotizacion().getFolio());
             dto.setClienteNombre(evento.getCotizacion().getCliente() != null ? evento.getCotizacion().getCliente().getNombre() : "Desconocido");
-            dto.setPaqueteNombre(evento.getCotizacion().getPaquete() != null ? evento.getCotizacion().getPaquete().getNombre() : "Personalizado");
+            com.mycompany.persistencia.dominio.Cotizacion cot = evento.getCotizacion();
+            dto.setPaqueteNombre(cot.getPaquete() != null ? cot.getPaquete().getNombre() : "Personalizado");
+            dto.setComidaNombre(cot.getComida() != null ? cot.getComida().getNombre() : null);
+            dto.setPersonas(cot.getPersonas());
+            dto.setPaqueteDetalle(com.mycompany.common.util.DescripcionPaquete.de(
+                    dto.getPaqueteNombre(), dto.getComidaNombre(), dto.getPersonas()));
             dto.setTotalCotizacion(evento.getCotizacion().getTotal());
         }
         if (evento.getCargosExtras() != null) {

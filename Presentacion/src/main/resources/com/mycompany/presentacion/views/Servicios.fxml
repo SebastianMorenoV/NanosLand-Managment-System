@@ -32,6 +32,7 @@
                 <columns>
                     <TableColumn fx:id="colId" text="ID" prefWidth="60" maxWidth="80" />
                     <TableColumn fx:id="colNombre" text="Nombre del Servicio" prefWidth="250" />
+                    <TableColumn fx:id="colCategoria" text="Categoría" prefWidth="150" />
                     <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="350" />
                     <TableColumn fx:id="colPrecio" text="Precio" prefWidth="120" />
                 </columns>

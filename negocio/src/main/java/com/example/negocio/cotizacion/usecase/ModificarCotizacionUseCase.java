@@ -6,13 +6,15 @@ package com.example.negocio.cotizacion.usecase;
 
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.logistica.usecase.GenerarLogisticaEventoUseCase;
+import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
+import com.example.negocio.precio.Dinero;
 import com.mycompany.common.dtos.CotizacionDTO;
-import com.mycompany.common.dtos.DetalleCotizacionDTO;
 import com.mycompany.common.mapper.CotizacionMapper;
 import com.mycompany.persistencia.dominio.Cliente;
 import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Paquete;
+import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.TurnoEvento;
@@ -27,8 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -45,6 +48,7 @@ public class ModificarCotizacionUseCase {
     private final EventoRepository eventoRepository;
     private final PagoRepository pagoRepository;
     private final GenerarLogisticaEventoUseCase generarLogisticaEventoUseCase;
+    private final CalcularPrecioPaqueteUseCase calcularPrecioPaqueteUseCase;
 
     @Transactional
     public CotizacionDTO modificarCotizacion(Long cotizacionId, CotizacionDTO dto) {
@@ -102,6 +106,20 @@ public class ModificarCotizacionUseCase {
                 "El paquete con ID " + dto.getPaqueteId() + " no existe en el catálogo."
             ));
 
+        // Precio del paquete: el pactado si no cambió el paquete, la comida ni las personas;
+        // si cambiaron, el del catálogo actual. Se calcula antes de modificar la cotización
+        // porque compara contra lo guardado.
+        double precioPaquete = calcularPrecioPaqueteUseCase.precioParaCotizacion(
+            existente, paquete, dto.getComidaId(), dto.getPersonas(), dto.getFecha());
+        Servicio comida = dto.getComidaId() == null ? null : servicioRepository.findById(dto.getComidaId())
+            .orElseThrow(() -> new CotizacionException("La comida seleccionada no existe en el catálogo."));
+        // Extras que ya tenía: se aceptan aunque hoy ya no sean de categoría Extra.
+        Set<Long> extrasYaContratados = existente.getServiciosExtra() == null ? Set.of()
+            : existente.getServiciosExtra().stream()
+                .filter(d -> d.getServicio() != null)
+                .map(d -> d.getServicio().getId())
+                .collect(Collectors.toSet());
+
         // ── Validación: no duplicar turno (excluyendo la cotización actual) ─
         LocalDate fechaNueva = dto.getFecha();
         TurnoEvento turnoNuevo = dto.getTurno();
@@ -131,7 +149,10 @@ public class ModificarCotizacionUseCase {
         // ── Actualización de campos base ───────────────────────────────────
         existente.setCliente(cliente);
         existente.setPaquete(paquete);
-        
+        existente.setComida(comida);
+        existente.setPersonas(dto.getPersonas());
+        existente.setPrecioPaquete(precioPaquete);
+
         boolean cambioTurno = eventoExistente.getTurno() != dto.getTurno();
         eventoExistente.setFecha(dto.getFecha());
         eventoExistente.setTurno(dto.getTurno());
@@ -149,44 +170,9 @@ public class ModificarCotizacionUseCase {
         // a BORRADOR porque la pantalla tenga un estado desactualizado.
 
         // ── Persistencia de servicios extra + recálculo total ────────────
-        List<DetalleCotizacionDTO> detallesDTO = dto.getDetalles();
-        List<DetalleCotizacion> detallesEntidad = new ArrayList<>();
-        double total = paquete.getCosto();
-
-        if (detallesDTO != null && !detallesDTO.isEmpty()) {
-            for (DetalleCotizacionDTO detalleDTO : detallesDTO) {
-                if (detalleDTO == null) continue;
-                if (detalleDTO.getServicioId() == null) {
-                    throw new CotizacionException("Un servicio extra no tiene id asociado.");
-                }
-
-                var servicio = servicioRepository.findById(detalleDTO.getServicioId())
-                    .orElseThrow(() -> new CotizacionException(
-                        "El servicio con ID " + detalleDTO.getServicioId() + " no existe en el catálogo."
-                    ));
-
-                int cantidad = detalleDTO.getCantidad() > 0 ? detalleDTO.getCantidad() : 1;
-                double precioUnitario = detalleDTO.getPrecioUnitario();
-                double subtotal = detalleDTO.getSubtotal();
-                if (subtotal <= 0) {
-                    subtotal = precioUnitario * cantidad;
-                }
-
-                DetalleCotizacion detalle = new DetalleCotizacion();
-                detalle.setServicio(servicio);
-                detalle.setCotizacion(existente);
-                detalle.setPrecioUnitario(precioUnitario);
-                detalle.setCantidad(cantidad);
-                detalle.setSubtotal(subtotal);
-                detalle.setHoraSugerida(detalleDTO.getHoraSugerida());
-                detalle.setEspecificacionesCliente(detalleDTO.getEspecificacionesCliente());
-                detalle.setDesgloseOpciones(detalleDTO.getDesgloseOpciones());
-                detalle.setUbicacionMontaje(detalleDTO.getUbicacionMontaje());
-
-                detallesEntidad.add(detalle);
-                total += subtotal;
-            }
-        }
+        List<DetalleCotizacion> detallesEntidad = LineasExtraCotizacion.construir(
+            dto.getDetalles(), existente, servicioRepository, extrasYaContratados);
+        double total = Dinero.aCentavos(precioPaquete + LineasExtraCotizacion.total(detallesEntidad));
 
         // Limpiar y agregar a la colección existente en lugar de reemplazarla (Evita el error de orphan deletion)
         if (existente.getServiciosExtra() != null) {

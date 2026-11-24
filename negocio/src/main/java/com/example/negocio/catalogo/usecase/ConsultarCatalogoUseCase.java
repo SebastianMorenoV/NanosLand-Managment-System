@@ -8,8 +8,7 @@ import com.mycompany.common.dtos.PaqueteDTO;
 import com.mycompany.common.dtos.ServicioDTO;
 import com.mycompany.common.mapper.PaqueteMapper;
 import com.mycompany.common.mapper.ServicioMapper;
-import com.mycompany.persistencia.dominio.Paquete;
-import com.mycompany.persistencia.dominio.Servicio;
+import com.mycompany.persistencia.enums.CategoriaServicio;
 import com.mycompany.persistencia.repository.PaqueteRepository;
 import com.mycompany.persistencia.repository.ServicioRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * Catálogo que usa la pantalla de cotización: paquetes activos y servicios extra.
  *
  * @author skyro
  */
@@ -37,6 +37,7 @@ public class ConsultarCatalogoUseCase {
                 .collect(Collectors.toList());
     }
 
+    /** Incluye paquetes dados de baja, para mostrar cotizaciones que los usan. */
     @Transactional(readOnly = true)
     public PaqueteDTO obtenerPaquetePorId(Long id) {
         return paqueteRepository.findById(id)
@@ -44,48 +45,11 @@ public class ConsultarCatalogoUseCase {
                 .orElse(null);
     }
 
-    public List<Servicio> obtenerServicios() {
-        return servicioRepository.findByActivoTrue();
-    }
-
-    public List<ServicioDTO> obtenerTodosLosServicios() {
-        return servicioRepository.findByActivoTrue().stream()
+    /** Servicios que se pueden agregar como extra a una cotización. */
+    @Transactional(readOnly = true)
+    public List<ServicioDTO> obtenerServiciosExtra() {
+        return servicioRepository.findByActivoTrueAndCategoriaOrderByNombreAsc(CategoriaServicio.EXTRA).stream()
                 .map(ServicioMapper::toDTO)
                 .collect(Collectors.toList());
-    }
-
-    private static void validarAlta(String nombre, Double importe) {
-        if (nombre == null || nombre.isBlank()) {
-            throw new com.example.negocio.exception.CotizacionException("El nombre es obligatorio.");
-        }
-        if (importe == null || importe < 0) {
-            throw new com.example.negocio.exception.CotizacionException("El precio no puede estar vacío ni ser negativo.");
-        }
-    }
-
-    public ServicioDTO guardarNuevoServicio(String nombre, Double precio, String descripcion) {
-        validarAlta(nombre, precio);
-        com.mycompany.persistencia.dominio.Servicio entidad = new com.mycompany.persistencia.dominio.Servicio();
-        entidad.setNombre(nombre);
-        entidad.setPrecio(precio);
-
-        // Guardamos la descripción que puso el usuario (o "Sin descripción" si la dejó en blanco)
-        entidad.setDescripcion(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin descripción");
-
-        // Guardamos en MySQL
-        entidad = servicioRepository.save(entidad);
-
-        // Retornamos el DTO para que la interfaz lo pueda usar
-        return ServicioMapper.toDTO(entidad);
-    }
-
-    public PaqueteDTO guardarNuevoPaquete(String nombre, Double costoBase, String descripcion) {
-        validarAlta(nombre, costoBase);
-        Paquete entidad = new Paquete();
-        entidad.setNombre(nombre);
-        entidad.setCosto(costoBase);
-        entidad.setDescripcion(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin descripción");
-        entidad = paqueteRepository.save(entidad);
-        return PaqueteMapper.toDTO(entidad);
     }
 }

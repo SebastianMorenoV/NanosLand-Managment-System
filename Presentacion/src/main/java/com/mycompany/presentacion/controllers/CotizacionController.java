@@ -12,10 +12,14 @@ import com.example.negocio.cotizacion.usecase.ListarCotizacionesUseCase;
 import com.example.negocio.cotizacion.usecase.RegistrarAnticipoUseCase;
 import com.example.negocio.cotizacion.usecase.ModificarCotizacionUseCase;
 import com.example.negocio.exception.CotizacionException;
+import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
+import com.example.negocio.precio.PrecioPaquete;
+import com.example.negocio.precio.SolicitudPrecioPaquete;
 import com.mycompany.common.dtos.ClienteDTO;
 import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.dtos.DetalleCotizacionDTO;
 import com.mycompany.common.dtos.PaqueteDTO;
+import com.mycompany.common.dtos.PaquetePrecioDTO;
 import com.mycompany.common.dtos.ServicioDTO;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.MetodoPago;
@@ -24,6 +28,7 @@ import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.FiltroCotizaciones;
 import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ModalHelper;
+import com.mycompany.presentacion.utils.TablaPreciosPaquete;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -77,6 +82,7 @@ public class CotizacionController {
     private final GenerarContratoUseCase generarContratoUseCase;
     private final RegistrarAnticipoUseCase registrarAnticipoUseCase;
     private final CotizacionContext cotizacionContext;
+    private final CalcularPrecioPaqueteUseCase calcularPrecioPaqueteUseCase;
 
     // ─── COMPONENTES FXML ─────────────────────────────────────────────────────
     @FXML
@@ -89,6 +95,10 @@ public class CotizacionController {
     private ComboBox<TurnoEvento> comboTurnos;
     @FXML
     private TextArea textAreaNotas;
+
+    @FXML private HBox boxOpcionesPaquete;
+    @FXML private ComboBox<OpcionComida> comboComida;
+    @FXML private ComboBox<Integer> comboPersonas;
 
     @FXML
     private Label lblNombrePaquete;
@@ -161,6 +171,29 @@ public class CotizacionController {
             .getOrDefault(fecha, "LIBRE");
     }
 
+    /** Comida que ofrece el paquete elegido. */
+    public record OpcionComida(Long id, String nombre) {
+        @Override
+        public String toString() {
+            return nombre;
+        }
+    }
+
+    /** Paquete, comida y personas de la cotización abierta, con su precio pactado (como está guardado). */
+    private record SeleccionGuardada(Long paqueteId, Long comidaId, Integer personas, Double precio) {
+        boolean coincide(Long paqueteId, Long comidaId, Integer personas) {
+            return java.util.Objects.equals(this.paqueteId, paqueteId)
+                && java.util.Objects.equals(this.comidaId, comidaId)
+                && java.util.Objects.equals(this.personas, personas);
+        }
+    }
+
+    /** Precio del paquete con la selección actual; {@code null} si falta elegir algo o no es válida. */
+    private Double precioPaqueteActual;
+    private SeleccionGuardada seleccionGuardada;
+    /** Mientras se llenan los combos por código no se recalcula en cada cambio. */
+    private boolean aplicandoPaquete;
+
     public static class ServicioAgrupado {
         public ServicioDTO servicio;
         public int cantidad;
@@ -210,8 +243,13 @@ public class CotizacionController {
             }));
         }
         
+        precioPaqueteActual = null;
+        seleccionGuardada = null;
+        aplicandoPaquete = false;
+
         configurarComboClientes();
         configurarComboPaquetes();
+        configurarOpcionesPaquete();
         configurarListaServiciosExtras();
 
         if (listenerExtras != null) {
@@ -305,6 +343,10 @@ public class CotizacionController {
 
         comboClientes.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
         comboPaquetes.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        // La fecha se manda al cálculo del precio (para los descuentos que vengan después).
+        if (datePickerFecha != null) {
+            datePickerFecha.valueProperty().addListener((obs, old, val) -> actualizarPrecioPaquete());
+        }
         comboTurnos.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
         if (txtNombreFestejado != null) txtNombreFestejado.textProperty().addListener((obs, old, val) -> validarFormularioCompleto());
         if (txtTematica != null) txtTematica.textProperty().addListener((obs, old, val) -> validarFormularioCompleto());
@@ -587,6 +629,8 @@ public class CotizacionController {
     // ─── CANCELAR FLUJO POR CATÁLOGO (Flujo 2.2.8) ──────────────────────────
     private void deshabilitarFlujoPorCatalogo() {
         if (comboPaquetes != null) comboPaquetes.setDisable(true);
+        if (comboComida != null) comboComida.setDisable(true);
+        if (comboPersonas != null) comboPersonas.setDisable(true);
         if (listaServiciosExtras != null) listaServiciosExtras.setDisable(true);
         if (btnAnadirServicio != null) btnAnadirServicio.setDisable(true);
         if (btnGuardarBorrador != null) btnGuardarBorrador.setDisable(true);
@@ -611,12 +655,23 @@ public class CotizacionController {
         }
 
         if (cotizacion.getPaqueteId() != null) {
+            // El precio pactado se respeta mientras no se cambie el paquete, la comida o las personas.
+            seleccionGuardada = new SeleccionGuardada(cotizacion.getPaqueteId(), cotizacion.getComidaId(),
+                cotizacion.getPersonas(), cotizacion.getPrecioPaquete());
             PaqueteDTO paqueteEncontrado = comboPaquetes.getItems().stream()
                 .filter(p -> p.getId() != null && p.getId().equals(cotizacion.getPaqueteId()))
                 .findFirst()
                 .orElse(null);
+            if (paqueteEncontrado == null) {
+                // Paquete dado de baja después de cotizar: se agrega para que la cotización
+                // se vea completa y se pueda seguir editando con su precio pactado.
+                paqueteEncontrado = consultarCatalogoUseCase.obtenerPaquetePorId(cotizacion.getPaqueteId());
+                if (paqueteEncontrado != null) {
+                    comboPaquetes.getItems().add(paqueteEncontrado);
+                }
+            }
             comboPaquetes.setValue(paqueteEncontrado);
-            actualizarLabelsPaquete(paqueteEncontrado);
+            aplicarPaquete(paqueteEncontrado, cotizacion.getComidaId(), cotizacion.getComidaNombre(), cotizacion.getPersonas());
         }
 
         if (cotizacion.getTurno() != null) {
@@ -654,14 +709,6 @@ public class CotizacionController {
 
         actualizarTotalEstimado();
         actualizarPagosUI();
-    }
-
-    private void actualizarLabelsPaquete(PaqueteDTO paquete) {
-        if (paquete == null) return;
-        lblNombrePaquete.setText(paquete.getNombre());
-        lblPrecioPaquete.setText("$" + String.format("%,.2f", paquete.getCostoBase()));
-        String detalles = paquete.getDescripcion() != null ? paquete.getDescripcion() : "Sin detalles adicionales";
-        lblDetallesPaquete.setText(detalles);
     }
 
     // ─── ABRIR COTIZACIÓN GUARDADA / SALIR ─────────────────────────────────
@@ -774,6 +821,8 @@ public class CotizacionController {
     private void setSoloLectura(boolean soloLectura) {
         if (comboClientes != null) comboClientes.setDisable(soloLectura);
         if (comboPaquetes != null) comboPaquetes.setDisable(soloLectura);
+        if (comboComida != null) comboComida.setDisable(soloLectura);
+        if (comboPersonas != null) comboPersonas.setDisable(soloLectura);
         if (datePickerFecha != null) datePickerFecha.setDisable(soloLectura);
         if (comboTurnos != null) {
             comboTurnos.setDisable(soloLectura);
@@ -795,7 +844,8 @@ public class CotizacionController {
                              datePickerFecha == null || datePickerFecha.getValue() == null ||
                              comboTurnos == null || comboTurnos.getValue() == null ||
                              txtNombreFestejado == null || txtNombreFestejado.getText() == null || txtNombreFestejado.getText().trim().isEmpty() ||
-                             txtTematica == null || txtTematica.getText() == null || txtTematica.getText().trim().isEmpty();
+                             txtTematica == null || txtTematica.getText() == null || txtTematica.getText().trim().isEmpty() ||
+                             faltaComidaOPersonas();
                              
         if (!isModoEdicion()) {
             if (btnConfirmarCotizacion != null) btnConfirmarCotizacion.setDisable(incompleto);
@@ -861,6 +911,9 @@ public class CotizacionController {
         if (paqueteSeleccionado == null) {
             throw new CotizacionException("Debe seleccionar un paquete base.");
         }
+        if (faltaComidaOPersonas()) {
+            throw new CotizacionException("Elija la comida y el número de personas del paquete.");
+        }
         if (fecha == null) {
             throw new CotizacionException("Debe seleccionar una fecha para el evento.");
         }
@@ -880,6 +933,11 @@ public class CotizacionController {
         }
         dto.setClienteId(clienteSeleccionado.getId());
         dto.setPaqueteId(paqueteSeleccionado.getId());
+        // El precio no se manda: el servidor lo calcula con el paquete, la comida y las personas.
+        if (paqueteSeleccionado.isTablaPrecios()) {
+            dto.setComidaId(comboComida.getValue().id());
+            dto.setPersonas(comboPersonas.getValue());
+        }
         dto.setFecha(fecha);
         dto.setTurno(turno);
         dto.setNotas(notas != null && !notas.isBlank() ? notas.trim() : null);
@@ -1031,23 +1089,162 @@ public class CotizacionController {
         comboPaquetes.setConverter(new StringConverter<PaqueteDTO>() {
             @Override
             public String toString(PaqueteDTO paquete) {
-                return paquete == null ? "" : paquete.getNombre();
+                if (paquete == null) return "";
+                return paquete.isActivo() ? paquete.getNombre() : paquete.getNombre() + " (ya no se ofrece)";
             }
             @Override
             public PaqueteDTO fromString(String string) { return null; }
         });
 
-        comboPaquetes.setOnAction(event -> {
-            PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
-            if (paqueteSeleccionado != null) {
-                lblNombrePaquete.setText(paqueteSeleccionado.getNombre());
-                lblPrecioPaquete.setText("$" + String.format("%,.2f", paqueteSeleccionado.getCostoBase()));
-                String detalles = paqueteSeleccionado.getDescripcion() != null
-                        ? paqueteSeleccionado.getDescripcion() : "Sin detalles adicionales";
-                lblDetallesPaquete.setText(detalles);
+        // También se dispara al asignar el paquete por código (al abrir una cotización guardada).
+        comboPaquetes.setOnAction(event -> aplicarPaquete(comboPaquetes.getValue(), null, null, null));
+    }
+
+    // ─── COMIDA Y PERSONAS (PAQUETES CON TABLA DE PRECIOS) ──────────────────
+    private void configurarOpcionesPaquete() {
+        comboPersonas.setConverter(new StringConverter<Integer>() {
+            @Override
+            public String toString(Integer personas) {
+                return personas == null ? "" : personas + " personas";
             }
-            actualizarTotalEstimado();
+            @Override
+            public Integer fromString(String string) { return null; }
         });
+        comboComida.valueProperty().addListener((obs, anterior, nueva) -> {
+            if (aplicandoPaquete) return;
+            llenarPersonas(comboPaquetes.getValue(), comboPersonas.getValue(), null);
+            actualizarPrecioPaquete();
+            validarFormularioCompleto();
+        });
+        comboPersonas.valueProperty().addListener((obs, anterior, nueva) -> {
+            if (aplicandoPaquete) return;
+            actualizarPrecioPaquete();
+            validarFormularioCompleto();
+        });
+    }
+
+    /**
+     * Muestra el paquete elegido y, si su precio depende de la comida y las personas, llena
+     * esos combos. Conserva la comida y las personas ya elegidas si el paquete nuevo las ofrece.
+     *
+     * @param comidaId     comida guardada que se debe seleccionar (al abrir una cotización), o null
+     * @param comidaNombre su nombre, por si ya no está en la tabla del paquete
+     * @param personas     personas guardadas que se deben seleccionar, o null
+     */
+    private void aplicarPaquete(PaqueteDTO paquete, Long comidaId, String comidaNombre, Integer personas) {
+        aplicandoPaquete = true;
+        try {
+            Long comidaDeseada = comidaId != null ? comidaId
+                : (comboComida.getValue() != null ? comboComida.getValue().id() : null);
+            Integer personasDeseadas = personas != null ? personas : comboPersonas.getValue();
+            boolean conTabla = paquete != null && paquete.isTablaPrecios();
+
+            boxOpcionesPaquete.setVisible(conTabla);
+            boxOpcionesPaquete.setManaged(conTabla);
+            if (!conTabla) {
+                comboComida.getItems().clear();
+                comboComida.setValue(null);
+                comboPersonas.getItems().clear();
+                comboPersonas.setValue(null);
+            } else {
+                List<OpcionComida> opciones = new ArrayList<>();
+                for (PaquetePrecioDTO p : paquete.getPrecios()) {
+                    if (opciones.stream().noneMatch(o -> o.id().equals(p.getComidaId()))) {
+                        opciones.add(new OpcionComida(p.getComidaId(), p.getComidaNombre()));
+                    }
+                }
+                opciones.sort(java.util.Comparator.comparing(OpcionComida::nombre, String.CASE_INSENSITIVE_ORDER));
+                if (comidaId != null && opciones.stream().noneMatch(o -> o.id().equals(comidaId))) {
+                    opciones.add(new OpcionComida(comidaId, comidaNombre != null ? comidaNombre : "Comida " + comidaId));
+                }
+                comboComida.getItems().setAll(opciones);
+                comboComida.setValue(opciones.stream()
+                    .filter(o -> o.id().equals(comidaDeseada)).findFirst().orElse(null));
+                llenarPersonas(paquete, personasDeseadas, personas);
+            }
+
+            if (paquete == null) {
+                lblNombrePaquete.setText("Seleccione un paquete");
+                lblDetallesPaquete.setText("Los detalles aparecerán aquí");
+            } else {
+                lblNombrePaquete.setText(paquete.isActivo() ? paquete.getNombre() : paquete.getNombre() + " (ya no se ofrece)");
+                lblDetallesPaquete.setText(paquete.getDescripcion() != null && !paquete.getDescripcion().isBlank()
+                    ? paquete.getDescripcion() : "Sin detalles adicionales");
+            }
+        } finally {
+            aplicandoPaquete = false;
+        }
+        actualizarPrecioPaquete();
+        validarFormularioCompleto();
+    }
+
+    /** Rangos de personas que el paquete ofrece para la comida elegida (o todos si aún no hay comida). */
+    private void llenarPersonas(PaqueteDTO paquete, Integer deseadas, Integer guardadas) {
+        boolean previo = aplicandoPaquete;
+        aplicandoPaquete = true;
+        try {
+            java.util.TreeSet<Integer> rangos = new java.util.TreeSet<>();
+            OpcionComida comida = comboComida.getValue();
+            if (paquete != null && paquete.getPrecios() != null) {
+                for (PaquetePrecioDTO p : paquete.getPrecios()) {
+                    if (comida == null || comida.id().equals(p.getComidaId())) rangos.add(p.getPersonas());
+                }
+            }
+            if (guardadas != null) rangos.add(guardadas);
+            comboPersonas.getItems().setAll(rangos);
+            comboPersonas.setValue(deseadas != null && rangos.contains(deseadas) ? deseadas : null);
+        } finally {
+            aplicandoPaquete = previo;
+        }
+    }
+
+    /** Un paquete con tabla de precios necesita comida y número de personas. */
+    private boolean faltaComidaOPersonas() {
+        PaqueteDTO paquete = comboPaquetes == null ? null : comboPaquetes.getValue();
+        return paquete != null && paquete.isTablaPrecios()
+            && (comboComida.getValue() == null || comboPersonas.getValue() == null);
+    }
+
+    /**
+     * Precio del paquete con la selección actual. Lo calcula el mismo caso de uso que usa el
+     * servidor al guardar; si la selección es la de la cotización abierta, es su precio pactado.
+     */
+    private void actualizarPrecioPaquete() {
+        if (aplicandoPaquete || comboPaquetes == null) return;
+        PaqueteDTO paquete = comboPaquetes.getValue();
+        precioPaqueteActual = null;
+        lblPrecioPaquete.setTooltip(null);
+
+        if (paquete == null) {
+            lblPrecioPaquete.setText("$0.00");
+        } else {
+            Long comidaId = comboComida.getValue() != null ? comboComida.getValue().id() : null;
+            Integer personas = comboPersonas.getValue();
+            if (!paquete.isTablaPrecios()) {
+                comidaId = null;
+                personas = null;
+            }
+            if (seleccionGuardada != null && seleccionGuardada.precio() != null
+                    && seleccionGuardada.coincide(paquete.getId(), comidaId, personas)) {
+                precioPaqueteActual = seleccionGuardada.precio();
+                lblPrecioPaquete.setText(TablaPreciosPaquete.dinero(precioPaqueteActual));
+            } else if (paquete.isTablaPrecios() && (comidaId == null || personas == null)) {
+                lblPrecioPaquete.setText("Desde " + TablaPreciosPaquete.dinero(paquete.getPrecioDesde()));
+            } else {
+                try {
+                    SolicitudPrecioPaquete solicitud = new SolicitudPrecioPaquete(paquete.getId(), comidaId, personas,
+                        datePickerFecha != null ? datePickerFecha.getValue() : null);
+                    PrecioPaquete precio = calcularPrecioPaqueteUseCase.calcularParaCotizacion(
+                        isModoEdicion() ? getCotizacionEnEdicionId() : null, solicitud);
+                    precioPaqueteActual = precio.precio();
+                    lblPrecioPaquete.setText(TablaPreciosPaquete.dinero(precioPaqueteActual));
+                } catch (CotizacionException e) {
+                    lblPrecioPaquete.setText("—");
+                    lblPrecioPaquete.setTooltip(new Tooltip(e.getMessage()));
+                }
+            }
+        }
+        actualizarTotalEstimado();
     }
 
     // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ──────────
@@ -1102,12 +1299,11 @@ public class CotizacionController {
 
     // ─── CÁLCULO DE TOTAL ESTIMADO ────────────────────────────────────────────
     private void actualizarTotalEstimado() {
-        PaqueteDTO paqueteSeleccionado = comboPaquetes.getValue();
-        
         // El total se calcula usando los servicios que están en la lista (y se pueden repetir)
         List<ServicioDTO> extras = new ArrayList<>(serviciosSeleccionados);
 
-        Double total = calcularTotalCotizacionUseCase.ejecutar(paqueteSeleccionado, extras);
+        double total = calcularTotalCotizacionUseCase.ejecutar(
+            precioPaqueteActual != null ? precioPaqueteActual : 0, extras);
 
         if (lblTotalEstimado != null) {
             lblTotalEstimado.setText(String.format("$%,.2f", total));
@@ -1165,10 +1361,11 @@ public class CotizacionController {
 
     @FXML
     private void abrirDialogoAgregarServicio() {
-        List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerTodosLosServicios();
+        // Solo los de categoría Extra: los incluidos y las comidas van dentro de los paquetes.
+        List<ServicioDTO> todosLosServicios = consultarCatalogoUseCase.obtenerServiciosExtra();
 
         if (todosLosServicios.isEmpty()) {
-            mostrarError("No hay servicios disponibles en el catálogo.");
+            mostrarError("No hay servicios extra disponibles en el catálogo.");
             return;
         }
 
@@ -1502,51 +1699,5 @@ public class CotizacionController {
         }, sinResultado -> { }, error -> mostrarError("No se pudo generar el contrato PDF."));
     }
     
-    @FXML
-    private void abrirDialogoAgregarPaquete() {
-        Dialog<PaqueteDTO> dialog = new Dialog<>();
-        dialog.setTitle("Nuevo Paquete");
-        dialog.setHeaderText("Añadir un nuevo paquete al catálogo");
-        
-        ButtonType guardarButtonType = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(guardarButtonType, ButtonType.CANCEL);
-        
-        GridPane grid = new GridPane();
-        grid.setHgap(10); grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
-        
-        TextField txtNombre = new TextField(); txtNombre.setPromptText("Ej. Paquete Super");
-        TextField txtPrecio = new TextField(); txtPrecio.setPromptText("Ej. 4000.00");
-        TextField txtDescripcion = new TextField(); txtDescripcion.setPromptText("Ej. Incluye de todo");
-        
-        grid.add(new Label("Nombre:"), 0, 0); grid.add(txtNombre, 1, 0);
-        grid.add(new Label("Precio Base (MXN):"), 0, 1); grid.add(txtPrecio, 1, 1);
-        grid.add(new Label("Descripción:"), 0, 2); grid.add(txtDescripcion, 1, 2);
-        
-        javafx.scene.Node guardarBtn = dialog.getDialogPane().lookupButton(guardarButtonType);
-        guardarBtn.setDisable(true);
-        
-        txtNombre.textProperty().addListener((o, old, newVal) -> guardarBtn.setDisable(newVal.trim().isEmpty() || txtPrecio.getText().trim().isEmpty()));
-        txtPrecio.textProperty().addListener((o, old, newVal) -> guardarBtn.setDisable(newVal.trim().isEmpty() || txtNombre.getText().trim().isEmpty()));
-        
-        dialog.getDialogPane().setContent(grid);
-        
-        dialog.setResultConverter(btn -> {
-            if (btn == guardarButtonType) {
-                try {
-                    return consultarCatalogoUseCase.guardarNuevoPaquete(txtNombre.getText().trim(), Double.parseDouble(txtPrecio.getText().trim()), txtDescripcion.getText().trim());
-                } catch(Exception e) {
-                    mostrarError("Error al guardar paquete.");
-                }
-            }
-            return null;
-        });
-        
-        dialog.showAndWait().ifPresent(nuevo -> {
-            Alert ok = new Alert(Alert.AlertType.INFORMATION, "Paquete agregado.");
-            ok.showAndWait();
-            configurarComboPaquetes();
-        });
-    }
     
 }

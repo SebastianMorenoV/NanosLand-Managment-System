@@ -14,10 +14,18 @@
         <TextField fx:id="txtNombre" promptText="Ej: Brincolín, Decoración, etc." styleClass="text-field-moderno"/>
     </VBox>
 
-    <VBox spacing="5">
-        <Label text="Precio" styleClass="label-pequeno"/>
-        <TextField fx:id="txtPrecio" promptText="Ej: 1500.00" styleClass="text-field-moderno"/>
-    </VBox>
+    <HBox spacing="15">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Categoría" styleClass="label-pequeno"/>
+            <ComboBox fx:id="cmbCategoria" maxWidth="Infinity" styleClass="combo-box-base"/>
+        </VBox>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Precio" styleClass="label-pequeno"/>
+            <TextField fx:id="txtPrecio" promptText="Ej: 1500.00" styleClass="text-field-moderno"/>
+        </VBox>
+    </HBox>
+    <!-- Alto fijo de dos renglones: el modal se dimensiona una vez al abrir. -->
+    <Label fx:id="lblAyudaCategoria" wrapText="true" minHeight="34" prefHeight="34" maxWidth="Infinity" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
 
     <VBox spacing="5" VBox.vgrow="ALWAYS">
         <Label text="Descripción" styleClass="label-pequeno"/>

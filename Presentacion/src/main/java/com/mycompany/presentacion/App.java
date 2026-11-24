@@ -213,11 +213,19 @@ public class App extends Application {
     private void usarContexto(ConfigurableApplicationContext contexto) {
         springContext = contexto;
         ViewSwitcher.setSpringContext(contexto);
+        // Cada corrección va por separado: si una falla, las demás se siguen aplicando.
+        // Contraseñas que sigan en texto plano (usuarios antiguos o cargados por script).
+        correccionAlArrancar(() -> contexto.getBean(com.example.negocio.sesion.usecase.Contrasenas.class).migrarTextoPlano());
+        // Eventos confirmados cuya fecha ya llegó o pasó: en curso / finalizado.
+        correccionAlArrancar(() -> contexto.getBean(ActualizarEstadosPorFechaUseCase.class).actualizar());
+        // Cotizaciones de antes del precio pactado del paquete.
+        correccionAlArrancar(() -> contexto.getBean(
+                com.example.negocio.cotizacion.usecase.CompletarPrecioPaqueteUseCase.class).completar());
+    }
+
+    private static void correccionAlArrancar(Runnable correccion) {
         try {
-            // Contraseñas que sigan en texto plano (usuarios antiguos o cargados por script).
-            contexto.getBean(com.example.negocio.sesion.usecase.Contrasenas.class).migrarTextoPlano();
-            // Eventos confirmados cuya fecha ya llegó o pasó: en curso / finalizado.
-            contexto.getBean(ActualizarEstadosPorFechaUseCase.class).actualizar();
+            correccion.run();
         } catch (RuntimeException e) {
             e.printStackTrace();
         }

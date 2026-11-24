@@ -57,7 +57,7 @@ public class EventoDetallesModalController {
         String horaFin = evento.getHoraFin() != null ? evento.getHoraFin().toString() : "--:--";
         lblHorario.setText(horaInicio + " a " + horaFin);
 
-        lblPaquete.setText(evento.getPaqueteNombre() != null ? evento.getPaqueteNombre() : "Personalizado");
+        lblPaquete.setText(evento.getPaqueteDetalle() != null && !evento.getPaqueteDetalle().isBlank() ? evento.getPaqueteDetalle() : "Personalizado");
         lblNotas.setText((evento.getNotas() != null && !evento.getNotas().isBlank()) ? evento.getNotas() : "Sin notas adicionales.");
 
         double totalCot = evento.getTotalCotizacion();

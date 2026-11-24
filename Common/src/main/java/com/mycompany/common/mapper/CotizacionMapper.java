@@ -36,6 +36,12 @@ public class CotizacionMapper {
             dto.setPaqueteId(cotizacion.getPaquete().getId());
             dto.setNombrePaquete(cotizacion.getPaquete().getNombre());
         }
+        if (cotizacion.getComida() != null) {
+            dto.setComidaId(cotizacion.getComida().getId());
+            dto.setComidaNombre(cotizacion.getComida().getNombre());
+        }
+        dto.setPersonas(cotizacion.getPersonas());
+        dto.setPrecioPaquete(cotizacion.getPrecioPaquete());
         if (cotizacion.getServiciosExtra() != null) {
             dto.setDetalles(cotizacion.getServiciosExtra().stream()
                 .map(DetalleCotizacionMapper::toDTO)
@@ -44,6 +50,7 @@ public class CotizacionMapper {
         return dto;
     }
 
+    /** Solo datos simples: paquete, comida, personas, precio y relaciones los asignan los casos de uso. */
     public static Cotizacion toEntity(CotizacionDTO dto) {
         if (dto == null) return null;
         Cotizacion cotizacion = new Cotizacion();
