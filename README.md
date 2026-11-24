@@ -7,8 +7,8 @@ Aplicación de escritorio para administrar el negocio de **NanosLand**, un saló
 - **Inicio**: resumen de lo que hay hoy, los próximos 7 días y los pendientes (cobrar, confirmar, contactar servicios).
 - **Inicio de sesión y usuarios**: acceso con correo y contraseña, con roles de *Dueño* y *Administrador*, y gestión de las cuentas del sistema.
 - **Clientes**: registro y consulta de clientes con sus datos de contacto y dirección.
-- **Catálogo de servicios y paquetes**: alta, edición y baja de servicios (shows, brincolines, decoración, fotografía, etc.) y de paquetes que agrupan varios servicios.
-- **Cotizaciones**: armado de una cotización para un cliente a partir de paquetes y servicios, con selección de fecha y turno según la disponibilidad de la agenda.
+- **Catálogo de servicios y paquetes**: alta, edición y baja de servicios y de paquetes que agrupan varios servicios. Cada servicio tiene una categoría: *Extra* (se vende aparte), *Incluido en paquete* (solo va dentro de los paquetes) o *Comida*. Un paquete tiene precio fijo (como la renta del local) o una tabla de precios por comida y número de personas (como los paquetes Plus, Full y Neón).
+- **Cotizaciones**: armado de una cotización para un cliente a partir de un paquete (con su comida y número de personas, si aplica) y servicios extra, con selección de fecha y turno según la disponibilidad de la agenda. Cada cotización guarda el precio pactado del paquete: si después cambian los precios del catálogo, las cotizaciones hechas conservan el suyo.
 - **Lista de cotizaciones**: por confirmar, confirmadas, vencidas y canceladas, desde donde se abren para editarlas, cobrar o generar el contrato.
 - **Eventos**: eventos confirmados, en curso y realizados, con detalle, cancelación y reprogramación.
 - **Logística**: seguimiento del estado de cada servicio contratado para un evento.
@@ -38,7 +38,7 @@ El sistema sigue una arquitectura por capas, con un módulo de Maven para cada u
 ├── Persistencia/   Entidades JPA, enums y repositorios
 ├── negocio/        Casos de uso (reglas del negocio)
 ├── Presentacion/   Aplicación JavaFX: vistas FXML, controladores y estilos
-├── sql/            Scripts con datos de ejemplo
+├── sql/            Scripts de datos: ejemplo y catálogo real del local
 └── pom.xml         POM padre que agrupa los módulos
 ```
 
@@ -83,6 +83,12 @@ La capa de presentación arranca el contexto de Spring y obtiene de él los cont
    ```
 
    El script está pensado para una base recién creada; ejecútalo una sola vez.
+
+   Para cargar el catálogo real del local (servicios, paquetes y tablas de precios de los volantes vigentes) usa `sql/catalogo_paquetes_servicios.sql`. Ejecútalo después de abrir la aplicación al menos una vez con la versión actual, para que existan las tablas nuevas. Funciona en una base que ya tiene datos y se puede ejecutar más de una vez, porque solo inserta lo que falta. Al final tiene una sección opcional, comentada, para dar de baja el catálogo anterior:
+
+   ```bash
+   mysql -u root -p --default-character-set=utf8mb4 < sql/catalogo_paquetes_servicios.sql
+   ```
 
 6. Inicia sesión con uno de los usuarios de ejemplo:
 
