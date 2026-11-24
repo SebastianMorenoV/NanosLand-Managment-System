@@ -4,36 +4,31 @@ import com.example.negocio.descuento.usecase.GestionarDescuentoUseCase;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.DescuentoDTO;
 import com.mycompany.common.util.DescripcionDescuento;
+import com.mycompany.persistencia.enums.TipoDescuento;
 import com.mycompany.presentacion.config.RegistroErrores;
 import com.mycompany.presentacion.utils.ModalHelper;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -41,52 +36,33 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 
 /**
- * Lista de descuentos automáticos a paquetes, separada en activos, vencidos y
- * desactivados. Solo la ve el dueño (el menú la oculta a los administradores).
+ * Lista de descuentos automáticos a paquetes, como tarjetas con la regla en palabras y sus
+ * botones, separada en activos, pausados y vencidos. Solo la ve el dueño (el menú la oculta
+ * a los administradores).
  */
 @Controller
 @Scope("prototype")
 @RequiredArgsConstructor
 public class DescuentosController {
 
-    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
     private final GestionarDescuentoUseCase gestionarDescuentoUseCase;
 
     @FXML private ToggleGroup grupoFiltro;
     @FXML private ToggleButton btnActivos;
+    @FXML private ToggleButton btnPausados;
     @FXML private ToggleButton btnVencidos;
-    @FXML private ToggleButton btnDesactivados;
     @FXML private TextField txtBuscar;
-    @FXML private TableView<DescuentoDTO> tablaDescuentos;
-    @FXML private TableColumn<DescuentoDTO, String> colNombre;
-    @FXML private TableColumn<DescuentoDTO, String> colDescuento;
-    @FXML private TableColumn<DescuentoDTO, String> colPaquetes;
-    @FXML private TableColumn<DescuentoDTO, String> colDias;
-    @FXML private TableColumn<DescuentoDTO, String> colTemporada;
-    @FXML private TableColumn<DescuentoDTO, String> colCotizarHasta;
-    @FXML private Button btnEditar;
-    @FXML private Button btnActivar;
-    @FXML private Button btnDuplicar;
-    @FXML private Button btnEliminar;
-    @FXML private Label lblResumen;
+    @FXML private VBox listaDescuentos;
 
-    private final ObservableList<DescuentoDTO> todos = FXCollections.observableArrayList();
-    private FilteredList<DescuentoDTO> filtrados;
+    private final List<DescuentoDTO> todos = new ArrayList<>();
     private final Map<DescuentoDTO.Estado, ToggleButton> pestanas = new EnumMap<>(DescuentoDTO.Estado.class);
     private final Map<DescuentoDTO.Estado, String> nombres = new EnumMap<>(DescuentoDTO.Estado.class);
 
     @FXML
     public void initialize() {
         registrarPestana(DescuentoDTO.Estado.ACTIVO, btnActivos);
+        registrarPestana(DescuentoDTO.Estado.DESACTIVADO, btnPausados);
         registrarPestana(DescuentoDTO.Estado.VENCIDO, btnVencidos);
-        registrarPestana(DescuentoDTO.Estado.DESACTIVADO, btnDesactivados);
-
-        configurarTabla();
-        filtrados = new FilteredList<>(todos, d -> false);
-        SortedList<DescuentoDTO> ordenados = new SortedList<>(filtrados);
-        ordenados.comparatorProperty().bind(tablaDescuentos.comparatorProperty());
-        tablaDescuentos.setItems(ordenados);
 
         grupoFiltro.selectedToggleProperty().addListener((obs, anterior, nuevo) -> {
             // Siempre queda una pestaña elegida.
@@ -94,11 +70,9 @@ public class DescuentosController {
                 anterior.setSelected(true);
                 return;
             }
-            aplicarFiltro();
+            mostrar();
         });
-        txtBuscar.textProperty().addListener((obs, anterior, nuevo) -> aplicarFiltro());
-        tablaDescuentos.getSelectionModel().selectedItemProperty()
-                .addListener((obs, anterior, nuevo) -> actualizarSeleccion(nuevo));
+        txtBuscar.textProperty().addListener((obs, anterior, nuevo) -> mostrar());
 
         btnActivos.setSelected(true);
         cargar(null);
@@ -108,113 +82,112 @@ public class DescuentosController {
         boton.setUserData(estado);
         pestanas.put(estado, boton);
         nombres.put(estado, boton.getText());
-        boton.selectedProperty().addListener((obs, antes, ahora) -> pintarPestana(boton));
-        pintarPestana(boton);
     }
 
-    private static void pintarPestana(ToggleButton boton) {
-        boton.setStyle((boton.isSelected()
-                ? "-fx-background-color: #1a82b8; -fx-text-fill: white;"
-                : "-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50;")
-                + " -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 8 14 8 14; -fx-cursor: hand;");
-    }
-
-    private void configurarTabla() {
-        tablaDescuentos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-        tablaDescuentos.setRowFactory(tv -> {
-            TableRow<DescuentoDTO> fila = new TableRow<>();
-            fila.setOnMouseClicked(e -> {
-                if (e.getClickCount() == 2 && !fila.isEmpty()) {
-                    abrirModal(fila.getItem());
-                }
-            });
-            return fila;
-        });
-        columna(colNombre, DescuentoDTO::getNombre);
-        columna(colDescuento, d -> DescripcionDescuento.valor(d.getTipo(), d.getValor()));
-        columna(colPaquetes, DescripcionDescuento::paquetes);
-        columna(colDias, d -> DescripcionDescuento.dias(d.getDias()));
-        columna(colTemporada, d -> DescripcionDescuento.temporada(d.getFechaInicio(), d.getFechaFin()));
-        columna(colCotizarHasta, d -> d.getCotizarHasta() == null ? "Sin límite" : FECHA.format(d.getCotizarHasta()));
-    }
-
-    /** Columna de texto; el tooltip muestra el texto completo si no cabe. */
-    private static void columna(TableColumn<DescuentoDTO, String> columna, Function<DescuentoDTO, String> texto) {
-        columna.setCellValueFactory(c -> new SimpleStringProperty(texto.apply(c.getValue())));
-        columna.setCellFactory(c -> new TableCell<>() {
-            @Override
-            protected void updateItem(String valor, boolean vacio) {
-                super.updateItem(valor, vacio);
-                setText(vacio ? null : valor);
-                setTooltip(vacio || valor == null || valor.isEmpty() ? null : new Tooltip(valor));
-            }
-        });
-    }
-
-    /** Recarga la lista; si se indica un descuento, muestra su pestaña y lo deja elegido. */
-    private void cargar(Long seleccionar) {
-        List<DescuentoDTO> lista;
+    /** Recarga la lista; si se indica un descuento, abre la pestaña donde quedó. */
+    private void cargar(Long mostrarDescuento) {
         try {
-            lista = gestionarDescuentoUseCase.obtenerTodos();
+            todos.clear();
+            todos.addAll(gestionarDescuentoUseCase.obtenerTodos());
         } catch (RuntimeException e) {
             e.printStackTrace();
-            tablaDescuentos.setPlaceholder(new Label("No se pudieron cargar los descuentos."));
+            listaDescuentos.getChildren().setAll(vacia("No se pudieron cargar los descuentos."));
             RegistroErrores.avisar("No se pudo cargar la lista de descuentos", e);
             return;
         }
-        todos.setAll(lista);
-        actualizarConteos();
-
-        DescuentoDTO elegido = seleccionar == null ? null
-                : todos.stream().filter(d -> seleccionar.equals(d.getId())).findFirst().orElse(null);
-        if (elegido != null) {
-            txtBuscar.clear();
-            pestanas.get(elegido.getEstado()).setSelected(true);
-        }
-        aplicarFiltro();
-        if (elegido != null) {
-            tablaDescuentos.getSelectionModel().select(elegido);
-            tablaDescuentos.scrollTo(elegido);
-        }
-    }
-
-    private void actualizarConteos() {
         Map<DescuentoDTO.Estado, Integer> conteos = new EnumMap<>(DescuentoDTO.Estado.class);
         todos.forEach(d -> conteos.merge(d.getEstado(), 1, Integer::sum));
         pestanas.forEach((estado, boton) ->
                 boton.setText(nombres.get(estado) + " (" + conteos.getOrDefault(estado, 0) + ")"));
+
+        todos.stream().filter(d -> d.getId().equals(mostrarDescuento)).findFirst().ifPresent(d -> {
+            txtBuscar.clear();
+            pestanas.get(d.getEstado()).setSelected(true);
+        });
+        mostrar();
     }
 
-    private void aplicarFiltro() {
+    private void mostrar() {
         DescuentoDTO.Estado estado = (DescuentoDTO.Estado) grupoFiltro.getSelectedToggle().getUserData();
         String texto = txtBuscar.getText() == null ? "" : txtBuscar.getText().trim().toLowerCase();
-        filtrados.setPredicate(d -> d.getEstado() == estado
-                && (texto.isEmpty() || contiene(d.getNombre(), texto)
-                    || contiene(DescripcionDescuento.paquetes(d), texto)));
-        tablaDescuentos.setPlaceholder(new Label(!texto.isEmpty() ? "No se encontró ningún descuento."
-                : estado == DescuentoDTO.Estado.ACTIVO ? "No hay descuentos activos. Cree uno con «+ Nuevo descuento»."
-                : "No hay descuentos en esta pestaña."));
-        actualizarSeleccion(tablaDescuentos.getSelectionModel().getSelectedItem());
+        List<Node> tarjetas = new ArrayList<>();
+        for (DescuentoDTO d : todos) {
+            if (d.getEstado() == estado && (texto.isEmpty() || contiene(d.getNombre(), texto)
+                    || contiene(DescripcionDescuento.paquetes(d), texto))) {
+                tarjetas.add(tarjeta(d));
+            }
+        }
+        if (tarjetas.isEmpty()) {
+            tarjetas.add(vacia(!texto.isEmpty() ? "No se encontró ningún descuento."
+                    : estado == DescuentoDTO.Estado.ACTIVO ? "Todavía no hay descuentos activos. Cree uno con «+ Nuevo descuento»."
+                    : estado == DescuentoDTO.Estado.DESACTIVADO ? "No hay descuentos pausados."
+                    : "No hay descuentos vencidos."));
+        }
+        listaDescuentos.getChildren().setAll(tarjetas);
+    }
+
+    /** Tarjeta de un descuento: cuánto, nombre y estado, la regla en una frase y sus botones. */
+    private Node tarjeta(DescuentoDTO d) {
+        Label valor = new Label("−" + (d.getTipo() == TipoDescuento.MONTO_FIJO
+                ? String.format("$%,.0f", d.getValor()) : DescripcionDescuento.valor(d.getTipo(), d.getValor())));
+        valor.getStyleClass().add("descuento-valor");
+
+        Label nombre = new Label(d.getNombre());
+        nombre.getStyleClass().add("descuento-nombre");
+        Label estado = new Label(d.getEstado().getEtiqueta());
+        estado.getStyleClass().addAll("estado-chip", switch (d.getEstado()) {
+            case ACTIVO -> "estado-activo";
+            case DESACTIVADO -> "estado-pausado";
+            case VENCIDO -> "estado-vencido";
+        });
+        HBox encabezado = new HBox(10, nombre, estado);
+        encabezado.setAlignment(Pos.CENTER_LEFT);
+
+        Label regla = new Label(DescripcionDescuento.resumen(d));
+        regla.getStyleClass().add("descuento-detalle");
+        regla.setWrapText(true);
+        VBox texto = new VBox(6, encabezado, regla);
+        HBox.setHgrow(texto, Priority.ALWAYS);
+
+        Button editar = boton("Editar", "boton-azul-claro", () -> abrirModal(d));
+        Button pausar = boton(d.isActivo() ? "Pausar" : "Activar", "boton-texto-gris", () -> cambiarActivo(d));
+        Button eliminar = boton("Eliminar", "boton-texto-rojo", () -> eliminar(d));
+        VBox acciones = new VBox(4, editar, pausar);
+        if (d.getFechaInicio() != null || d.getFechaFin() != null || d.getCotizarHasta() != null) {
+            acciones.getChildren().add(boton("Repetir el próximo año", "boton-texto-gris", () -> duplicar(d)));
+        }
+        acciones.getChildren().add(eliminar);
+        acciones.getChildren().forEach(b -> ((Button) b).setMaxWidth(Double.MAX_VALUE));
+        acciones.setMinWidth(170);
+
+        HBox tarjeta = new HBox(18, valor, texto, acciones);
+        tarjeta.setAlignment(Pos.CENTER_LEFT);
+        tarjeta.getStyleClass().add("tarjeta-descuento");
+        tarjeta.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                abrirModal(d);
+            }
+        });
+        return tarjeta;
+    }
+
+    private static Button boton(String texto, String estilo, Runnable accion) {
+        Button boton = new Button(texto);
+        boton.getStyleClass().add(estilo);
+        boton.setOnAction(e -> accion.run());
+        return boton;
+    }
+
+    private static Label vacia(String mensaje) {
+        Label label = new Label(mensaje);
+        label.getStyleClass().add("lista-vacia");
+        label.setMaxWidth(Double.MAX_VALUE);
+        label.setAlignment(Pos.CENTER);
+        return label;
     }
 
     private static boolean contiene(String valor, String texto) {
         return valor != null && valor.toLowerCase().contains(texto);
-    }
-
-    private void actualizarSeleccion(DescuentoDTO elegido) {
-        boolean hay = elegido != null;
-        btnEditar.setDisable(!hay);
-        btnActivar.setDisable(!hay);
-        btnEliminar.setDisable(!hay);
-        btnDuplicar.setDisable(!hay || (elegido.getFechaInicio() == null && elegido.getFechaFin() == null
-                && elegido.getCotizarHasta() == null));
-        btnActivar.setText(hay && !elegido.isActivo() ? "Activar" : "Desactivar");
-        lblResumen.setText(hay ? DescripcionDescuento.resumen(elegido)
-                : "Elija un descuento para ver cómo se aplica.");
-    }
-
-    private DescuentoDTO elegido() {
-        return tablaDescuentos.getSelectionModel().getSelectedItem();
     }
 
     @FXML
@@ -222,17 +195,7 @@ public class DescuentosController {
         abrirModal(null);
     }
 
-    @FXML
-    private void editar() {
-        if (elegido() != null) {
-            abrirModal(elegido());
-        }
-    }
-
-    @FXML
-    private void cambiarActivo() {
-        DescuentoDTO d = elegido();
-        if (d == null) return;
+    private void cambiarActivo(DescuentoDTO d) {
         try {
             gestionarDescuentoUseCase.cambiarActivo(d.getId(), !d.isActivo());
             cargar(d.getId());
@@ -242,10 +205,7 @@ public class DescuentosController {
         }
     }
 
-    @FXML
-    private void duplicar() {
-        DescuentoDTO d = elegido();
-        if (d == null) return;
+    private void duplicar(DescuentoDTO d) {
         try {
             DescuentoDTO copia = gestionarDescuentoUseCase.duplicarAlSiguienteAnio(d.getId());
             cargar(copia.getId());
@@ -259,15 +219,12 @@ public class DescuentosController {
         }
     }
 
-    @FXML
-    private void eliminar() {
-        DescuentoDTO d = elegido();
-        if (d == null) return;
+    private void eliminar(DescuentoDTO d) {
         Alert confirmar = new Alert(Alert.AlertType.CONFIRMATION);
         confirmar.setTitle("Eliminar descuento");
         confirmar.setHeaderText("¿Eliminar el descuento «" + d.getNombre() + "»?");
         confirmar.setContentText("Las cotizaciones que ya lo tienen conservan su precio. "
-                + "Si solo quiere pausarlo, use «Desactivar».");
+                + "Si solo quiere dejar de usarlo por un tiempo, use «Pausar».");
         Optional<ButtonType> respuesta = confirmar.showAndWait();
         if (respuesta.isEmpty() || respuesta.get() != ButtonType.OK) return;
         try {

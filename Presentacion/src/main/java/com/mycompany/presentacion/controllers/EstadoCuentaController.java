@@ -144,15 +144,18 @@ public class EstadoCuentaController {
 
         // Presupuesto
         ObservableList<String> itemsPresupuesto = FXCollections.observableArrayList();
-        itemsPresupuesto.add(String.format("Paquete Base (%s): $%,.2f", dto.getNombrePaqueteBase(), dto.getPrecioPaqueteBase()));
-        if (dto.getDescuentoPaqueteMonto() > 0) {
-            itemsPresupuesto.add(String.format("    Incluye descuento «%s»: −$%,.2f (precio de lista $%,.2f)",
-                dto.getDescuentoPaqueteNombre(), dto.getDescuentoPaqueteMonto(), dto.getPrecioListaPaquete()));
-        }
+        // Como un ticket: el paquete a su precio de lista, los extras y al final el descuento.
+        boolean conDescuento = dto.getDescuentoPaqueteMonto() > 0;
+        itemsPresupuesto.add(String.format("Paquete Base (%s): $%,.2f", dto.getNombrePaqueteBase(),
+            conDescuento ? dto.getPrecioListaPaquete() : dto.getPrecioPaqueteBase()));
         if (dto.getServiciosExtrasOriginales() != null) {
             for (ServicioExtraDTO s : dto.getServiciosExtrasOriginales()) {
                 itemsPresupuesto.add(String.format("+ %d x %s ($%,.2f c/u): $%,.2f", s.getCantidad(), s.getNombre(), s.getPrecioUnitario(), s.getSubtotal()));
             }
+        }
+        if (conDescuento) {
+            itemsPresupuesto.add(String.format("− Descuento «%s»: −$%,.2f",
+                dto.getDescuentoPaqueteNombre(), dto.getDescuentoPaqueteMonto()));
         }
         listaPresupuesto.setItems(itemsPresupuesto);
 

@@ -140,9 +140,6 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Label fx:id="lblPrecioPaquete" text=" &#36;0.00" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1a82b8;"/>
                     </HBox>
-                    <!-- Solo cuando el paquete lleva descuento por la fecha del evento. -->
-                    <Label fx:id="lblDescuentoPaquete" visible="false" managed="false" wrapText="true"
-                           style="-fx-text-fill: #1e8449; -fx-font-weight: bold; -fx-background-color: #e9f7ef; -fx-background-radius: 6; -fx-padding: 4 8;"/>
                     <Label fx:id="lblDetallesPaquete" text="Los detalles aparecerán aquí" style="-fx-text-fill: #7f8c8d;"/>
                 </VBox>
             </VBox>
@@ -161,11 +158,34 @@
 
                 <Label text="Mantén presionada la tecla Ctrl para seleccionar varios extras" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
                 <ListView fx:id="listaServiciosExtras" VBox.vgrow="ALWAYS" prefHeight="150" minHeight="50" styleClass="lista-moderna" />
-                <HBox alignment="BOTTOM_RIGHT" spacing="20">
-                    <Label fx:id="lblSubtotalExtras" text="Subtotal Extras: $0.00" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
-                    <VBox alignment="CENTER_RIGHT">
-                        <Label text="TOTAL ESTIMADO" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;"/>
-                        <Label fx:id="lblTotalEstimado" text=" $0.00" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #1a82b8;"/>
+                <!-- Desglose como ticket: paquete, extras, descuento y total -->
+                <HBox alignment="BOTTOM_RIGHT">
+                    <VBox spacing="6" minWidth="380" maxWidth="440" HBox.hgrow="ALWAYS" styleClass="ticket">
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label fx:id="lblTicketPaquete" text="Paquete" styleClass="ticket-concepto"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblTicketPaqueteImporte" text="—" minWidth="-Infinity" styleClass="ticket-importe"/>
+                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="Servicios extra" styleClass="ticket-concepto"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblSubtotalExtras" text="\$0.00" minWidth="-Infinity" styleClass="ticket-importe"/>
+                        </HBox>
+                        <!-- Solo cuando el paquete lleva descuento por la fecha del evento -->
+                        <HBox fx:id="boxTicketDescuento" spacing="10" alignment="CENTER_LEFT" visible="false" managed="false">
+                            <Label fx:id="lblTicketDescuento" text="Descuento" wrapText="true" styleClass="ticket-descuento">
+                                <graphic>
+                                    <SVGPath content="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" fill="#1e8449" scaleX="0.6" scaleY="0.6"/>
+                                </graphic>
+                            </Label>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblTicketDescuentoImporte" minWidth="-Infinity" styleClass="ticket-descuento"/>
+                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="ticket-renglon-total">
+                            <Label text="TOTAL ESTIMADO" styleClass="ticket-total-titulo"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblTotalEstimado" text="\$0.00" minWidth="-Infinity" styleClass="ticket-total"/>
+                        </HBox>
                     </VBox>
                 </HBox>
             </VBox>

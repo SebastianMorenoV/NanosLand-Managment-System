@@ -1,6 +1,7 @@
 package com.mycompany.presentacion.utils;
 
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -53,10 +54,22 @@ public final class ModalHelper {
         double maxAlto = visual.getHeight() * MAX_FRACCION;
 
         // Medimos el tamaño preferido del contenido para decidir si necesita scroll.
+        // applyCss() no hace nada en un nodo que no está en una escena: sin estilos la
+        // medida salía más chica que la real y un modal alto podía quedar más grande que
+        // la pantalla (sin scroll y con los botones fuera de la vista). Por eso se mide
+        // dentro de una escena provisional.
+        Group medicion = null;
+        if (contenido.getScene() == null && contenido.getParent() == null) {
+            medicion = new Group(contenido);
+            new Scene(medicion);
+        }
         contenido.applyCss();
         contenido.autosize();
         double prefAncho = contenido.prefWidth(-1);
         double prefAlto = contenido.prefHeight(prefAncho);
+        if (medicion != null) {
+            medicion.getChildren().clear();
+        }
 
         boolean excedeAncho = prefAncho > maxAncho;
         boolean excedeAlto = prefAlto > maxAlto;

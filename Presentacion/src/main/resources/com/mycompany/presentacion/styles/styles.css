@@ -975,3 +975,257 @@
     -fx-pref-width: 44px;
     -fx-pref-height: 44px;
 }
+
+/* =================================================== */
+/* 18. OPCIONES QUE SE ELIGEN CON UN CLIC              */
+/* =================================================== */
+/* Pestañas de filtro de una lista (ej. Activos / Pausados / Vencidos) */
+.pestana {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 14px;
+    -fx-cursor: hand;
+}
+
+.pestana:hover {
+    -fx-background-color: #dfe6e9;
+}
+
+.pestana:selected {
+    -fx-background-color: #1a82b8;
+    -fx-text-fill: white;
+}
+
+/* Pastilla seleccionable (días de la semana, paquetes, sí / no) */
+.opcion-pastilla {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #ccd4db;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 13px;
+    -fx-padding: 5px 12px;
+    -fx-cursor: hand;
+}
+
+.opcion-pastilla:hover {
+    -fx-border-color: #1a82b8;
+}
+
+.opcion-pastilla:selected {
+    -fx-background-color: #1a82b8;
+    -fx-border-color: #1a82b8;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.opcion-pastilla:disabled {
+    -fx-opacity: 0.5;
+}
+
+/* Día de la semana: todas las pastillas del mismo ancho */
+.opcion-dia {
+    -fx-min-width: 46px;
+    -fx-padding: 5px 8px;
+    -fx-alignment: center;
+}
+
+/* Enlace de atajo (ej. "Lunes a jueves") */
+.enlace-rapido {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1a82b8;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 6px;
+    -fx-cursor: hand;
+}
+
+.enlace-rapido:hover {
+    -fx-underline: true;
+}
+
+/* =================================================== */
+/* 19. FORMULARIO POR PASOS                            */
+/* =================================================== */
+/* Fondo de referencia blanco: así el texto de los controles queda oscuro aunque
+   el contenido termine dentro de un ScrollPane transparente (con fondo
+   transparente JavaFX calcula el texto en blanco). */
+.fondo-blanco {
+    -fx-background-color: #ffffff;
+    -fx-background: #ffffff;
+}
+
+.paso-numero {
+    -fx-background-color: #1a82b8;
+    -fx-background-radius: 12px;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-min-width: 24px;
+    -fx-max-width: 24px;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
+}
+
+.paso-titulo {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.texto-normal {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 13px;
+}
+
+.texto-ayuda {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+}
+
+/* Cantidad con su unidad ($ o %) */
+.text-field-moderno.campo-cantidad {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 5px 10px;
+}
+
+.unidad-cantidad {
+    -fx-text-fill: #1a82b8;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* Lo que falta capturar (naranja, como los avisos del modal de paquetes) */
+.aviso-falta {
+    -fx-text-fill: #b9770e;
+    -fx-background-color: #fef5e7;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 10px;
+    -fx-font-size: 12px;
+}
+
+/* Columna de vista previa de un formulario */
+.vista-previa {
+    -fx-background-color: #f4f7fa;
+    -fx-background: #f4f7fa;
+    -fx-background-radius: 10px;
+    -fx-padding: 14px;
+}
+
+/* =================================================== */
+/* 20. TICKET (DESGLOSE DE IMPORTES)                   */
+/* =================================================== */
+.ticket {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #ccd4db;
+    -fx-border-style: segments(6, 4);
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 16px;
+}
+
+.ticket-concepto {
+    -fx-text-fill: #4e5b69;
+    -fx-font-size: 13px;
+}
+
+.ticket-importe {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.ticket-descuento {
+    -fx-text-fill: #1e8449;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* Renglón del total: línea punteada arriba */
+.ticket-renglon-total {
+    -fx-border-color: #ccd4db;
+    -fx-border-width: 1px 0 0 0;
+    -fx-border-style: segments(4, 3);
+    -fx-padding: 8px 0 0 0;
+}
+
+.ticket-total-titulo {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.ticket-total {
+    -fx-text-fill: #1a82b8;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+/* =================================================== */
+/* 21. LISTA DE DESCUENTOS                             */
+/* =================================================== */
+.tarjeta-descuento {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dadddf;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 14px 18px;
+}
+
+.tarjeta-descuento:hover {
+    -fx-border-color: #1a82b8;
+}
+
+.descuento-valor {
+    -fx-background-color: #e8f4fa;
+    -fx-background-radius: 10px;
+    -fx-text-fill: #1a82b8;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-min-width: 110px;
+    -fx-padding: 14px 10px;
+}
+
+.descuento-nombre {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.descuento-detalle {
+    -fx-text-fill: #4e5b69;
+    -fx-font-size: 13px;
+}
+
+.estado-chip {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10px;
+    -fx-padding: 2px 9px;
+}
+
+.estado-activo {
+    -fx-background-color: #e9f7ef;
+    -fx-text-fill: #1e8449;
+}
+
+.estado-pausado {
+    -fx-background-color: #ecf0f1;
+    -fx-text-fill: #7f8c8d;
+}
+
+.estado-vencido {
+    -fx-background-color: #fdf0f0;
+    -fx-text-fill: #c0392b;
+}
+
+.lista-vacia {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 14px;
+    -fx-padding: 40px 0;
+}

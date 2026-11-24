@@ -105,14 +105,6 @@ public class GenerarComprobanteUseCase {
             if (cotizacion.getPersonas() != null) {
                 addRow(datos, "PERSONAS:", String.valueOf(cotizacion.getPersonas()), boldFont, normalFont);
             }
-            var precioPaquete = com.example.negocio.precio.CalcularPrecioPaqueteUseCase.pactado(cotizacion);
-            if (paquete != null && precioPaquete.tieneDescuento()) {
-                addRow(datos, "PRECIO DE LISTA:", money.format(precioPaquete.precioLista()), boldFont, normalFont);
-                addRow(datos, "DESCUENTO:", precioPaquete.descuento() + "  -" + money.format(precioPaquete.montoDescuento()),
-                        boldFont, normalFont);
-                addRow(datos, "PRECIO PAQUETE:", money.format(precioPaquete.precio()), boldFont, normalFont);
-            }
-
             document.add(datos);
             document.add(new Paragraph(" "));
 
@@ -135,6 +127,13 @@ public class GenerarComprobanteUseCase {
             totales.setWidthPercentage(100);
             totales.setWidths(new int[]{1, 2});
 
+            // Como en un ticket: subtotal, el descuento del paquete y el total.
+            var precioPaquete = com.example.negocio.precio.CalcularPrecioPaqueteUseCase.pactado(cotizacion);
+            if (paquete != null && precioPaquete.tieneDescuento()) {
+                addRow(totales, "SUBTOTAL:", money.format(total + precioPaquete.montoDescuento()), boldFont, normalFont);
+                addRow(totales, "DESCUENTO:", "-" + money.format(precioPaquete.montoDescuento())
+                        + " (" + precioPaquete.descuento() + ")", boldFont, normalFont);
+            }
             addRow(totales, "TOTAL:", money.format(total), boldFont, normalFont);
             addRow(totales, "ANTICIPO:", money.format(anticipo), boldFont, normalFont);
             addRow(totales, "SALDO PENDIENTE:", money.format(saldo), boldFont, normalFont);

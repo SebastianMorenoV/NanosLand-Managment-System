@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -22,13 +23,14 @@ import java.util.Map;
 import java.util.Set;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
-import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -39,8 +41,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
 
 /**
- * Alta y edición de un descuento: tipo y valor, paquetes, días de la semana, temporada
- * y fecha límite para cotizar. Muestra en una frase cómo quedará la regla. Una instancia
+ * Alta y edición de un descuento, como preguntas numeradas que se contestan con clics:
+ * cuánto, a qué paquetes, qué días, en qué fechas y hasta cuándo se cotiza. A la derecha
+ * muestra cómo queda un paquete de ejemplo en el ticket de la cotización. Una instancia
  * por ventana.
  */
 @Controller
@@ -50,63 +53,88 @@ public class DescuentoModalController {
 
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter LECTURA_FECHA = DateTimeFormatter.ofPattern("d/M/uuuu");
-    /** Precio de ejemplo para mostrar en el resumen cuánto queda un paquete. */
-    private static final double PRECIO_EJEMPLO = 10_000;
+    private static final String[] NOMBRES_DIAS = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
 
     private final GestionarDescuentoUseCase gestionarDescuentoUseCase;
     private final ConsultarPaquetesUseCase consultarPaquetesUseCase;
 
     @FXML private Label lblTitulo;
     @FXML private TextField txtNombre;
-    @FXML private CheckBox chkActivo;
-    @FXML private RadioButton rbPorcentaje;
-    @FXML private RadioButton rbMontoFijo;
-    @FXML private Label lblValor;
+    @FXML private ToggleButton opPorcentaje;
+    @FXML private ToggleButton opMontoFijo;
+    @FXML private Label lblUnidadAntes;
     @FXML private TextField txtValor;
-    @FXML private RadioButton rbTodosPaquetes;
-    @FXML private RadioButton rbAlgunosPaquetes;
+    @FXML private Label lblUnidadDespues;
+    @FXML private ToggleButton opTodosPaquetes;
+    @FXML private ToggleButton opAlgunosPaquetes;
     @FXML private FlowPane boxPaquetes;
     @FXML private HBox boxDias;
+    @FXML private ToggleButton opTodoElAnio;
+    @FXML private ToggleButton opTemporada;
     @FXML private DatePicker dpInicio;
     @FXML private DatePicker dpFin;
+    @FXML private ToggleButton opSinLimite;
+    @FXML private ToggleButton opHastaFecha;
     @FXML private DatePicker dpCotizarHasta;
+
+    @FXML private ComboBox<PaqueteDTO> cmbEjemplo;
+    @FXML private Label lblEjemploPaquete;
+    @FXML private Label lblEjemploPrecio;
+    @FXML private HBox boxEjemploDescuento;
+    @FXML private Label lblEjemploDescuento;
+    @FXML private Label lblEjemploMonto;
+    @FXML private Label lblEjemploTotal;
+    @FXML private Label lblEjemploNota;
     @FXML private Label lblResumen;
+    @FXML private Label lblAviso;
 
     private DescuentoDTO descuentoAEditar;
     /** El descuento guardado al cerrar, o {@code null} si se canceló. */
     @Getter
     private DescuentoDTO guardado;
 
-    private final Map<DayOfWeek, CheckBox> dias = new EnumMap<>(DayOfWeek.class);
-    /** Casilla y nombre de cada paquete que se puede elegir, por id. */
-    private final Map<Long, CheckBox> paquetes = new LinkedHashMap<>();
+    private final Map<DayOfWeek, ToggleButton> dias = new EnumMap<>(DayOfWeek.class);
+    /** Pastilla de cada paquete, por id. */
+    private final Map<Long, ToggleButton> paquetes = new LinkedHashMap<>();
+    /** Paquetes elegidos en "Solo algunos" (se recuerdan aunque se cambie a "Todos"). */
+    private final Set<Long> paquetesElegidos = new HashSet<>();
+    /** Mientras se pintan las pastillas por código no se toman como elección del usuario. */
+    private boolean pintandoPaquetes;
 
     @FXML
     public void initialize() {
+        txtValor.getStyleClass().add("campo-cantidad");
         txtValor.setTextFormatter(new TextFormatter<>(change ->
             change.getControlNewText().matches("\\d{0,7}(\\.\\d{0,2})?") ? change : null));
 
-        ToggleGroup grupoTipo = new ToggleGroup();
-        rbPorcentaje.setToggleGroup(grupoTipo);
-        rbMontoFijo.setToggleGroup(grupoTipo);
-        grupoTipo.selectedToggleProperty().addListener((obs, anterior, nuevo) -> aplicarTipo());
-
-        ToggleGroup grupoPaquetes = new ToggleGroup();
-        rbTodosPaquetes.setToggleGroup(grupoPaquetes);
-        rbAlgunosPaquetes.setToggleGroup(grupoPaquetes);
-        grupoPaquetes.selectedToggleProperty().addListener((obs, anterior, nuevo) -> aplicarPaquetes());
+        grupo(opPorcentaje, opMontoFijo).selectedToggleProperty().addListener((obs, a, b) -> aplicarTipo());
+        grupo(opTodosPaquetes, opAlgunosPaquetes).selectedToggleProperty().addListener((obs, a, b) -> aplicarPaquetes());
+        grupo(opTodoElAnio, opTemporada).selectedToggleProperty().addListener((obs, a, b) -> aplicarFechas());
+        grupo(opSinLimite, opHastaFecha).selectedToggleProperty().addListener((obs, a, b) -> aplicarFechas());
 
         for (DayOfWeek dia : DayOfWeek.values()) {
-            CheckBox casilla = new CheckBox(DescripcionDescuento.nombreCortoDia(dia));
-            casilla.setSelected(true);
-            casilla.selectedProperty().addListener((obs, antes, ahora) -> actualizarResumen());
-            dias.put(dia, casilla);
-            boxDias.getChildren().add(casilla);
+            ToggleButton boton = new ToggleButton(DescripcionDescuento.nombreCortoDia(dia));
+            boton.getStyleClass().addAll("opcion-pastilla", "opcion-dia");
+            boton.setTooltip(new Tooltip(NOMBRES_DIAS[dia.getValue() - 1]));
+            boton.setSelected(true);
+            boton.selectedProperty().addListener((obs, antes, ahora) -> actualizarVistaPrevia());
+            dias.put(dia, boton);
+            boxDias.getChildren().add(boton);
         }
 
         List<PaqueteDTO> activos = new ArrayList<>(consultarPaquetesUseCase.obtenerPaquetesActivos());
         activos.sort(Comparator.comparing(PaqueteDTO::getNombre, String.CASE_INSENSITIVE_ORDER));
         activos.forEach(p -> agregarPaquete(p.getId(), p.getNombre()));
+
+        cmbEjemplo.getItems().setAll(activos);
+        cmbEjemplo.setConverter(new StringConverter<>() {
+            @Override public String toString(PaqueteDTO p) { return p == null ? "" : p.getNombre(); }
+            @Override public PaqueteDTO fromString(String s) { return null; }
+        });
+        if (!activos.isEmpty()) {
+            cmbEjemplo.setValue(activos.get(0));
+        }
+        cmbEjemplo.valueProperty().addListener((obs, antes, ahora) -> actualizarVistaPrevia());
 
         for (DatePicker dp : List.of(dpInicio, dpFin, dpCotizarHasta)) {
             dp.setConverter(new StringConverter<>() {
@@ -120,13 +148,29 @@ public class DescuentoModalController {
                     }
                 }
             });
-            dp.valueProperty().addListener((obs, antes, ahora) -> actualizarResumen());
+            dp.valueProperty().addListener((obs, antes, ahora) -> actualizarVistaPrevia());
+            dp.setTooltip(new Tooltip("Elíjala en el calendario o escríbala como 01/12/2026"));
         }
 
-        txtNombre.textProperty().addListener((obs, antes, ahora) -> actualizarResumen());
-        txtValor.textProperty().addListener((obs, antes, ahora) -> actualizarResumen());
+        txtNombre.textProperty().addListener((obs, antes, ahora) -> actualizarVistaPrevia());
+        txtValor.textProperty().addListener((obs, antes, ahora) -> actualizarVistaPrevia());
         aplicarTipo();
         aplicarPaquetes();
+        aplicarFechas();
+    }
+
+    /** Agrupa opciones excluyentes; siempre queda una elegida (un clic en la elegida no la apaga). */
+    private static ToggleGroup grupo(ToggleButton... opciones) {
+        ToggleGroup grupo = new ToggleGroup();
+        for (ToggleButton opcion : opciones) {
+            opcion.setToggleGroup(grupo);
+        }
+        grupo.selectedToggleProperty().addListener((obs, anterior, nueva) -> {
+            if (nueva == null && anterior != null) {
+                anterior.setSelected(true);
+            }
+        });
+        return grupo;
     }
 
     /** Llena el formulario con un descuento guardado. */
@@ -134,45 +178,81 @@ public class DescuentoModalController {
         this.descuentoAEditar = descuento;
         lblTitulo.setText("Editar descuento");
         txtNombre.setText(descuento.getNombre());
-        chkActivo.setSelected(descuento.isActivo());
-        (descuento.getTipo() == TipoDescuento.MONTO_FIJO ? rbMontoFijo : rbPorcentaje).setSelected(true);
+        (descuento.getTipo() == TipoDescuento.MONTO_FIJO ? opMontoFijo : opPorcentaje).setSelected(true);
         txtValor.setText(formatoValor(descuento.getValor()));
 
-        (descuento.isTodosLosPaquetes() ? rbTodosPaquetes : rbAlgunosPaquetes).setSelected(true);
         List<Long> ids = descuento.getPaqueteIds();
         for (int i = 0; i < ids.size(); i++) {
             // Un paquete dado de baja después sigue en la lista para poder quitarlo.
             if (!paquetes.containsKey(ids.get(i))) {
                 agregarPaquete(ids.get(i), descuento.getPaqueteNombres().get(i));
             }
-            paquetes.get(ids.get(i)).setSelected(true);
         }
+        paquetesElegidos.clear();
+        paquetesElegidos.addAll(ids);
+        (descuento.isTodosLosPaquetes() ? opTodosPaquetes : opAlgunosPaquetes).setSelected(true);
+        aplicarPaquetes();
+        cmbEjemplo.getItems().stream()
+                .filter(p -> descuento.isTodosLosPaquetes() || ids.contains(p.getId()))
+                .findFirst()
+                .ifPresent(cmbEjemplo::setValue);
 
         Set<DayOfWeek> guardados = descuento.getDias();
-        dias.forEach((dia, casilla) -> casilla.setSelected(guardados == null || guardados.isEmpty() || guardados.contains(dia)));
+        dias.forEach((dia, boton) -> boton.setSelected(guardados == null || guardados.isEmpty() || guardados.contains(dia)));
+
         dpInicio.setValue(descuento.getFechaInicio());
         dpFin.setValue(descuento.getFechaFin());
         dpCotizarHasta.setValue(descuento.getCotizarHasta());
-        aplicarPaquetes();
+        (descuento.getFechaInicio() != null || descuento.getFechaFin() != null ? opTemporada : opTodoElAnio).setSelected(true);
+        (descuento.getCotizarHasta() != null ? opHastaFecha : opSinLimite).setSelected(true);
+        aplicarFechas();
     }
 
     private void agregarPaquete(Long id, String nombre) {
-        CheckBox casilla = new CheckBox(nombre);
-        casilla.selectedProperty().addListener((obs, antes, ahora) -> actualizarResumen());
-        paquetes.put(id, casilla);
-        boxPaquetes.getChildren().add(casilla);
+        ToggleButton boton = new ToggleButton(nombre);
+        boton.getStyleClass().add("opcion-pastilla");
+        boton.selectedProperty().addListener((obs, antes, ahora) -> {
+            if (pintandoPaquetes) return;
+            if (ahora) paquetesElegidos.add(id); else paquetesElegidos.remove(id);
+            actualizarVistaPrevia();
+        });
+        paquetes.put(id, boton);
+        boxPaquetes.getChildren().add(boton);
     }
 
     private void aplicarTipo() {
-        boolean porcentaje = rbPorcentaje.isSelected();
-        lblValor.setText(porcentaje ? "Porcentaje" : "Monto en pesos");
-        txtValor.setPromptText(porcentaje ? "Ej: 15" : "Ej: 1000.00");
-        actualizarResumen();
+        boolean porcentaje = opPorcentaje.isSelected();
+        lblUnidadAntes.setVisible(!porcentaje);
+        lblUnidadAntes.setManaged(!porcentaje);
+        lblUnidadDespues.setVisible(porcentaje);
+        lblUnidadDespues.setManaged(porcentaje);
+        txtValor.setPromptText(porcentaje ? "15" : "1000");
+        actualizarVistaPrevia();
     }
 
+    /**
+     * Con "Todos los paquetes" las pastillas se ven todas marcadas y no se pueden tocar;
+     * con "Solo algunos" muestran lo que se eligió.
+     */
     private void aplicarPaquetes() {
-        boxPaquetes.setDisable(!rbAlgunosPaquetes.isSelected());
-        actualizarResumen();
+        boolean todos = opTodosPaquetes.isSelected();
+        pintandoPaquetes = true;
+        try {
+            paquetes.forEach((id, boton) -> {
+                boton.setSelected(todos || paquetesElegidos.contains(id));
+                boton.setDisable(todos);
+            });
+        } finally {
+            pintandoPaquetes = false;
+        }
+        actualizarVistaPrevia();
+    }
+
+    private void aplicarFechas() {
+        dpInicio.setDisable(!opTemporada.isSelected());
+        dpFin.setDisable(!opTemporada.isSelected());
+        dpCotizarHasta.setDisable(!opHastaFecha.isSelected());
+        actualizarVistaPrevia();
     }
 
     @FXML
@@ -191,45 +271,93 @@ public class DescuentoModalController {
     }
 
     private void marcarDias(Set<DayOfWeek> elegidos) {
-        dias.forEach((dia, casilla) -> casilla.setSelected(elegidos.contains(dia)));
+        dias.forEach((dia, boton) -> boton.setSelected(elegidos.contains(dia)));
     }
 
-    /** La regla tal como está capturada, en una frase, con un ejemplo de cuánto queda un paquete. */
-    private void actualizarResumen() {
-        if (lblResumen == null || txtValor == null) return;
+    /** Ticket de ejemplo, la regla en una frase y lo que falta contestar. */
+    private void actualizarVistaPrevia() {
+        if (lblResumen == null || cmbEjemplo == null || lblAviso == null) return;
         DescuentoDTO dto = leerFormulario(false);
-        String aviso = aviso(dto);
-        if (aviso != null) {
-            lblResumen.setText(aviso);
+        List<String> faltan = faltantes(dto);
+
+        lblAviso.setText(faltan.isEmpty() ? "" : "Falta: " + DescripcionDescuento.lista(faltan) + ".");
+        lblAviso.setVisible(!faltan.isEmpty());
+        lblAviso.setManaged(!faltan.isEmpty());
+        boolean valorValido = dto.getValor() > 0
+                && !(dto.getTipo() == TipoDescuento.PORCENTAJE && dto.getValor() > 100);
+        lblResumen.setText(valorValido && !dto.getDias().isEmpty()
+                && (dto.isTodosLosPaquetes() || !dto.getPaqueteIds().isEmpty())
+                ? DescripcionDescuento.resumen(dto) : "Conteste las preguntas para ver el resumen.");
+
+        PaqueteDTO ejemplo = cmbEjemplo.getValue();
+        if (ejemplo == null) {
+            lblEjemploPaquete.setText("Sin paquetes en el catálogo");
+            lblEjemploPrecio.setText("");
+            lblEjemploTotal.setText("");
+            mostrarDescuentoEjemplo(false);
+            lblEjemploNota.setText("");
             return;
         }
-        double monto = dto.getTipo() == TipoDescuento.MONTO_FIJO
-                ? Math.min(dto.getValor(), PRECIO_EJEMPLO)
-                : PRECIO_EJEMPLO * dto.getValor() / 100.0;
-        lblResumen.setText(DescripcionDescuento.resumen(dto) + String.format(
-                "%nEjemplo: un paquete de $%,.2f queda en $%,.2f.", PRECIO_EJEMPLO, PRECIO_EJEMPLO - monto));
+        double precio = ejemplo.getPrecioDesde();
+        boolean aplica = dto.isTodosLosPaquetes() || dto.getPaqueteIds().contains(ejemplo.getId());
+        double monto = !valorValido || !aplica ? 0
+                : dto.getTipo() == TipoDescuento.MONTO_FIJO
+                    ? Math.min(dto.getValor(), precio)
+                    : Math.round(precio * dto.getValor()) / 100.0;
+
+        lblEjemploPaquete.setText(ejemplo.getNombre());
+        lblEjemploPrecio.setText(dinero(precio));
+        mostrarDescuentoEjemplo(monto > 0);
+        String nombre = dto.getNombre().isEmpty() ? "Descuento" : "Descuento «" + dto.getNombre() + "»";
+        lblEjemploDescuento.setText(nombre);
+        lblEjemploMonto.setText("−" + dinero(monto));
+        lblEjemploTotal.setText(dinero(precio - monto));
+
+        List<String> notas = new ArrayList<>();
+        if (!aplica) {
+            notas.add("Este paquete no lleva el descuento.");
+        }
+        if (ejemplo.isTablaPrecios()) {
+            notas.add("Con el precio más bajo de su tabla.");
+        }
+        lblEjemploNota.setText(String.join(" ", notas));
+        lblEjemploNota.setVisible(!notas.isEmpty());
+        lblEjemploNota.setManaged(!notas.isEmpty());
     }
 
-    /** Lo que falta capturar para que la regla tenga sentido, o {@code null} si está completa. */
-    private String aviso(DescuentoDTO dto) {
+    private void mostrarDescuentoEjemplo(boolean visible) {
+        boxEjemploDescuento.setVisible(visible);
+        boxEjemploDescuento.setManaged(visible);
+    }
+
+    /** Lo que falta contestar, en palabras; vacío si todo está completo. */
+    private List<String> faltantes(DescuentoDTO dto) {
+        List<String> faltan = new ArrayList<>();
+        if (dto.getNombre().isEmpty()) {
+            faltan.add("el nombre");
+        }
         if (dto.getValor() <= 0) {
-            return dto.getTipo() == TipoDescuento.PORCENTAJE
-                    ? "Escriba el porcentaje de descuento." : "Escriba el monto de descuento.";
-        }
-        if (dto.getTipo() == TipoDescuento.PORCENTAJE && dto.getValor() > 100) {
-            return "El porcentaje no puede pasar de 100.";
-        }
-        if (dto.getDias().isEmpty()) {
-            return "Elija al menos un día de la semana.";
+            faltan.add(dto.getTipo() == TipoDescuento.PORCENTAJE ? "el porcentaje" : "la cantidad");
+        } else if (dto.getTipo() == TipoDescuento.PORCENTAJE && dto.getValor() > 100) {
+            faltan.add("un porcentaje de 100 o menos");
         }
         if (!dto.isTodosLosPaquetes() && dto.getPaqueteIds().isEmpty()) {
-            return "Elija al menos un paquete.";
+            faltan.add("elegir al menos un paquete");
         }
-        return null;
+        if (dto.getDias().isEmpty()) {
+            faltan.add("elegir al menos un día");
+        }
+        if (opTemporada.isSelected() && dpInicio.getValue() == null && dpFin.getValue() == null) {
+            faltan.add("las fechas de la temporada");
+        }
+        if (opHastaFecha.isSelected() && dpCotizarHasta.getValue() == null) {
+            faltan.add("el último día para cotizar");
+        }
+        return faltan;
     }
 
     /**
-     * Arma el DTO con lo capturado. Con {@code confirmarFechas} también toma el texto escrito
+     * Arma el DTO con lo contestado. Con {@code confirmarFechas} también toma el texto escrito
      * en las fechas que aún no se confirmó con Enter.
      *
      * @throws DateTimeParseException si {@code confirmarFechas} y una fecha está mal escrita
@@ -237,33 +365,38 @@ public class DescuentoModalController {
     private DescuentoDTO leerFormulario(boolean confirmarFechas) {
         DescuentoDTO dto = new DescuentoDTO();
         dto.setNombre(txtNombre.getText() == null ? "" : txtNombre.getText().trim());
-        dto.setActivo(chkActivo.isSelected());
-        dto.setTipo(rbMontoFijo.isSelected() ? TipoDescuento.MONTO_FIJO : TipoDescuento.PORCENTAJE);
+        // El interruptor se maneja desde la lista: uno nuevo nace activo y uno editado conserva su estado.
+        dto.setActivo(descuentoAEditar == null || descuentoAEditar.isActivo());
+        dto.setTipo(opMontoFijo.isSelected() ? TipoDescuento.MONTO_FIJO : TipoDescuento.PORCENTAJE);
         dto.setValor(numero(txtValor.getText()));
 
         EnumSet<DayOfWeek> elegidos = EnumSet.noneOf(DayOfWeek.class);
-        dias.forEach((dia, casilla) -> {
-            if (casilla.isSelected()) elegidos.add(dia);
+        dias.forEach((dia, boton) -> {
+            if (boton.isSelected()) elegidos.add(dia);
         });
         dto.setDias(elegidos);
 
-        dto.setTodosLosPaquetes(rbTodosPaquetes.isSelected());
+        dto.setTodosLosPaquetes(opTodosPaquetes.isSelected());
         List<Long> ids = new ArrayList<>();
         List<String> nombres = new ArrayList<>();
         if (!dto.isTodosLosPaquetes()) {
-            paquetes.forEach((id, casilla) -> {
-                if (casilla.isSelected()) {
+            paquetes.forEach((id, boton) -> {
+                if (paquetesElegidos.contains(id)) {
                     ids.add(id);
-                    nombres.add(casilla.getText());
+                    nombres.add(boton.getText());
                 }
             });
         }
         dto.setPaqueteIds(ids);
         dto.setPaqueteNombres(nombres);
 
-        dto.setFechaInicio(confirmarFechas ? confirmar(dpInicio) : dpInicio.getValue());
-        dto.setFechaFin(confirmarFechas ? confirmar(dpFin) : dpFin.getValue());
-        dto.setCotizarHasta(confirmarFechas ? confirmar(dpCotizarHasta) : dpCotizarHasta.getValue());
+        if (opTemporada.isSelected()) {
+            dto.setFechaInicio(confirmarFechas ? confirmar(dpInicio) : dpInicio.getValue());
+            dto.setFechaFin(confirmarFechas ? confirmar(dpFin) : dpFin.getValue());
+        }
+        if (opHastaFecha.isSelected()) {
+            dto.setCotizarHasta(confirmarFechas ? confirmar(dpCotizarHasta) : dpCotizarHasta.getValue());
+        }
         return dto;
     }
 
@@ -289,16 +422,12 @@ public class DescuentoModalController {
         try {
             dto = leerFormulario(true);
         } catch (DateTimeParseException e) {
-            mostrarError("Escriba las fechas como día/mes/año, por ejemplo 01/12/2026, o déjelas vacías.");
+            mostrarError("Escriba las fechas como día/mes/año, por ejemplo 01/12/2026, o elíjalas en el calendario.");
             return;
         }
-        if (dto.getNombre().isEmpty()) {
-            mostrarError("Escriba un nombre para el descuento.");
-            return;
-        }
-        String aviso = aviso(dto);
-        if (aviso != null) {
-            mostrarError(aviso);
+        List<String> faltan = faltantes(dto);
+        if (!faltan.isEmpty()) {
+            mostrarError("Falta: " + DescripcionDescuento.lista(faltan) + ".");
             return;
         }
         try {
@@ -325,14 +454,18 @@ public class DescuentoModalController {
         }
     }
 
+    private static String dinero(double importe) {
+        return String.format("$%,.2f", importe);
+    }
+
     private static String formatoValor(double valor) {
         return valor == Math.rint(valor) ? String.valueOf((long) valor) : String.format(Locale.ROOT, "%.2f", valor);
     }
 
     private static void mostrarError(String mensaje) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Descuento");
-        alert.setHeaderText("Revise los datos");
+        alert.setHeaderText("Revise el descuento");
         alert.setContentText(mensaje);
         alert.showAndWait();
     }

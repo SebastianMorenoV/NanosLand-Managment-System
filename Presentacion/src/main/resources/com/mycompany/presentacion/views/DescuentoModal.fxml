@@ -3,79 +3,137 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="16" prefWidth="620" stylesheets="@../styles/styles.css" style="-fx-background-color: #ffffff;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.DescuentoModalController">
-    <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+<!-- Alta y edición de un descuento: preguntas numeradas a la izquierda y, a la derecha,
+     cómo queda en una cotización. Compacto para que quepa en pantallas con escalado
+     (unos 880 x 600). El estilo viene de styles.css (secciones 18 a 20). -->
+<HBox spacing="24" styleClass="fondo-blanco" stylesheets="@../styles/styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.DescuentoModalController">
+    <padding><Insets top="22" right="22" bottom="22" left="26"/></padding>
 
-    <VBox spacing="4">
-        <Label fx:id="lblTitulo" text="Nuevo descuento" styleClass="titulo-modal"/>
-        <Label text="Se resta del precio del paquete según la fecha del evento. Los servicios extra no llevan descuento." wrapText="true" styleClass="subtitulo-modal"/>
-    </VBox>
-
-    <HBox spacing="15" alignment="BOTTOM_LEFT">
-        <VBox spacing="5" HBox.hgrow="ALWAYS">
-            <Label text="Nombre" styleClass="label-pequeno"/>
-            <TextField fx:id="txtNombre" promptText="Ej: Entre semana, Diciembre 2026" styleClass="text-field-moderno"/>
+    <!-- ── PREGUNTAS ── -->
+    <VBox spacing="14" prefWidth="540" minWidth="540">
+        <VBox spacing="2">
+            <Label fx:id="lblTitulo" text="Nuevo descuento" styleClass="titulo-modal"/>
+            <Label text="Conteste las preguntas; a la derecha verá cómo queda en una cotización." styleClass="subtitulo-modal"/>
         </VBox>
-        <CheckBox fx:id="chkActivo" text="Activo" selected="true" style="-fx-padding: 0 0 8 0;"/>
-    </HBox>
 
-    <HBox spacing="15" alignment="BOTTOM_LEFT">
-        <VBox spacing="8">
-            <Label text="Tipo de descuento" styleClass="label-pequeno"/>
-            <HBox spacing="18" style="-fx-padding: 0 0 8 0;">
-                <RadioButton fx:id="rbPorcentaje" text="Porcentaje (%)" selected="true"/>
-                <RadioButton fx:id="rbMontoFijo" text="Monto fijo ($)"/>
-            </HBox>
-        </VBox>
-        <VBox spacing="5" HBox.hgrow="ALWAYS">
-            <Label fx:id="lblValor" text="Porcentaje" styleClass="label-pequeno"/>
-            <TextField fx:id="txtValor" promptText="Ej: 15" styleClass="text-field-moderno"/>
-        </VBox>
-    </HBox>
-
-    <VBox spacing="8">
-        <Label text="Paquetes" styleClass="label-pequeno"/>
-        <HBox spacing="18">
-            <RadioButton fx:id="rbTodosPaquetes" text="Todos los paquetes" selected="true"/>
-            <RadioButton fx:id="rbAlgunosPaquetes" text="Solo los que elija"/>
-        </HBox>
-        <!-- Sin ScrollPane: su fondo transparente vuelve blanco el texto de las casillas. -->
-        <FlowPane fx:id="boxPaquetes" hgap="18" vgap="8" prefWrapLength="520"
-                  style="-fx-background-color: #f8f9fa; -fx-background-radius: 6; -fx-border-color: #dadddf; -fx-border-radius: 6; -fx-padding: 10;"/>
-    </VBox>
-
-    <VBox spacing="8">
-        <Label text="Días del evento" styleClass="label-pequeno"/>
-        <HBox fx:id="boxDias" spacing="14" alignment="CENTER_LEFT"/>
-        <HBox spacing="6" alignment="CENTER_LEFT">
-            <Label text="Elegir:" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
-            <Button text="Todos" styleClass="boton-texto-gris" style="-fx-font-size: 12px; -fx-padding: 2 6;" onAction="#diasTodos"/>
-            <Button text="Lunes a jueves" styleClass="boton-texto-gris" style="-fx-font-size: 12px; -fx-padding: 2 6;" onAction="#diasEntreSemana"/>
-            <Button text="Viernes a domingo" styleClass="boton-texto-gris" style="-fx-font-size: 12px; -fx-padding: 2 6;" onAction="#diasFinDeSemana"/>
-        </HBox>
-    </VBox>
-
-    <HBox spacing="15">
-        <VBox spacing="5" HBox.hgrow="ALWAYS">
-            <Label text="Temporada (fechas del evento)" styleClass="label-pequeno"/>
+        <!-- 1. Nombre -->
+        <VBox spacing="6">
             <HBox spacing="8" alignment="CENTER_LEFT">
-                <DatePicker fx:id="dpInicio" promptText="Desde" prefWidth="140" styleClass="text-field-moderno"/>
-                <Label text="a" style="-fx-text-fill: #7f8c8d;"/>
-                <DatePicker fx:id="dpFin" promptText="Hasta" prefWidth="140" styleClass="text-field-moderno"/>
+                <Label text="1" styleClass="paso-numero"/>
+                <Label text="¿Cómo se llama?" styleClass="paso-titulo"/>
+                <Label text="El cliente lo verá en su cotización." styleClass="texto-ayuda"/>
             </HBox>
-            <Label text="Vacías: aplica en cualquier fecha." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+            <TextField fx:id="txtNombre" promptText="Ej. Entre semana, Diciembre 2026" styleClass="text-field-moderno"/>
         </VBox>
-        <VBox spacing="5">
-            <Label text="Se puede cotizar hasta" styleClass="label-pequeno"/>
-            <DatePicker fx:id="dpCotizarHasta" promptText="Sin límite" prefWidth="150" styleClass="text-field-moderno"/>
-            <Label text="Último día para cotizar con este precio." style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+
+        <!-- 2. Cuánto -->
+        <VBox spacing="6">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="2" styleClass="paso-numero"/>
+                <Label text="¿Cuánto se descuenta?" styleClass="paso-titulo"/>
+                <Label text="Solo al paquete; los extras no." styleClass="texto-ayuda"/>
+            </HBox>
+            <HBox spacing="6" alignment="CENTER_LEFT">
+                <ToggleButton fx:id="opPorcentaje" text="Porcentaje" selected="true" styleClass="opcion-pastilla"/>
+                <ToggleButton fx:id="opMontoFijo" text="Cantidad fija" styleClass="opcion-pastilla"/>
+                <Region minWidth="14"/>
+                <Label fx:id="lblUnidadAntes" text="\$" styleClass="unidad-cantidad"/>
+                <TextField fx:id="txtValor" prefWidth="110" styleClass="text-field-moderno"/>
+                <Label fx:id="lblUnidadDespues" text="\%" styleClass="unidad-cantidad"/>
+                <Label text="menos" styleClass="texto-normal"/>
+            </HBox>
         </VBox>
-    </HBox>
 
-    <Label fx:id="lblResumen" wrapText="true" maxWidth="Infinity" minHeight="-Infinity" styleClass="resumen-cobro" style="-fx-text-fill: #2c3e50;"/>
+        <!-- 3. Paquetes -->
+        <VBox spacing="6">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="3" styleClass="paso-numero"/>
+                <Label text="¿Para qué paquetes?" styleClass="paso-titulo"/>
+            </HBox>
+            <HBox spacing="6">
+                <ToggleButton fx:id="opTodosPaquetes" text="Todos los paquetes" selected="true" styleClass="opcion-pastilla"/>
+                <ToggleButton fx:id="opAlgunosPaquetes" text="Solo algunos" styleClass="opcion-pastilla"/>
+            </HBox>
+            <FlowPane fx:id="boxPaquetes" hgap="6" vgap="6" prefWrapLength="540"/>
+        </VBox>
 
-    <HBox alignment="CENTER_RIGHT" spacing="15">
-        <Button text="Cancelar" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
-        <Button text="Guardar descuento" styleClass="boton-azul" onAction="#guardar"/>
-    </HBox>
-</VBox>
+        <!-- 4. Días -->
+        <VBox spacing="6">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="4" styleClass="paso-numero"/>
+                <Label text="¿Qué días es la fiesta?" styleClass="paso-titulo"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="Elegir:" styleClass="texto-ayuda"/>
+                <Button text="Lunes a jueves" minWidth="-Infinity" styleClass="enlace-rapido" onAction="#diasEntreSemana"/>
+                <Button text="Viernes a domingo" minWidth="-Infinity" styleClass="enlace-rapido" onAction="#diasFinDeSemana"/>
+                <Button text="Todos" minWidth="-Infinity" styleClass="enlace-rapido" onAction="#diasTodos"/>
+            </HBox>
+            <HBox fx:id="boxDias" spacing="5" alignment="CENTER_LEFT"/>
+        </VBox>
+
+        <!-- 5. Fechas -->
+        <VBox spacing="6">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="5" styleClass="paso-numero"/>
+                <Label text="¿En qué fechas?" styleClass="paso-titulo"/>
+            </HBox>
+            <HBox spacing="6" alignment="CENTER_LEFT">
+                <ToggleButton fx:id="opTodoElAnio" text="Todo el año" selected="true" styleClass="opcion-pastilla"/>
+                <ToggleButton fx:id="opTemporada" text="Una temporada" styleClass="opcion-pastilla"/>
+                <Region HBox.hgrow="ALWAYS" minWidth="8"/>
+                <DatePicker fx:id="dpInicio" promptText="Desde" prefWidth="128" styleClass="text-field-moderno"/>
+                <Label text="a" styleClass="texto-normal"/>
+                <DatePicker fx:id="dpFin" promptText="Hasta" prefWidth="128" styleClass="text-field-moderno"/>
+            </HBox>
+        </VBox>
+
+        <!-- 6. Hasta cuándo se cotiza -->
+        <VBox spacing="6">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="6" styleClass="paso-numero"/>
+                <Label text="¿Hasta cuándo se puede cotizar?" styleClass="paso-titulo"/>
+                <Label text="Ej. promociones del Buen Fin." styleClass="texto-ayuda"/>
+            </HBox>
+            <HBox spacing="6" alignment="CENTER_LEFT">
+                <ToggleButton fx:id="opSinLimite" text="Sin límite" selected="true" styleClass="opcion-pastilla"/>
+                <ToggleButton fx:id="opHastaFecha" text="Hasta un día" styleClass="opcion-pastilla"/>
+                <Region HBox.hgrow="ALWAYS" minWidth="8"/>
+                <DatePicker fx:id="dpCotizarHasta" promptText="Último día" prefWidth="128" styleClass="text-field-moderno"/>
+            </HBox>
+        </VBox>
+    </VBox>
+
+    <!-- ── VISTA PREVIA ── -->
+    <VBox spacing="10" prefWidth="270" minWidth="270" styleClass="vista-previa">
+        <Label text="ASÍ SE VERÁ EN UNA COTIZACIÓN" styleClass="titulo-seccion"/>
+        <ComboBox fx:id="cmbEjemplo" maxWidth="Infinity" styleClass="combo-box-base"/>
+
+        <VBox spacing="7" styleClass="ticket">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label fx:id="lblEjemploPaquete" text="Paquete" styleClass="ticket-concepto"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblEjemploPrecio" text="\$0.00" minWidth="-Infinity" styleClass="ticket-importe"/>
+            </HBox>
+            <HBox fx:id="boxEjemploDescuento" spacing="8" alignment="CENTER_LEFT">
+                <Label fx:id="lblEjemploDescuento" text="Descuento" wrapText="true" styleClass="ticket-descuento"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblEjemploMonto" text="" minWidth="-Infinity" styleClass="ticket-descuento"/>
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT" styleClass="ticket-renglon-total">
+                <Label text="TOTAL" styleClass="ticket-total-titulo"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblEjemploTotal" text="\$0.00" minWidth="-Infinity" styleClass="ticket-total"/>
+            </HBox>
+        </VBox>
+        <Label fx:id="lblEjemploNota" wrapText="true" styleClass="texto-ayuda"/>
+
+        <Label fx:id="lblResumen" wrapText="true" styleClass="texto-normal"/>
+        <Label fx:id="lblAviso" wrapText="true" maxWidth="Infinity" styleClass="aviso-falta"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button text="Cancelar" minWidth="-Infinity" styleClass="boton-texto-gris" onAction="#cerrarModal"/>
+            <Button text="Guardar" minWidth="-Infinity" styleClass="boton-azul" onAction="#guardar"/>
+        </HBox>
+    </VBox>
+</HBox>

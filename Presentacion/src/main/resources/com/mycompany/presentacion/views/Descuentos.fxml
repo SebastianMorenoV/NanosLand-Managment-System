@@ -9,41 +9,28 @@
         <ToggleGroup fx:id="grupoFiltro"/>
     </fx:define>
 
-    <VBox spacing="2">
-        <HBox alignment="CENTER_LEFT" spacing="10">
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox HBox.hgrow="ALWAYS" spacing="2">
             <Label text="Descuentos" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="btnEditar" text="Editar" minWidth="-Infinity" styleClass="boton-azul-claro" disable="true" onAction="#editar"/>
-            <Button fx:id="btnActivar" text="Desactivar" minWidth="-Infinity" styleClass="boton-azul-claro" disable="true" onAction="#cambiarActivo"/>
-            <Button fx:id="btnDuplicar" text="Repetir el próximo año" minWidth="-Infinity" styleClass="boton-azul-claro" disable="true" onAction="#duplicar"/>
-            <Button fx:id="btnEliminar" text="Eliminar" minWidth="-Infinity" styleClass="boton-rojo" disable="true" onAction="#eliminar"/>
-            <Button text="+ Nuevo descuento" minWidth="-Infinity" styleClass="boton-azul" onAction="#nuevo"/>
-        </HBox>
-        <Label text="Rebajas automáticas al precio de los paquetes según el día o la temporada del evento." wrapText="true" style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
-    </VBox>
+            <Label text="Rebajas que se aplican solas al precio de los paquetes, según el día o la temporada del evento." wrapText="true" style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
+        </VBox>
+        <Button text="+ Nuevo descuento" minWidth="-Infinity" styleClass="boton-azul" onAction="#nuevo"/>
+    </HBox>
 
-    <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="12">
+    <VBox styleClass="tarjeta-blanca" VBox.vgrow="ALWAYS" spacing="14">
         <HBox spacing="8" alignment="CENTER_LEFT">
-            <ToggleButton fx:id="btnActivos" text="Activos" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
-            <ToggleButton fx:id="btnVencidos" text="Vencidos" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
-            <ToggleButton fx:id="btnDesactivados" text="Desactivados" minWidth="-Infinity" toggleGroup="$grupoFiltro"/>
+            <ToggleButton fx:id="btnActivos" text="Activos" minWidth="-Infinity" styleClass="pestana" toggleGroup="$grupoFiltro"/>
+            <ToggleButton fx:id="btnPausados" text="Pausados" minWidth="-Infinity" styleClass="pestana" toggleGroup="$grupoFiltro"/>
+            <ToggleButton fx:id="btnVencidos" text="Vencidos" minWidth="-Infinity" styleClass="pestana" toggleGroup="$grupoFiltro"/>
             <Region HBox.hgrow="ALWAYS"/>
             <TextField fx:id="txtBuscar" promptText="Buscar por nombre o paquete..." prefWidth="280" styleClass="text-field-moderno"/>
         </HBox>
 
-        <TableView fx:id="tablaDescuentos" VBox.vgrow="ALWAYS">
-            <columns>
-                <TableColumn fx:id="colNombre" text="Nombre" prefWidth="150"/>
-                <TableColumn fx:id="colDescuento" text="Descuento" prefWidth="90" maxWidth="130" style="-fx-alignment: CENTER_RIGHT;"/>
-                <TableColumn fx:id="colPaquetes" text="Paquetes" prefWidth="210"/>
-                <TableColumn fx:id="colDias" text="Días del evento" prefWidth="130"/>
-                <TableColumn fx:id="colTemporada" text="Fechas del evento" prefWidth="215"/>
-                <TableColumn fx:id="colCotizarHasta" text="Cotizar hasta" prefWidth="105" maxWidth="130" style="-fx-alignment: CENTER;"/>
-            </columns>
-        </TableView>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+            <VBox fx:id="listaDescuentos" spacing="10" styleClass="fondo-blanco"/>
+        </ScrollPane>
 
-        <Label fx:id="lblResumen" wrapText="true" maxWidth="Infinity" styleClass="resumen-cobro" style="-fx-text-fill: #2c3e50;"/>
         <Label text="Si a una cotización le tocan varios descuentos, se aplica solo el que más rebaja. Las cotizaciones ya guardadas conservan su precio aunque el descuento cambie o se borre."
-               wrapText="true" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+               wrapText="true" styleClass="texto-ayuda"/>
     </VBox>
 </VBox>

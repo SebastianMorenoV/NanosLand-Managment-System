@@ -41,8 +41,8 @@ public class DescuentoDTO {
         ACTIVO("Activo"),
         /** Ya terminó su temporada o su plazo para cotizar. */
         VENCIDO("Vencido"),
-        /** Apagado con el interruptor. */
-        DESACTIVADO("Desactivado");
+        /** Pausado desde la lista (apagado sin borrarlo). */
+        DESACTIVADO("Pausado");
 
         private final String etiqueta;
 

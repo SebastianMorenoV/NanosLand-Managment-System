@@ -104,11 +104,14 @@ public class CotizacionController {
     private Label lblNombrePaquete;
     @FXML
     private Label lblPrecioPaquete;
-    /** Desglose del descuento del paquete (cuánto se descuenta y el precio de lista). */
-    @FXML
-    private Label lblDescuentoPaquete;
     @FXML
     private Label lblDetallesPaquete;
+    // Ticket arriba del total: paquete a precio de lista, extras, descuento y total.
+    @FXML private Label lblTicketPaquete;
+    @FXML private Label lblTicketPaqueteImporte;
+    @FXML private HBox boxTicketDescuento;
+    @FXML private Label lblTicketDescuento;
+    @FXML private Label lblTicketDescuentoImporte;
     @FXML
     private Label lblTotalEstimado;
     @FXML
@@ -195,8 +198,11 @@ public class CotizacionController {
         }
     }
 
-    /** Precio del paquete con la selección actual; {@code null} si falta elegir algo o no es válida. */
-    private Double precioPaqueteActual;
+    /**
+     * Precio del paquete con la selección actual (de lista, descuento y final);
+     * {@code null} si falta elegir algo o no es válida.
+     */
+    private PrecioPaquete precioActual;
     private SeleccionGuardada seleccionGuardada;
     /** Mientras se llenan los combos por código no se recalcula en cada cambio. */
     private boolean aplicandoPaquete;
@@ -250,7 +256,7 @@ public class CotizacionController {
             }));
         }
         
-        precioPaqueteActual = null;
+        precioActual = null;
         seleccionGuardada = null;
         aplicandoPaquete = false;
 
@@ -274,7 +280,7 @@ public class CotizacionController {
             
             double subtotalExtras = serviciosSeleccionados.stream().mapToDouble(ServicioDTO::getPrecio).sum();
             if (lblSubtotalExtras != null) {
-                lblSubtotalExtras.setText(String.format("Subtotal Extras: $%,.2f", subtotalExtras));
+                lblSubtotalExtras.setText(String.format("$%,.2f", subtotalExtras));
             }
         };
         serviciosSeleccionados.addListener(listenerExtras);
@@ -1216,14 +1222,14 @@ public class CotizacionController {
     /**
      * Precio del paquete con la selección actual. Lo calcula el mismo caso de uso que usa el
      * servidor al guardar, con el descuento que toque por la fecha del evento; si la selección
-     * es la de la cotización abierta, es su precio pactado.
+     * es la de la cotización abierta, es su precio pactado. La tarjeta del paquete muestra el
+     * precio de lista; el descuento va en el ticket, arriba del total.
      */
     private void actualizarPrecioPaquete() {
         if (aplicandoPaquete || comboPaquetes == null) return;
         PaqueteDTO paquete = comboPaquetes.getValue();
-        precioPaqueteActual = null;
+        precioActual = null;
         lblPrecioPaquete.setTooltip(null);
-        mostrarDescuento(null);
 
         if (paquete == null) {
             lblPrecioPaquete.setText("$0.00");
@@ -1244,9 +1250,8 @@ public class CotizacionController {
                         datePickerFecha != null ? datePickerFecha.getValue() : null);
                     PrecioPaquete precio = calcularPrecioPaqueteUseCase.calcularParaCotizacion(
                         isModoEdicion() ? getCotizacionEnEdicionId() : null, solicitud);
-                    precioPaqueteActual = precio.precio();
-                    lblPrecioPaquete.setText(TablaPreciosPaquete.dinero(precioPaqueteActual));
-                    mostrarDescuento(precio);
+                    precioActual = precio;
+                    lblPrecioPaquete.setText(TablaPreciosPaquete.dinero(precio.precioLista()));
                 } catch (CotizacionException e) {
                     lblPrecioPaquete.setText("—");
                     lblPrecioPaquete.setTooltip(new Tooltip(e.getMessage()));
@@ -1254,17 +1259,6 @@ public class CotizacionController {
             }
         }
         actualizarTotalEstimado();
-    }
-
-    /** Desglose del descuento debajo del paquete; se oculta si no hay descuento. */
-    private void mostrarDescuento(PrecioPaquete precio) {
-        if (lblDescuentoPaquete == null) return;
-        boolean hay = precio != null && precio.tieneDescuento();
-        lblDescuentoPaquete.setVisible(hay);
-        lblDescuentoPaquete.setManaged(hay);
-        lblDescuentoPaquete.setText(!hay ? "" : String.format("Descuento «%s»: −%s  ·  precio de lista %s",
-            precio.descuento(), TablaPreciosPaquete.dinero(precio.montoDescuento()),
-            TablaPreciosPaquete.dinero(precio.precioLista())));
     }
 
     // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ──────────
@@ -1323,10 +1317,27 @@ public class CotizacionController {
         List<ServicioDTO> extras = new ArrayList<>(serviciosSeleccionados);
 
         double total = calcularTotalCotizacionUseCase.ejecutar(
-            precioPaqueteActual != null ? precioPaqueteActual : 0, extras);
+            precioActual != null ? precioActual.precio() : 0, extras);
 
         if (lblTotalEstimado != null) {
             lblTotalEstimado.setText(String.format("$%,.2f", total));
+        }
+        actualizarTicket();
+    }
+
+    /** Renglones del ticket: el paquete a precio de lista y, si toca, su descuento antes del total. */
+    private void actualizarTicket() {
+        if (lblTicketPaquete == null) return;
+        PaqueteDTO paquete = comboPaquetes != null ? comboPaquetes.getValue() : null;
+        lblTicketPaquete.setText(paquete != null ? paquete.getNombre() : "Paquete");
+        lblTicketPaqueteImporte.setText(precioActual != null ? TablaPreciosPaquete.dinero(precioActual.precioLista()) : "—");
+
+        boolean conDescuento = precioActual != null && precioActual.tieneDescuento();
+        boxTicketDescuento.setVisible(conDescuento);
+        boxTicketDescuento.setManaged(conDescuento);
+        if (conDescuento) {
+            lblTicketDescuento.setText("Descuento «" + precioActual.descuento() + "»");
+            lblTicketDescuentoImporte.setText("−" + TablaPreciosPaquete.dinero(precioActual.montoDescuento()));
         }
     }
 
