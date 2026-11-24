@@ -25,6 +25,8 @@ import org.springframework.stereotype.Controller;
 import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDate;
+import com.mycompany.presentacion.utils.Espera;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -188,23 +190,28 @@ public class ReportesController {
         File archivo = fileChooser.showSaveDialog(stage);
 
         if (archivo != null) {
-            try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
-                exportarReporteUseCase.exportarPDF(masterData, logoStream,
-                    archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
-
+            List<EventoDTO> datos = new ArrayList<>(masterData);
+            LocalDate inicio = dpInicio.getValue();
+            LocalDate fin = dpFin.getValue();
+            // Incluye gráficas: es el PDF que más tarda.
+            Espera.ejecutar(btnExportar, "Generando el PDF…", () -> {
+                try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
+                    exportarReporteUseCase.exportarPDF(datos, logoStream, archivo.getAbsolutePath(), inicio, fin);
+                }
+                return null;
+            }, sinResultado -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Éxito");
                 alert.setHeaderText(null);
                 alert.setContentText("Reporte exportado correctamente a:\n" + archivo.getAbsolutePath());
                 alert.showAndWait();
-            } catch (Exception e) {
-                e.printStackTrace();
+            }, error -> {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error");
                 alert.setHeaderText("No se pudo exportar el PDF");
-                alert.setContentText(e.getMessage());
+                alert.setContentText(error.getMessage());
                 alert.showAndWait();
-            }
+            });
         }
     }
 }

@@ -2,7 +2,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<VBox spacing="14" minHeight="0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.InicioController">
+<VBox fx:id="raiz" spacing="14" minHeight="0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.InicioController">
     <padding><Insets top="26" right="36" bottom="22" left="36"/></padding>
 
     <HBox alignment="CENTER_LEFT" spacing="10">

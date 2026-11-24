@@ -891,3 +891,87 @@
     -fx-font-weight: bold;
     -fx-text-fill: #1a82b8;
 }
+
+/* =================================================== */
+/* 17. PANTALLA DE CARGA Y AVISOS DE ESPERA            */
+/* =================================================== */
+/* Pantalla que se muestra mientras arranca el sistema (PantallaCarga) */
+.carga-tarjeta {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 14px;
+    -fx-border-color: #dadddf;
+    -fx-border-radius: 14px;
+    -fx-padding: 28px 32px 24px 32px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 22, 0, 0, 6);
+}
+
+.carga-sistema {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.carga-nombre {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+}
+
+.carga-descripcion {
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 13px;
+}
+
+.carga-estado {
+    -fx-text-fill: #4e5b69;
+    -fx-font-size: 12px;
+}
+
+.carga-version {
+    -fx-text-fill: #b2b2b2;
+    -fx-font-size: 11px;
+}
+
+/* Barra delgada de progreso indeterminado */
+.carga-barra {
+    -fx-pref-height: 6px;
+}
+
+.carga-barra > .track {
+    -fx-background-color: #e8f4fa;
+    -fx-background-insets: 0;
+    -fx-background-radius: 3px;
+}
+
+.carga-barra > .bar {
+    -fx-background-color: #1a82b8;
+    -fx-background-insets: 0;
+    -fx-background-radius: 3px;
+    -fx-padding: 3px;
+}
+
+/* Aviso de "trabajando" sobre una ventana (utils.Espera) */
+.espera-capa {
+    -fx-background-color: rgba(228, 233, 240, 0.65);
+}
+
+.espera-tarjeta {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 0.8em;
+    -fx-border-color: #dadddf;
+    -fx-border-radius: 0.8em;
+    -fx-padding: 24px 36px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 18, 0, 0, 4);
+}
+
+.espera-texto {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.espera-indicador {
+    -fx-progress-color: #1a82b8;
+    -fx-pref-width: 44px;
+    -fx-pref-height: 44px;
+}

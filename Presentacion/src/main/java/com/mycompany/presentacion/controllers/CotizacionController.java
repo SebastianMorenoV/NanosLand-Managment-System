@@ -22,6 +22,7 @@ import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.FiltroCotizaciones;
+import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ModalHelper;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.application.Platform;
@@ -1489,16 +1490,16 @@ public class CotizacionController {
         
         File destino = fileChooser.showSaveDialog(btnConfirmarCotizacion.getScene().getWindow());
         if (destino == null) return;
-        
-        try {
-            byte[] pdf = generarContratoUseCase.generarContrato(getCotizacionEnEdicionId());
+
+        Long id = getCotizacionEnEdicionId();
+        Espera.ejecutar(btnConfirmarCotizacion, "Generando el contrato…", () -> {
+            byte[] pdf = generarContratoUseCase.generarContrato(id);
             try (FileOutputStream fos = new FileOutputStream(destino)) {
                 fos.write(pdf);
             }
             if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(destino);
-        } catch (Exception ex) {
-            mostrarError("No se pudo generar el contrato PDF.");
-        }
+            return null;
+        }, sinResultado -> { }, error -> mostrarError("No se pudo generar el contrato PDF."));
     }
     
     @FXML

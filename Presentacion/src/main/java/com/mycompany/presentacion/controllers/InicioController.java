@@ -6,11 +6,11 @@ import com.mycompany.common.dtos.ResumenInicioDTO.TipoPendiente;
 import com.mycompany.presentacion.config.RegistroErrores;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.SesionContext;
+import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -35,6 +35,7 @@ public class InicioController {
     private final SesionContext sesionContext;
     private final CotizacionContext cotizacionContext;
 
+    @FXML private VBox raiz;
     @FXML private Label lblFecha;
     @FXML private Label lblEventosHoy;
     @FXML private Label lblEventosProximos;
@@ -57,21 +58,12 @@ public class InicioController {
         boxDinero.setVisible(esDueno);
         boxDinero.setManaged(esDueno);
 
-        // En segundo plano: la pantalla aparece de inmediato y los datos llegan después.
-        Task<ResumenInicioDTO> tarea = new Task<>() {
-            @Override
-            protected ResumenInicioDTO call() {
-                return generarResumenInicioUseCase.generar(esDueno);
-            }
-        };
-        tarea.setOnSucceeded(e -> mostrar(tarea.getValue()));
-        tarea.setOnFailed(e -> {
-            tarea.getException().printStackTrace();
-            RegistroErrores.avisar("No se pudieron cargar los datos de Inicio", tarea.getException());
-        });
-        Thread hilo = new Thread(tarea, "hilo-inicio");
-        hilo.setDaemon(true);
-        hilo.start();
+        // En segundo plano: la pantalla aparece de inmediato con un aviso de carga sobre
+        // ella (el menú sigue disponible) y los datos llegan después.
+        Espera.ejecutarEnZona(raiz, "Cargando el resumen…",
+                () -> generarResumenInicioUseCase.generar(esDueno),
+                this::mostrar,
+                error -> RegistroErrores.avisar("No se pudieron cargar los datos de Inicio", error));
     }
 
     private void mostrar(ResumenInicioDTO resumen) {

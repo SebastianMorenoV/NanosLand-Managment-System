@@ -32,7 +32,7 @@ public final class ModalHelper {
     private static final double MAX_FRACCION = 0.9;
 
     /** Hoja de estilos de la aplicación (la misma que cargan las vistas FXML). */
-    private static final String HOJA_ESTILOS = "/com/mycompany/presentacion/styles/styles.css";
+    public static final String HOJA_ESTILOS = "/com/mycompany/presentacion/styles/styles.css";
 
     private ModalHelper() {
     }

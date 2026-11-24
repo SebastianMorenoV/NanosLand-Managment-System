@@ -17,6 +17,8 @@ import org.springframework.stereotype.Controller;
 import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDate;
+import com.mycompany.presentacion.utils.Espera;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -26,6 +28,7 @@ public class ReporteAdeudosController {
     private final GenerarReporteAdeudosUseCase generarReporteAdeudosUseCase;
     private final ExportarReporteUseCase exportarReporteUseCase;
 
+    @FXML private javafx.scene.layout.VBox raiz;
     @FXML private TextField txtBuscarCliente;
     @FXML private Button btnExportar;
     @FXML private Label lblTotalDeuda;
@@ -123,17 +126,17 @@ public class ReporteAdeudosController {
     }
 
     private void cargarDatos() {
-        try {
-            List<AdeudoDTO> adeudos = generarReporteAdeudosUseCase.generarReporteAdeudos();
-            masterData.clear();
-            if (adeudos != null) {
-                masterData.addAll(adeudos);
-            }
-            filtrarDatos();
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAlertaError("Error", "No se pudo cargar el reporte de adeudos.");
-        }
+        // Recorre el saldo de cada evento: con muchos eventos tarda.
+        Espera.ejecutarEnZona(raiz, "Calculando adeudos…",
+                generarReporteAdeudosUseCase::generarReporteAdeudos,
+                adeudos -> {
+                    masterData.clear();
+                    if (adeudos != null) {
+                        masterData.addAll(adeudos);
+                    }
+                    filtrarDatos();
+                },
+                error -> mostrarAlertaError("Error", "No se pudo cargar el reporte de adeudos."));
     }
 
     private void filtrarDatos() {
@@ -172,18 +175,19 @@ public class ReporteAdeudosController {
         File archivo = fileChooser.showSaveDialog(stage);
 
         if (archivo != null) {
-            try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
-                exportarReporteUseCase.exportarAdeudosPDF(filteredData, logoStream, archivo.getAbsolutePath());
-                
+            List<AdeudoDTO> datos = new ArrayList<>(filteredData);
+            Espera.ejecutar(btnExportar, "Generando el PDF…", () -> {
+                try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
+                    exportarReporteUseCase.exportarAdeudosPDF(datos, logoStream, archivo.getAbsolutePath());
+                }
+                return null;
+            }, sinResultado -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Éxito");
                 alert.setHeaderText(null);
                 alert.setContentText("Reporte exportado correctamente a:\n" + archivo.getAbsolutePath());
                 alert.showAndWait();
-            } catch (Exception e) {
-                e.printStackTrace();
-                mostrarAlertaError("Error", "No se pudo exportar el PDF: " + e.getMessage());
-            }
+            }, error -> mostrarAlertaError("Error", "No se pudo exportar el PDF: " + error.getMessage()));
         }
     }
 

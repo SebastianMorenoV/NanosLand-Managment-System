@@ -5,6 +5,7 @@ import com.example.negocio.sesion.usecase.IniciarSesionUseCase;
 import com.mycompany.persistencia.dominio.Usuario;
 import com.mycompany.presentacion.App;
 import com.mycompany.presentacion.context.SesionContext;
+import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -50,8 +51,21 @@ public class LoginController {
         String correo = txtCorreo.getText();
         String contrasena = txtContrasena.getText();
 
+        // La verificación de la contraseña (BCrypt) y la primera consulta pueden tardar.
+        Espera.ejecutar(txtCorreo, "Iniciando sesión…",
+                () -> iniciarSesionUseCase.iniciarSesion(correo, contrasena),
+                this::abrirSistema,
+                error -> {
+                    if (error instanceof CotizacionException) {
+                        mostrarAlerta("Acceso Denegado", error.getMessage());
+                    } else {
+                        mostrarAlerta("Error", "Ocurrió un error inesperado al iniciar sesión.");
+                    }
+                });
+    }
+
+    private void abrirSistema(Usuario usuario) {
         try {
-            Usuario usuario = iniciarSesionUseCase.iniciarSesion(correo, contrasena);
             sesionContext.setUsuarioAutenticado(usuario);
 
             // Cargar el MainShell reemplazando la escena completa
@@ -63,9 +77,6 @@ public class LoginController {
             Stage stage = (Stage) txtCorreo.getScene().getWindow();
             stage.getScene().setRoot(root);
             stage.setMaximized(true);
-
-        } catch (CotizacionException ex) {
-            mostrarAlerta("Acceso Denegado", ex.getMessage());
         } catch (Exception ex) {
             mostrarAlerta("Error", "Ocurrió un error inesperado al iniciar sesión.");
             ex.printStackTrace();

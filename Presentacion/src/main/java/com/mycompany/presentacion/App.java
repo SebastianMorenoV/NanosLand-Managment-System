@@ -4,11 +4,16 @@ import com.example.negocio.NegocioApplication;
 import com.example.negocio.evento.usecase.ActualizarEstadosPorFechaUseCase;
 import com.mycompany.presentacion.config.ConfiguracionBD;
 import com.mycompany.presentacion.config.ConfiguracionBDDialog;
+import com.mycompany.presentacion.config.PantallaCarga;
 import com.mycompany.presentacion.config.PrimerUsuarioDialog;
 import com.mycompany.presentacion.config.RegistroErrores;
+import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -28,45 +33,93 @@ public class App extends Application {
 
     private ConfigurableApplicationContext springContext;
     private Stage primaryStage;
+    private PantallaCarga pantallaCarga;
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         instancia = this;
         this.primaryStage = primaryStage;
 
-        // Antes de arrancar Spring se confirma que hay conexión a MySQL. Si no
-        // la hay (primera vez en este equipo, contraseña distinta, servidor
-        // apagado) se piden los datos en lugar de fallar al iniciar. Lo mismo
-        // si la conexión funciona pero el sistema no logra iniciar con esa base.
-        ConfiguracionBD config = ConfiguracionBD.cargar();
-        String error = config.probarConexion();
-        boolean configuracionNueva = false;
-        ConfigurableApplicationContext contexto = null;
-        while (contexto == null) {
-            if (error != null) {
-                Optional<ConfiguracionBD> nueva = ConfiguracionBDDialog.mostrar(null, config, error);
-                if (nueva.isEmpty()) {
-                    Platform.exit();
-                    return;
+        // La conexión y Spring tardan varios segundos: se hacen en segundo plano
+        // para que la pantalla de carga aparezca de inmediato y no se congele.
+        pantallaCarga = new PantallaCarga();
+        pantallaCarga.mostrar();
+        Thread hilo = new Thread(this::arrancar, "hilo-arranque");
+        hilo.setDaemon(true);
+        hilo.start();
+    }
+
+    /** Arranque del sistema. Corre fuera del hilo de JavaFX; las ventanas se abren con {@link #enHiloFx}. */
+    private void arrancar() {
+        try {
+            // Antes de arrancar Spring se confirma que hay conexión a MySQL. Si no
+            // la hay (primera vez en este equipo, contraseña distinta, servidor
+            // apagado) se piden los datos en lugar de fallar al iniciar. Lo mismo
+            // si la conexión funciona pero el sistema no logra iniciar con esa base.
+            pantallaCarga.estado("Conectando a la base de datos…");
+            ConfiguracionBD config = ConfiguracionBD.cargar();
+            String error = config.probarConexion();
+            boolean configuracionNueva = false;
+            ConfigurableApplicationContext contexto = null;
+            while (contexto == null) {
+                if (error != null) {
+                    pantallaCarga.estado("Esperando los datos de conexión…");
+                    ConfiguracionBD actual = config;
+                    String aviso = error;
+                    Optional<ConfiguracionBD> nueva = enHiloFx(() ->
+                            ConfiguracionBDDialog.mostrar(pantallaCarga.ventana(), actual, aviso));
+                    if (nueva.isEmpty()) {
+                        Platform.exit();
+                        return;
+                    }
+                    config = nueva.get();
+                    configuracionNueva = true;
                 }
-                config = nueva.get();
-                configuracionNueva = true;
+                pantallaCarga.estado("Iniciando el sistema…");
+                try {
+                    contexto = arrancarSpring(config);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    error = "La conexión funciona, pero el sistema no pudo iniciar con esta base de datos: "
+                            + RegistroErrores.causaRaiz(e);
+                }
             }
-            try {
-                contexto = arrancarSpring(config);
-            } catch (Exception e) {
-                e.printStackTrace();
-                error = "La conexión funciona, pero el sistema no pudo iniciar con esta base de datos: "
-                        + RegistroErrores.causaRaiz(e);
-            }
-        }
-        usarContexto(contexto);
-        if (configuracionNueva) {
-            guardarConfiguracion(config);
-        }
+            pantallaCarga.estado("Preparando la información…");
+            usarContexto(contexto);
 
-        PrimerUsuarioDialog.mostrarSiNoHayUsuarios(null, springContext);
+            ConfiguracionBD configFinal = config;
+            boolean guardar = configuracionNueva;
+            enHiloFx(() -> {
+                if (guardar) {
+                    guardarConfiguracion(configFinal);
+                }
+                PrimerUsuarioDialog.mostrarSiNoHayUsuarios(pantallaCarga.ventana(), springContext);
+                mostrarVentanaPrincipal();
+                return null;
+            });
+        } catch (Throwable e) {
+            e.printStackTrace();
+            Platform.runLater(() -> {
+                pantallaCarga.cerrar();
+                mostrarError("No se pudo iniciar el sistema", RegistroErrores.causaRaiz(e)
+                        + "\n\nEl detalle quedó guardado en:\n" + RegistroErrores.rutaArchivo());
+                Platform.exit();
+            });
+        }
+    }
 
+    /** Ejecuta {@code accion} en el hilo de JavaFX y espera su resultado. */
+    private static <T> T enHiloFx(Callable<T> accion) throws Exception {
+        FutureTask<T> tarea = new FutureTask<>(accion);
+        Platform.runLater(tarea);
+        try {
+            return tarea.get();
+        } catch (ExecutionException e) {
+            throw e.getCause() instanceof Exception causa ? causa : e;
+        }
+    }
+
+    private void mostrarVentanaPrincipal() throws IOException {
         Scene scene = new Scene(cargarLogin(), 1280, 720);
 
         primaryStage.setTitle("Sistema de Gestión NanosLand");
@@ -86,6 +139,14 @@ public class App extends Application {
         });
 
         primaryStage.show();
+        // Si mientras cargaba el usuario pasó a otra ventana, Windows deja la nueva
+        // detrás; se trae al frente para que se note que el sistema ya abrió.
+        primaryStage.setAlwaysOnTop(true);
+        primaryStage.setAlwaysOnTop(false);
+        primaryStage.toFront();
+        // Se cierra después de mostrar la principal: así nunca quedan cero ventanas
+        // abiertas (JavaFX terminaría la aplicación).
+        pantallaCarga.cerrar();
 
         // Mínimos por debajo de 1280x720 para que la ventana pueda reducirse en
         // laptops pequeñas sin quedar bloqueada. El contenido sigue siendo
@@ -112,25 +173,26 @@ public class App extends Application {
         if (nueva.isEmpty()) {
             return;
         }
-        ConfigurableApplicationContext contextoNuevo;
-        try {
-            contextoNuevo = arrancarSpring(nueva.get());
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarError("No se pudo aplicar la nueva conexión",
-                    "La conexión funciona, pero el sistema no pudo iniciar con esa base de datos:\n"
-                    + RegistroErrores.causaRaiz(e) + "\n\nSe conserva la conexión anterior.");
-            return;
-        }
-        ConfigurableApplicationContext contextoAnterior = app.springContext;
-        app.usarContexto(contextoNuevo);
+        // Arrancar el sistema con la nueva base tarda varios segundos.
+        Espera.ejecutar(app.primaryStage.getScene().getRoot(), "Conectando con la nueva base de datos…",
+                () -> arrancarSpring(nueva.get()),
+                contextoNuevo -> app.aplicarConexion(contextoNuevo, nueva.get()),
+                error -> mostrarError("No se pudo aplicar la nueva conexión",
+                        "La conexión funciona, pero el sistema no pudo iniciar con esa base de datos:\n"
+                        + RegistroErrores.causaRaiz(error) + "\n\nSe conserva la conexión anterior."));
+    }
+
+    /** Cambia al sistema ya arrancado con la nueva conexión y vuelve al inicio de sesión. */
+    private void aplicarConexion(ConfigurableApplicationContext contextoNuevo, ConfiguracionBD config) {
+        ConfigurableApplicationContext contextoAnterior = springContext;
+        usarContexto(contextoNuevo);
         if (contextoAnterior != null) {
             contextoAnterior.close();
         }
-        guardarConfiguracion(nueva.get());
+        guardarConfiguracion(config);
         try {
-            PrimerUsuarioDialog.mostrarSiNoHayUsuarios(app.primaryStage, app.springContext);
-            app.primaryStage.getScene().setRoot(app.cargarLogin());
+            PrimerUsuarioDialog.mostrarSiNoHayUsuarios(primaryStage, springContext);
+            primaryStage.getScene().setRoot(cargarLogin());
         } catch (Exception e) {
             e.printStackTrace();
             mostrarError("No se pudo mostrar el inicio de sesión",

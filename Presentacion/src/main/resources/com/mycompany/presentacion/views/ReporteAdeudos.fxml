@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.shape.SVGPath?>
-<VBox spacing="20" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ReporteAdeudosController">
+<VBox fx:id="raiz" spacing="20" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.ReporteAdeudosController">
     <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
 
     <HBox alignment="CENTER_LEFT">

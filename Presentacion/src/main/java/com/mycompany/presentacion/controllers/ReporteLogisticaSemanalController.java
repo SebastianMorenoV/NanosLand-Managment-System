@@ -4,6 +4,7 @@ import com.example.negocio.logistica.usecase.GenerarReporteLogisticaSemanalUseCa
 import com.example.negocio.reporte.usecase.ExportarReporteUseCase;
 import com.mycompany.common.dtos.ReporteLogisticaSemanalDTO;
 import com.mycompany.presentacion.config.RegistroErrores;
+import com.mycompany.presentacion.utils.Espera;
 import java.io.File;
 import java.io.InputStream;
 import java.time.DayOfWeek;
@@ -205,20 +206,25 @@ public class ReporteLogisticaSemanalController {
         if (archivo == null) {
             return;
         }
-        try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
-            exportarReporteUseCase.exportarLogisticaSemanalPDF(reporte, logoStream, archivo.getAbsolutePath());
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAviso(Alert.AlertType.ERROR, "No se pudo guardar el PDF. Si ese archivo está abierto, ciérralo e intenta de nuevo.");
-            return;
-        }
-        // Se abre de una vez, listo para ver o imprimir.
-        try {
-            java.awt.Desktop.getDesktop().open(archivo);
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarAviso(Alert.AlertType.INFORMATION, "El PDF se guardó en:\n" + archivo.getAbsolutePath());
-        }
+        ReporteLogisticaSemanalDTO datos = reporte;
+        Espera.ejecutar(btnExportar, "Generando el PDF…", () -> {
+            try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
+                exportarReporteUseCase.exportarLogisticaSemanalPDF(datos, logoStream, archivo.getAbsolutePath());
+            }
+            // Se abre de una vez, listo para ver o imprimir.
+            try {
+                java.awt.Desktop.getDesktop().open(archivo);
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }, abierto -> {
+            if (!abierto) {
+                mostrarAviso(Alert.AlertType.INFORMATION, "El PDF se guardó en:\n" + archivo.getAbsolutePath());
+            }
+        }, error -> mostrarAviso(Alert.AlertType.ERROR,
+                "No se pudo guardar el PDF. Si ese archivo está abierto, ciérralo e intenta de nuevo."));
     }
 
     private void mostrarAviso(Alert.AlertType tipo, String mensaje) {

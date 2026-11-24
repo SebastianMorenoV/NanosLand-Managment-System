@@ -19,6 +19,8 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import com.mycompany.presentacion.utils.Espera;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -176,18 +178,22 @@ public class ReporteIngresosController {
         File archivo = fileChooser.showSaveDialog(stage);
 
         if (archivo != null) {
-            try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
-                exportarReporteUseCase.exportarIngresosPDF(masterData, ventasPorProducto, logoStream, archivo.getAbsolutePath(), dpInicio.getValue(), dpFin.getValue());
-                
+            List<IngresoDTO> datos = new ArrayList<>(masterData);
+            List<com.mycompany.common.dtos.VentaProductoDTO> ventas = new ArrayList<>(ventasPorProducto);
+            LocalDate inicio = dpInicio.getValue();
+            LocalDate fin = dpFin.getValue();
+            Espera.ejecutar(btnExportar, "Generando el PDF…", () -> {
+                try (InputStream logoStream = getClass().getResourceAsStream("/Logo Nanos.png")) {
+                    exportarReporteUseCase.exportarIngresosPDF(datos, ventas, logoStream, archivo.getAbsolutePath(), inicio, fin);
+                }
+                return null;
+            }, sinResultado -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Éxito");
                 alert.setHeaderText(null);
                 alert.setContentText("Reporte de ingresos exportado correctamente a:\n" + archivo.getAbsolutePath());
                 alert.showAndWait();
-            } catch (Exception e) {
-                e.printStackTrace();
-                mostrarAlertaError("Error", "No se pudo exportar el PDF: " + e.getMessage());
-            }
+            }, error -> mostrarAlertaError("Error", "No se pudo exportar el PDF: " + error.getMessage()));
         }
     }
 
