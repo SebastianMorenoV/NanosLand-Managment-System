@@ -11,6 +11,7 @@ import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.CategoriaServicio;
 import com.mycompany.persistencia.repository.CotizacionRepository;
+import com.mycompany.persistencia.repository.DescuentoRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ class CalcularPrecioPaqueteUseCaseTest {
 
     @Mock PaqueteRepository paqueteRepository;
     @Mock CotizacionRepository cotizacionRepository;
+    @Mock DescuentoRepository descuentoRepository;
 
     CalcularPrecioPaqueteUseCase precios;
 
@@ -34,7 +36,7 @@ class CalcularPrecioPaqueteUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        precios = new CalcularPrecioPaqueteUseCase(paqueteRepository, cotizacionRepository);
+        precios = new CalcularPrecioPaqueteUseCase(paqueteRepository, cotizacionRepository, descuentoRepository);
         precio(full, barbacoa, 80, 22600);
         precio(full, barbacoa, 100, 23800);
         precio(full, taquiza, 100, 23400);
@@ -52,9 +54,9 @@ class CalcularPrecioPaqueteUseCaseTest {
 
     @Test
     void paqueteFijoNoAceptaComidaNiPersonas() {
-        assertThatThrownBy(() -> precios.precioDeLista(renta, 10L, null, null))
+        assertThatThrownBy(() -> precios.precioDeLista(renta, 10L, null))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("precio fijo");
-        assertThatThrownBy(() -> precios.precioDeLista(renta, null, 100, null))
+        assertThatThrownBy(() -> precios.precioDeLista(renta, null, 100))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("precio fijo");
     }
 
@@ -68,32 +70,32 @@ class CalcularPrecioPaqueteUseCaseTest {
 
     @Test
     void paqueteConTablaPideComidaYPersonas() {
-        assertThatThrownBy(() -> precios.precioDeLista(full, null, 100, null))
+        assertThatThrownBy(() -> precios.precioDeLista(full, null, 100))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("comida");
-        assertThatThrownBy(() -> precios.precioDeLista(full, 10L, null, null))
+        assertThatThrownBy(() -> precios.precioDeLista(full, 10L, null))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("número de personas");
     }
 
     @Test
     void combinacionInexistenteDaMensajeClaro() {
-        assertThatThrownBy(() -> precios.precioDeLista(full, 11L, 80, null))
+        assertThatThrownBy(() -> precios.precioDeLista(full, 11L, 80))
                 .isInstanceOf(CotizacionException.class)
                 .hasMessageContaining("\"Taquiza\"").hasMessageContaining("80 personas");
-        assertThatThrownBy(() -> precios.precioDeLista(full, 99L, 80, null))
+        assertThatThrownBy(() -> precios.precioDeLista(full, 99L, 80))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("esa comida");
     }
 
     @Test
     void paqueteInactivoNoSeOfreceParaSeleccionesNuevas() {
         renta.setActivo(false);
-        assertThatThrownBy(() -> precios.precioDeLista(renta, null, null, null))
+        assertThatThrownBy(() -> precios.precioDeLista(renta, null, null))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("ya no se ofrece");
     }
 
     @Test
     void redondeaACentavos() {
         Paquete raro = paqueteFijo(3, "Raro", 100.005);
-        assertThat(precios.precioDeLista(raro, null, null, null)).isEqualTo(100.01);
+        assertThat(precios.precioDeLista(raro, null, null)).isEqualTo(100.01);
     }
 
     @Test
@@ -113,14 +115,13 @@ class CalcularPrecioPaqueteUseCaseTest {
         Cotizacion cot = cotizacion(51, renta, null, null, 8800.0);
         renta.setActivo(false);
 
-        assertThat(precios.precioParaCotizacion(cot, renta, null, null, null)).isEqualTo(8800);
+        assertThat(precios.precioParaCotizacion(cot, renta, null, null, null).precio()).isEqualTo(8800);
     }
 
     @Test
     void cambiarPersonasVuelveACotizar() {
         Cotizacion cot = cotizacion(52, full, barbacoa, 100, 23800.0);
         when(cotizacionRepository.findById(52L)).thenReturn(Optional.of(cot));
-        when(paqueteRepository.findById(2L)).thenReturn(Optional.of(full));
 
         PrecioPaquete p = precios.calcularParaCotizacion(52L, new SolicitudPrecioPaquete(2L, 10L, 80, null));
 
@@ -136,7 +137,7 @@ class CalcularPrecioPaqueteUseCaseTest {
         extra(cot, servicio(21, "Mesero(a)", 500, CategoriaServicio.EXTRA), 1, 500);
 
         assertThat(CalcularPrecioPaqueteUseCase.precioPactado(cot)).isEqualTo(9800);
-        assertThat(precios.precioParaCotizacion(cot, renta, null, null, null)).isEqualTo(9800);
+        assertThat(precios.precioParaCotizacion(cot, renta, null, null, null).precio()).isEqualTo(9800);
     }
 
     @Test

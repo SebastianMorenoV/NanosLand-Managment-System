@@ -140,6 +140,9 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Label fx:id="lblPrecioPaquete" text=" &#36;0.00" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1a82b8;"/>
                     </HBox>
+                    <!-- Solo cuando el paquete lleva descuento por la fecha del evento. -->
+                    <Label fx:id="lblDescuentoPaquete" visible="false" managed="false" wrapText="true"
+                           style="-fx-text-fill: #1e8449; -fx-font-weight: bold; -fx-background-color: #e9f7ef; -fx-background-radius: 6; -fx-padding: 4 8;"/>
                     <Label fx:id="lblDetallesPaquete" text="Los detalles aparecerán aquí" style="-fx-text-fill: #7f8c8d;"/>
                 </VBox>
             </VBox>

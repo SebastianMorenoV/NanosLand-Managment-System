@@ -33,6 +33,12 @@ public class CotizacionDTO {
     private Integer personas;
     /** Precio pactado del paquete. Solo de salida: el servidor lo calcula y no lo toma del DTO. */
     private Double precioPaquete;
+    /** Solo de salida: precio de catálogo del paquete antes del descuento (nulo en cotizaciones antiguas). */
+    private Double precioLista;
+    /** Solo de salida: nombre del descuento aplicado al paquete, o nulo. */
+    private String descuentoNombre;
+    /** Solo de salida: pesos descontados al paquete, o nulo. */
+    private Double descuentoMonto;
     private String tematica;
     private Long usuarioId;
     private List<DetalleCotizacionDTO> detalles;

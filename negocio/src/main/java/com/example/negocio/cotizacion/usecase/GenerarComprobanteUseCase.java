@@ -105,6 +105,13 @@ public class GenerarComprobanteUseCase {
             if (cotizacion.getPersonas() != null) {
                 addRow(datos, "PERSONAS:", String.valueOf(cotizacion.getPersonas()), boldFont, normalFont);
             }
+            var precioPaquete = com.example.negocio.precio.CalcularPrecioPaqueteUseCase.pactado(cotizacion);
+            if (paquete != null && precioPaquete.tieneDescuento()) {
+                addRow(datos, "PRECIO DE LISTA:", money.format(precioPaquete.precioLista()), boldFont, normalFont);
+                addRow(datos, "DESCUENTO:", precioPaquete.descuento() + "  -" + money.format(precioPaquete.montoDescuento()),
+                        boldFont, normalFont);
+                addRow(datos, "PRECIO PAQUETE:", money.format(precioPaquete.precio()), boldFont, normalFont);
+            }
 
             document.add(datos);
             document.add(new Paragraph(" "));

@@ -42,6 +42,9 @@ public class CotizacionMapper {
         }
         dto.setPersonas(cotizacion.getPersonas());
         dto.setPrecioPaquete(cotizacion.getPrecioPaquete());
+        dto.setPrecioLista(cotizacion.getPrecioLista());
+        dto.setDescuentoNombre(cotizacion.getDescuentoNombre());
+        dto.setDescuentoMonto(cotizacion.getDescuentoMonto());
         if (cotizacion.getServiciosExtra() != null) {
             dto.setDetalles(cotizacion.getServiciosExtra().stream()
                 .map(DetalleCotizacionMapper::toDTO)

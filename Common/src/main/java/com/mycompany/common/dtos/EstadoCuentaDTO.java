@@ -17,6 +17,11 @@ public class EstadoCuentaDTO {
     // Desglose Financiero
     private double precioPaqueteBase;
     private String nombrePaqueteBase;
+    /** Descuento que tuvo el paquete al cotizar (nombre nulo y monto 0 si no tuvo). */
+    private String descuentoPaqueteNombre;
+    private double descuentoPaqueteMonto;
+    /** Precio de catálogo del paquete antes del descuento. */
+    private double precioListaPaquete;
     
     private List<ServicioExtraDTO> serviciosExtrasOriginales;
     private double totalServiciosExtrasOriginales;

@@ -54,6 +54,8 @@ public class MainShellController {
     @FXML
     private ToggleButton btnServicios;
     @FXML
+    private ToggleButton btnDescuentos;
+    @FXML
     private ToggleButton btnReportes;
     @FXML
     private ToggleButton btnLogistica;
@@ -94,11 +96,15 @@ public class MainShellController {
             lblUsuarioActual.setText(correo + " (" + rol + ")");
         }
 
-        // Mostrar/ocultar botón de gestión de usuarios según el rol
+        // Gestión de usuarios y descuentos: solo el dueño
+        boolean esDueno = sesionContext.esDueno();
         if (btnGestionUsuarios != null) {
-            boolean esDueno = sesionContext.esDueno();
             btnGestionUsuarios.setVisible(esDueno);
             btnGestionUsuarios.setManaged(esDueno);
+        }
+        if (btnDescuentos != null) {
+            btnDescuentos.setVisible(esDueno);
+            btnDescuentos.setManaged(esDueno);
         }
 
         // Ocultar reportes de adeudos e ingresos para ADMINISTRADOR (solo visible para DUEÑO)
@@ -194,6 +200,11 @@ public class MainShellController {
     @FXML
     private void navServicios() {
         ViewSwitcher.cargarVista("Servicios.fxml");
+    }
+
+    @FXML
+    private void navDescuentos() {
+        ViewSwitcher.cargarVista("Descuentos.fxml");
     }
 
     @FXML

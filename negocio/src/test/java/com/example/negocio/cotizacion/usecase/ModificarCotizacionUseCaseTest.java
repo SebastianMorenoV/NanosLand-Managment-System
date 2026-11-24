@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.logistica.usecase.GenerarLogisticaEventoUseCase;
@@ -19,13 +20,16 @@ import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.CategoriaServicio;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.EstadoEvento;
+import com.mycompany.persistencia.enums.TipoDescuento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import com.mycompany.persistencia.repository.CotizacionRepository;
+import com.mycompany.persistencia.repository.DescuentoRepository;
 import com.mycompany.persistencia.repository.EventoRepository;
 import com.mycompany.persistencia.repository.PagoRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
 import com.mycompany.persistencia.repository.ServicioRepository;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ModificarCotizacionUseCaseTest {
 
     @Mock CotizacionRepository cotizacionRepository;
+    @Mock DescuentoRepository descuentoRepository;
     @Mock ClienteRepository clienteRepository;
     @Mock PaqueteRepository paqueteRepository;
     @Mock ServicioRepository servicioRepository;
@@ -58,7 +63,7 @@ class ModificarCotizacionUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        CalcularPrecioPaqueteUseCase precios = new CalcularPrecioPaqueteUseCase(paqueteRepository, cotizacionRepository);
+        CalcularPrecioPaqueteUseCase precios = new CalcularPrecioPaqueteUseCase(paqueteRepository, cotizacionRepository, descuentoRepository);
         modificar = new ModificarCotizacionUseCase(cotizacionRepository, clienteRepository, paqueteRepository,
                 servicioRepository, eventoRepository, pagoRepository, new GenerarLogisticaEventoUseCase(), precios);
         precio(full, barbacoa, 80, 22600);
@@ -175,5 +180,21 @@ class ModificarCotizacionUseCaseTest {
 
         assertThatThrownBy(() -> modificar.modificarCotizacion(50L, dto(1, null, null, extraDTO(21, 0))))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("no se vende como extra");
+    }
+
+    @Test
+    void moverUnBorradorAUnDiaConDescuentoLoAplica() {
+        Cotizacion c = existente(full, barbacoa, 100, 23800.0, 23800);
+        when(descuentoRepository.findByActivoTrue()).thenReturn(List.of(
+                descuento(1, "Martes", TipoDescuento.MONTO_FIJO, 2000, DayOfWeek.TUESDAY)));
+        CotizacionDTO dto = dto(2, 10L, 100);
+        dto.setFecha(proximo(DayOfWeek.TUESDAY));
+
+        modificar.modificarCotizacion(50L, dto);
+
+        assertThat(c.getPrecioPaquete()).isEqualTo(21800);
+        assertThat(c.getPrecioLista()).isEqualTo(23800);
+        assertThat(c.getDescuentoNombre()).isEqualTo("Martes");
+        assertThat(c.getTotal()).isEqualTo(21800);
     }
 }

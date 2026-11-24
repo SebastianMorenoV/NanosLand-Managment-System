@@ -154,6 +154,12 @@ public class GenerarContratoUseCase {
             tableEvento.addCell(cellHoras);
 
             addRow(tableEvento, "TIPO DE PAQUETE:", paquete != null ? descripcionPaquete : "", boldFont, normalFont);
+            var precioPaquete = com.example.negocio.precio.CalcularPrecioPaqueteUseCase.pactado(cotizacion);
+            if (paquete != null && precioPaquete.tieneDescuento()) {
+                addRow(tableEvento, "DESCUENTO:", precioPaquete.descuento() + ": -" + money.format(precioPaquete.montoDescuento())
+                        + " (precio de lista del paquete " + money.format(precioPaquete.precioLista()) + ")",
+                        boldFont, normalFont);
+            }
             addRow(tableEvento, "COSTO TOTAL:", money.format(total), boldFont, normalFont);
             addRow(tableEvento, "ANTICIPO:", money.format(anticipo), boldFont, normalFont);
             addRow(tableEvento, "SALDO RESTANTE:", money.format(saldo), boldFont, normalFont);

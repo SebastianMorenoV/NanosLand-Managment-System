@@ -1,13 +1,20 @@
 package com.example.negocio;
 
 import com.mycompany.persistencia.dominio.Cotizacion;
+import com.mycompany.persistencia.dominio.Descuento;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.dominio.PaquetePrecio;
 import com.mycompany.persistencia.dominio.PaqueteServicio;
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.CategoriaServicio;
+import com.mycompany.persistencia.enums.TipoDescuento;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 
 /** Entidades armadas a mano para las pruebas (sin base de datos). */
 public final class Fixtures {
@@ -84,5 +91,23 @@ public final class Fixtures {
         d.setSubtotal(precioUnitario * cantidad);
         cotizacion.getServiciosExtra().add(d);
         return d;
+    }
+
+    /** Descuento encendido para todos los paquetes; sin días, aplica cualquier día. */
+    public static Descuento descuento(long id, String nombre, TipoDescuento tipo, double valor, DayOfWeek... dias) {
+        Descuento d = new Descuento();
+        d.setId(id);
+        d.setNombre(nombre);
+        d.setTipo(tipo);
+        d.setValor(valor);
+        d.setDias(new HashSet<>(Arrays.asList(dias)));
+        d.setTodosLosPaquetes(true);
+        d.setActivo(true);
+        return d;
+    }
+
+    /** La siguiente fecha (después de hoy) que cae en ese día de la semana. */
+    public static LocalDate proximo(DayOfWeek dia) {
+        return LocalDate.now().with(TemporalAdjusters.next(dia));
     }
 }

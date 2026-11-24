@@ -104,6 +104,9 @@ public class CotizacionController {
     private Label lblNombrePaquete;
     @FXML
     private Label lblPrecioPaquete;
+    /** Desglose del descuento del paquete (cuánto se descuenta y el precio de lista). */
+    @FXML
+    private Label lblDescuentoPaquete;
     @FXML
     private Label lblDetallesPaquete;
     @FXML
@@ -179,8 +182,12 @@ public class CotizacionController {
         }
     }
 
-    /** Paquete, comida y personas de la cotización abierta, con su precio pactado (como está guardado). */
-    private record SeleccionGuardada(Long paqueteId, Long comidaId, Integer personas, Double precio) {
+    /**
+     * Paquete, comida y personas de la cotización abierta, como están guardados. Con esa
+     * selección el precio lo pide al caso de uso aunque falte elegir comida o personas
+     * (p. ej. si el paquete cambió de precio fijo a tabla), para mostrar el pactado.
+     */
+    private record SeleccionGuardada(Long paqueteId, Long comidaId, Integer personas) {
         boolean coincide(Long paqueteId, Long comidaId, Integer personas) {
             return java.util.Objects.equals(this.paqueteId, paqueteId)
                 && java.util.Objects.equals(this.comidaId, comidaId)
@@ -655,9 +662,10 @@ public class CotizacionController {
         }
 
         if (cotizacion.getPaqueteId() != null) {
-            // El precio pactado se respeta mientras no se cambie el paquete, la comida o las personas.
+            // El precio pactado se respeta mientras no se cambie el paquete, la comida, las personas
+            // o la fecha; lo decide CalcularPrecioPaqueteUseCase comparando con lo guardado.
             seleccionGuardada = new SeleccionGuardada(cotizacion.getPaqueteId(), cotizacion.getComidaId(),
-                cotizacion.getPersonas(), cotizacion.getPrecioPaquete());
+                cotizacion.getPersonas());
             PaqueteDTO paqueteEncontrado = comboPaquetes.getItems().stream()
                 .filter(p -> p.getId() != null && p.getId().equals(cotizacion.getPaqueteId()))
                 .findFirst()
@@ -1207,13 +1215,15 @@ public class CotizacionController {
 
     /**
      * Precio del paquete con la selección actual. Lo calcula el mismo caso de uso que usa el
-     * servidor al guardar; si la selección es la de la cotización abierta, es su precio pactado.
+     * servidor al guardar, con el descuento que toque por la fecha del evento; si la selección
+     * es la de la cotización abierta, es su precio pactado.
      */
     private void actualizarPrecioPaquete() {
         if (aplicandoPaquete || comboPaquetes == null) return;
         PaqueteDTO paquete = comboPaquetes.getValue();
         precioPaqueteActual = null;
         lblPrecioPaquete.setTooltip(null);
+        mostrarDescuento(null);
 
         if (paquete == null) {
             lblPrecioPaquete.setText("$0.00");
@@ -1224,11 +1234,9 @@ public class CotizacionController {
                 comidaId = null;
                 personas = null;
             }
-            if (seleccionGuardada != null && seleccionGuardada.precio() != null
-                    && seleccionGuardada.coincide(paquete.getId(), comidaId, personas)) {
-                precioPaqueteActual = seleccionGuardada.precio();
-                lblPrecioPaquete.setText(TablaPreciosPaquete.dinero(precioPaqueteActual));
-            } else if (paquete.isTablaPrecios() && (comidaId == null || personas == null)) {
+            boolean esLaGuardada = seleccionGuardada != null
+                    && seleccionGuardada.coincide(paquete.getId(), comidaId, personas);
+            if (!esLaGuardada && paquete.isTablaPrecios() && (comidaId == null || personas == null)) {
                 lblPrecioPaquete.setText("Desde " + TablaPreciosPaquete.dinero(paquete.getPrecioDesde()));
             } else {
                 try {
@@ -1238,6 +1246,7 @@ public class CotizacionController {
                         isModoEdicion() ? getCotizacionEnEdicionId() : null, solicitud);
                     precioPaqueteActual = precio.precio();
                     lblPrecioPaquete.setText(TablaPreciosPaquete.dinero(precioPaqueteActual));
+                    mostrarDescuento(precio);
                 } catch (CotizacionException e) {
                     lblPrecioPaquete.setText("—");
                     lblPrecioPaquete.setTooltip(new Tooltip(e.getMessage()));
@@ -1245,6 +1254,17 @@ public class CotizacionController {
             }
         }
         actualizarTotalEstimado();
+    }
+
+    /** Desglose del descuento debajo del paquete; se oculta si no hay descuento. */
+    private void mostrarDescuento(PrecioPaquete precio) {
+        if (lblDescuentoPaquete == null) return;
+        boolean hay = precio != null && precio.tieneDescuento();
+        lblDescuentoPaquete.setVisible(hay);
+        lblDescuentoPaquete.setManaged(hay);
+        lblDescuentoPaquete.setText(!hay ? "" : String.format("Descuento «%s»: −%s  ·  precio de lista %s",
+            precio.descuento(), TablaPreciosPaquete.dinero(precio.montoDescuento()),
+            TablaPreciosPaquete.dinero(precio.precioLista())));
     }
 
     // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ──────────

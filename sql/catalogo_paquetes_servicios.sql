@@ -13,8 +13,8 @@ SET NAMES utf8mb4;
 --   * Plus, Full y Neón -> un paquete cada uno, con su tabla de precios por comida
 --                          (7) y número de personas (60/80/100/120): 28 precios
 --                          por paquete.
---   * Precios: de momento se usa el precio más alto del volante (viernes a
---     domingo). El de lunes a jueves se manejará después con descuentos.
+--   * Precios: se usa el precio más alto del volante (viernes a domingo). El de
+--     lunes a jueves se maneja con un descuento desde la pantalla Descuentos.
 --   * Las comidas son servicios de categoría COMIDA (precio 0: lo pone la tabla).
 --   * La payasita, el pintacaritas y la decoración de mesa son de categoría
 --     INCLUIDO: van dentro de los paquetes y no salen en la lista de extras.

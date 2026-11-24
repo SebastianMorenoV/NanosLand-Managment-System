@@ -3,6 +3,7 @@ package com.example.negocio.cotizacion.usecase;
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
 import com.example.negocio.precio.Dinero;
+import com.example.negocio.precio.PrecioPaquete;
 import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.mapper.CotizacionMapper;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
@@ -35,7 +36,8 @@ import java.util.Set;
  * - Verificar que la fecha del evento sea futura (no en el pasado).
  * - Verificar que el turno no esté duplicado en la misma fecha.
  * - Generar un folio único con formato COT-YYYY-NNNN.
- * - Calcular el precio del paquete (fijo o por comida y personas) y guardarlo como precio pactado.
+ * - Calcular el precio del paquete (fijo o por comida y personas, con el descuento de la fecha)
+ *   y guardarlo como precio pactado.
  * - Total = precio del paquete + servicios extra.
  * - Asignar el estado inicial BORRADOR.
  * - Persistir la cotización.
@@ -109,8 +111,10 @@ public class CrearCotizacionUseCase {
                 "El paquete con ID " + dto.getPaqueteId() + " no existe en el catálogo."
             ));
         // Valida también que esté activo y que la comida y las personas correspondan a su forma de precio.
-        double precioPaquete = calcularPrecioPaqueteUseCase.precioDeLista(
+        // Lleva el descuento que corresponda a la fecha del evento.
+        PrecioPaquete precio = calcularPrecioPaqueteUseCase.precioDeCatalogo(
             paquete, dto.getComidaId(), dto.getPersonas(), dto.getFecha());
+        double precioPaquete = precio.precio();
         Servicio comida = dto.getComidaId() == null ? null : servicioRepository.findById(dto.getComidaId())
             .orElseThrow(() -> new CotizacionException("La comida seleccionada no existe en el catálogo."));
 
@@ -132,7 +136,7 @@ public class CrearCotizacionUseCase {
         cotizacion.setPaquete(paquete);
         cotizacion.setComida(comida);
         cotizacion.setPersonas(dto.getPersonas());
-        cotizacion.setPrecioPaquete(precioPaquete);
+        precio.guardarEn(cotizacion);
         EstadoCotizacion estado = dto.getEstado() != null ? dto.getEstado() : EstadoCotizacion.BORRADOR;
         cotizacion.setEstado(estado);
         if (dto.getUsuarioId() != null) {

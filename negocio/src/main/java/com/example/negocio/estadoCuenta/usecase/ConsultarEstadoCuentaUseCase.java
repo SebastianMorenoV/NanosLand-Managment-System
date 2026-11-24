@@ -100,9 +100,13 @@ public class ConsultarEstadoCuentaUseCase {
         // Se parte del total GUARDADO en la cotización (lo pactado con el cliente), no del
         // precio actual del paquete: así un cambio posterior en el catálogo no altera
         // lo que debe un evento ya vendido. El paquete se muestra a su precio pactado.
-        dto.setPrecioPaqueteBase(cotizacion.getPaquete() != null
-                ? com.example.negocio.precio.CalcularPrecioPaqueteUseCase.precioPactado(cotizacion)
-                : 0.0);
+        if (cotizacion.getPaquete() != null) {
+            var precio = com.example.negocio.precio.CalcularPrecioPaqueteUseCase.pactado(cotizacion);
+            dto.setPrecioPaqueteBase(precio.precio());
+            dto.setPrecioListaPaquete(precio.precioLista());
+            dto.setDescuentoPaqueteNombre(precio.descuento());
+            dto.setDescuentoPaqueteMonto(precio.montoDescuento());
+        }
         double granTotal = cotizacion.getTotal() + totalCargos;
         dto.setGranTotal(granTotal);
         dto.setSaldoPendiente(granTotal - totalPagado);

@@ -8,6 +8,7 @@ import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.logistica.usecase.GenerarLogisticaEventoUseCase;
 import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
 import com.example.negocio.precio.Dinero;
+import com.example.negocio.precio.PrecioPaquete;
 import com.mycompany.common.dtos.CotizacionDTO;
 import com.mycompany.common.mapper.CotizacionMapper;
 import com.mycompany.persistencia.dominio.Cliente;
@@ -106,11 +107,12 @@ public class ModificarCotizacionUseCase {
                 "El paquete con ID " + dto.getPaqueteId() + " no existe en el catálogo."
             ));
 
-        // Precio del paquete: el pactado si no cambió el paquete, la comida ni las personas;
-        // si cambiaron, el del catálogo actual. Se calcula antes de modificar la cotización
-        // porque compara contra lo guardado.
-        double precioPaquete = calcularPrecioPaqueteUseCase.precioParaCotizacion(
+        // Precio del paquete: el pactado si no cambió el paquete, la comida, las personas ni la
+        // fecha; si cambiaron, se vuelve a cotizar (con el descuento de la fecha). Se calcula
+        // antes de modificar la cotización porque compara contra lo guardado.
+        PrecioPaquete precio = calcularPrecioPaqueteUseCase.precioParaCotizacion(
             existente, paquete, dto.getComidaId(), dto.getPersonas(), dto.getFecha());
+        double precioPaquete = precio.precio();
         Servicio comida = dto.getComidaId() == null ? null : servicioRepository.findById(dto.getComidaId())
             .orElseThrow(() -> new CotizacionException("La comida seleccionada no existe en el catálogo."));
         // Extras que ya tenía: se aceptan aunque hoy ya no sean de categoría Extra.
@@ -151,7 +153,7 @@ public class ModificarCotizacionUseCase {
         existente.setPaquete(paquete);
         existente.setComida(comida);
         existente.setPersonas(dto.getPersonas());
-        existente.setPrecioPaquete(precioPaquete);
+        precio.guardarEn(existente);
 
         boolean cambioTurno = eventoExistente.getTurno() != dto.getTurno();
         eventoExistente.setFecha(dto.getFecha());

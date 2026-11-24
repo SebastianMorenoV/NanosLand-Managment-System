@@ -18,13 +18,16 @@ import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.CategoriaServicio;
+import com.mycompany.persistencia.enums.TipoDescuento;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.persistencia.repository.ClienteRepository;
 import com.mycompany.persistencia.repository.CotizacionRepository;
+import com.mycompany.persistencia.repository.DescuentoRepository;
 import com.mycompany.persistencia.repository.EventoRepository;
 import com.mycompany.persistencia.repository.PaqueteRepository;
 import com.mycompany.persistencia.repository.ServicioRepository;
 import com.mycompany.persistencia.repository.UsuarioRepository;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CrearCotizacionUseCaseTest {
 
     @Mock CotizacionRepository cotizacionRepository;
+    @Mock DescuentoRepository descuentoRepository;
     @Mock ClienteRepository clienteRepository;
     @Mock PaqueteRepository paqueteRepository;
     @Mock ServicioRepository servicioRepository;
@@ -55,7 +59,7 @@ class CrearCotizacionUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        CalcularPrecioPaqueteUseCase precios = new CalcularPrecioPaqueteUseCase(paqueteRepository, cotizacionRepository);
+        CalcularPrecioPaqueteUseCase precios = new CalcularPrecioPaqueteUseCase(paqueteRepository, cotizacionRepository, descuentoRepository);
         crear = new CrearCotizacionUseCase(cotizacionRepository, clienteRepository, paqueteRepository,
                 servicioRepository, eventoRepository, usuarioRepository, precios);
         precio(full, barbacoa, 100, 23800);
@@ -152,5 +156,24 @@ class CrearCotizacionUseCaseTest {
         crear.crearCotizacion(dto);
 
         assertThat(guardada().getTotal()).isEqualTo(9800);
+    }
+
+    @Test
+    void guardaElDescuentoQueTocaPorLaFechaDelEvento() {
+        when(descuentoRepository.findByActivoTrue()).thenReturn(List.of(
+                descuento(1, "Entre semana", TipoDescuento.PORCENTAJE, 15,
+                        DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY)));
+        CotizacionDTO dto = dto(2, 10L, 100, extraDTO(20, 400));
+        dto.setFecha(proximo(DayOfWeek.MONDAY));
+
+        crear.crearCotizacion(dto);
+
+        Cotizacion c = guardada();
+        assertThat(c.getPrecioLista()).isEqualTo(23800);
+        assertThat(c.getDescuentoNombre()).isEqualTo("Entre semana");
+        assertThat(c.getDescuentoMonto()).isEqualTo(3570);
+        assertThat(c.getPrecioPaquete()).isEqualTo(20230);
+        // El descuento es solo del paquete: los extras van a su precio.
+        assertThat(c.getTotal()).isEqualTo(20630);
     }
 }

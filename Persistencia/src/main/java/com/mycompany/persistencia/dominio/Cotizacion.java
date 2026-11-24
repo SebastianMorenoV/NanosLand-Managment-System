@@ -68,6 +68,21 @@ public class Cotizacion {
     @Column(name = "precio_paquete")
     private Double precioPaquete;
 
+    /**
+     * Precio de catálogo del paquete antes del descuento, tal como estaba al cotizar.
+     * Nulo en cotizaciones de antes de los descuentos (su precio de lista es {@link #precioPaquete}).
+     */
+    @Column(name = "precio_lista")
+    private Double precioLista;
+
+    /** Nombre del descuento aplicado al paquete, como se llamaba al cotizar. Nulo si no tuvo descuento. */
+    @Column(name = "descuento_nombre")
+    private String descuentoNombre;
+
+    /** Pesos que se descontaron al paquete: {@code precioLista - precioPaquete}. Nulo o 0 si no tuvo descuento. */
+    @Column(name = "descuento_monto")
+    private Double descuentoMonto;
+
     @ToString.Exclude
     @OneToOne(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private Evento evento;
