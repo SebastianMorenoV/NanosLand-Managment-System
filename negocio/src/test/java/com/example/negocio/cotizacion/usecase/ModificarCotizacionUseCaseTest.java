@@ -31,6 +31,7 @@ import com.mycompany.persistencia.repository.PaqueteRepository;
 import com.mycompany.persistencia.repository.ServicioRepository;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -102,6 +103,8 @@ class ModificarCotizacionUseCaseTest {
         dto.setClienteId(1L);
         dto.setFecha(fecha);
         dto.setTurno(TurnoEvento.MATUTINO);
+        dto.setHoraInicio(LocalTime.of(10, 0));
+        dto.setHoraFin(LocalTime.of(14, 30));
         dto.setPaqueteId(paqueteId);
         dto.setComidaId(comidaId);
         dto.setPersonas(personas);
@@ -180,6 +183,55 @@ class ModificarCotizacionUseCaseTest {
 
         assertThatThrownBy(() -> modificar.modificarCotizacion(50L, dto(1, null, null, extraDTO(21, 0))))
                 .isInstanceOf(CotizacionException.class).hasMessageContaining("no se vende como extra");
+    }
+
+    @Test
+    void cambiarDeTurnoGuardaElHorarioCapturadoSinInventarlo() {
+        Cotizacion c = existente(renta, null, null, 9800.0, 9800);
+        c.getEvento().setHoraInicio(LocalTime.of(9, 0));
+        c.getEvento().setHoraFin(LocalTime.of(14, 0));
+        CotizacionDTO dto = dto(1, null, null);
+        dto.setTurno(TurnoEvento.VESPERTINO);
+        dto.setHoraInicio(LocalTime.of(16, 30));
+        dto.setHoraFin(LocalTime.of(21, 0));
+
+        modificar.modificarCotizacion(50L, dto);
+
+        assertThat(c.getEvento().getTurno()).isEqualTo(TurnoEvento.VESPERTINO);
+        assertThat(c.getEvento().getHoraInicio()).isEqualTo(LocalTime.of(16, 30));
+        assertThat(c.getEvento().getHoraFin()).isEqualTo(LocalTime.of(21, 0));
+    }
+
+    @Test
+    void unEventoEnCursoNoCambiaDeFechaPeroSiDeHorario() {
+        Cotizacion c = existente(renta, null, null, 9800.0, 9800);
+        c.setEstado(EstadoCotizacion.VIGENTE);
+        c.getEvento().setFecha(LocalDate.now());
+        c.getEvento().setEstado(EstadoEvento.EN_CURSO);
+
+        CotizacionDTO otraFecha = dto(1, null, null);
+        otraFecha.setFecha(LocalDate.now().plusDays(7));
+        assertThatThrownBy(() -> modificar.modificarCotizacion(50L, otraFecha))
+                .isInstanceOf(CotizacionException.class).hasMessageContaining("en curso");
+        assertThat(c.getEvento().getFecha()).isEqualTo(LocalDate.now());
+
+        CotizacionDTO mismoDia = dto(1, null, null);
+        mismoDia.setFecha(LocalDate.now());
+        mismoDia.setHoraInicio(LocalTime.of(11, 0));
+        mismoDia.setHoraFin(LocalTime.of(16, 0));
+        modificar.modificarCotizacion(50L, mismoDia);
+        assertThat(c.getEvento().getHoraInicio()).isEqualTo(LocalTime.of(11, 0));
+        assertThat(c.getEvento().getHoraFin()).isEqualTo(LocalTime.of(16, 0));
+    }
+
+    @Test
+    void sinHorarioNoSeModifica() {
+        existente(renta, null, null, 9800.0, 9800);
+        CotizacionDTO dto = dto(1, null, null);
+        dto.setHoraInicio(null);
+
+        assertThatThrownBy(() -> modificar.modificarCotizacion(50L, dto))
+                .isInstanceOf(CotizacionException.class).hasMessageContaining("hora de inicio y la hora de fin");
     }
 
     @Test

@@ -61,6 +61,17 @@
                         <ComboBox fx:id="comboTurnos" promptText="Turno..." maxWidth="Infinity" styleClass="text-field-moderno"/>
                     </VBox>
                 </HBox>
+                <!-- Horario real del evento (el que sale en el contrato) -->
+                <HBox spacing="10">
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label text="HORA DE INICIO" styleClass="label-pequeno"/>
+                        <ComboBox fx:id="comboHoraInicio" maxWidth="Infinity" styleClass="text-field-moderno"/>
+                    </VBox>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label text="HORA DE FIN" styleClass="label-pequeno"/>
+                        <ComboBox fx:id="comboHoraFin" maxWidth="Infinity" styleClass="text-field-moderno"/>
+                    </VBox>
+                </HBox>
                 <Label fx:id="lblErrorTurnos" text="No hay turnos disponibles para esta fecha." styleClass="boton-texto-rojo" visible="false" managed="false">
                     <graphic>
                         <SVGPath content="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="#e74c3c" scaleX="0.7" scaleY="0.7"/>

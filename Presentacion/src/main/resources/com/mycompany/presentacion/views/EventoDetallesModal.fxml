@@ -41,7 +41,10 @@
 
         <!-- Horario -->
         <Label text="Horario:" styleClass="titulo-seccion" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <Label fx:id="lblHorario" text="-" style="-fx-text-fill: #2c3e50;" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+        <HBox spacing="12" alignment="CENTER_LEFT" GridPane.rowIndex="3" GridPane.columnIndex="1">
+            <Label fx:id="lblHorario" text="-" style="-fx-text-fill: #2c3e50;"/>
+            <Button fx:id="btnEditarHorario" text="Editar horario" minWidth="-Infinity" styleClass="boton-azul-claro" onAction="#editarHorario"/>
+        </HBox>
 
         <!-- Paquete -->
         <Label text="Paquete:" styleClass="titulo-seccion" GridPane.rowIndex="4" GridPane.columnIndex="0"/>

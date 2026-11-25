@@ -11,6 +11,7 @@ import com.example.negocio.cotizacion.usecase.GenerarContratoUseCase;
 import com.example.negocio.cotizacion.usecase.ListarCotizacionesUseCase;
 import com.example.negocio.cotizacion.usecase.RegistrarAnticipoUseCase;
 import com.example.negocio.cotizacion.usecase.ModificarCotizacionUseCase;
+import com.example.negocio.evento.usecase.HorarioEvento;
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
 import com.example.negocio.precio.PrecioPaquete;
@@ -26,6 +27,7 @@ import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.FiltroCotizaciones;
+import com.mycompany.presentacion.utils.ComboHoras;
 import com.mycompany.presentacion.utils.DialogoGuardarPdf;
 import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ModalHelper;
@@ -62,6 +64,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,6 +96,8 @@ public class CotizacionController {
     private DatePicker datePickerFecha;
     @FXML
     private ComboBox<TurnoEvento> comboTurnos;
+    @FXML private ComboBox<LocalTime> comboHoraInicio;
+    @FXML private ComboBox<LocalTime> comboHoraFin;
     @FXML
     private TextArea textAreaNotas;
 
@@ -260,6 +265,8 @@ public class CotizacionController {
         seleccionGuardada = null;
         aplicandoPaquete = false;
 
+        ComboHoras.configurarInicio(comboHoraInicio);
+        ComboHoras.configurarFin(comboHoraFin);
         configurarComboClientes();
         configurarComboPaquetes();
         configurarOpcionesPaquete();
@@ -361,6 +368,8 @@ public class CotizacionController {
             datePickerFecha.valueProperty().addListener((obs, old, val) -> actualizarPrecioPaquete());
         }
         comboTurnos.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        comboHoraInicio.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
+        comboHoraFin.valueProperty().addListener((obs, old, val) -> validarFormularioCompleto());
         if (txtNombreFestejado != null) txtNombreFestejado.textProperty().addListener((obs, old, val) -> validarFormularioCompleto());
         if (txtTematica != null) txtTematica.textProperty().addListener((obs, old, val) -> validarFormularioCompleto());
 
@@ -683,6 +692,9 @@ public class CotizacionController {
         if (cotizacion.getTurno() != null) {
             comboTurnos.setValue(cotizacion.getTurno());
         }
+        // Las cotizaciones guardadas antes de capturar el horario llegan sin horas: se piden al guardar.
+        comboHoraInicio.setValue(cotizacion.getHoraInicio());
+        comboHoraFin.setValue(cotizacion.getHoraFin());
 
         textAreaNotas.setText(cotizacion.getNotas() != null ? cotizacion.getNotas() : "");
         txtNombreFestejado.setText(cotizacion.getNombreFestejado() != null ? cotizacion.getNombreFestejado() : "");
@@ -741,6 +753,12 @@ public class CotizacionController {
         setSoloLectura(!editable);
         if (!editable) {
             ocultarErrorTurnos(); // en una cotización de solo consulta no aplica elegir turno
+        }
+        // Confirmada y el evento es hoy (en curso): ya no se cambia de fecha ni de turno;
+        // si no se realiza, se cancela. Lo demás (horario, notas, extras) sí se puede editar.
+        if (cotizacion.getEstado() == EstadoCotizacion.VIGENTE && LocalDate.now().equals(cotizacion.getFecha())) {
+            datePickerFecha.setDisable(true);
+            comboTurnos.setDisable(true);
         }
 
         lblTituloCotizacion.setText("Cotización " + (cotizacion.getFolio() != null ? cotizacion.getFolio() : ""));
@@ -803,6 +821,7 @@ public class CotizacionController {
 
     private boolean hayDatosCapturados() {
         return comboClientes.getValue() != null || comboPaquetes.getValue() != null
+                || comboHoraInicio.getValue() != null || comboHoraFin.getValue() != null
                 || !serviciosSeleccionados.isEmpty()
                 || !textoVacio(txtNombreFestejado.getText()) || !textoVacio(txtTematica.getText())
                 || !textoVacio(textAreaNotas.getText());
@@ -837,6 +856,8 @@ public class CotizacionController {
                 comboTurnos.setDisable(true);
             }
         }
+        if (comboHoraInicio != null) comboHoraInicio.setDisable(soloLectura);
+        if (comboHoraFin != null) comboHoraFin.setDisable(soloLectura);
         if (textAreaNotas != null) textAreaNotas.setDisable(soloLectura);
         if (txtNombreFestejado != null) txtNombreFestejado.setDisable(soloLectura);
         if (txtTematica != null) txtTematica.setDisable(soloLectura);
@@ -849,6 +870,8 @@ public class CotizacionController {
                              comboPaquetes == null || comboPaquetes.getValue() == null ||
                              datePickerFecha == null || datePickerFecha.getValue() == null ||
                              comboTurnos == null || comboTurnos.getValue() == null ||
+                             comboHoraInicio == null || comboHoraInicio.getValue() == null ||
+                             comboHoraFin == null || comboHoraFin.getValue() == null ||
                              txtNombreFestejado == null || txtNombreFestejado.getText() == null || txtNombreFestejado.getText().trim().isEmpty() ||
                              // La temática es opcional.
                              faltaComidaOPersonas();
@@ -926,6 +949,9 @@ public class CotizacionController {
         if (turno == null) {
             throw new CotizacionException("Debe seleccionar un turno (Matutino o Vespertino).");
         }
+        LocalTime horaInicio = comboHoraInicio.getValue();
+        LocalTime horaFin = comboHoraFin.getValue();
+        HorarioEvento.validar(horaInicio, horaFin);
 
         String notas = textAreaNotas.getText();
         String nombreFestejado = txtNombreFestejado.getText();
@@ -946,6 +972,8 @@ public class CotizacionController {
         }
         dto.setFecha(fecha);
         dto.setTurno(turno);
+        dto.setHoraInicio(horaInicio);
+        dto.setHoraFin(horaFin);
         dto.setNotas(notas != null && !notas.isBlank() ? notas.trim() : null);
         dto.setNombreFestejado(nombreFestejado != null && !nombreFestejado.isBlank() ? nombreFestejado.trim() : null);
         dto.setTematica(tematica != null && !tematica.isBlank() ? tematica.trim() : null);

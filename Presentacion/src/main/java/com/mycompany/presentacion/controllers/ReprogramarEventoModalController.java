@@ -3,6 +3,7 @@ package com.mycompany.presentacion.controllers;
 import com.example.negocio.evento.usecase.ReprogramarEventoUseCase;
 import com.mycompany.common.dtos.EventoDTO;
 import com.mycompany.persistencia.enums.TurnoEvento;
+import com.mycompany.presentacion.utils.ComboHoras;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Controller
 @RequiredArgsConstructor
@@ -20,6 +22,8 @@ public class ReprogramarEventoModalController {
 
     @FXML private DatePicker dpNuevaFecha;
     @FXML private ComboBox<TurnoEvento> cmbNuevoTurno;
+    @FXML private ComboBox<LocalTime> cmbHoraInicio;
+    @FXML private ComboBox<LocalTime> cmbHoraFin;
 
     private EventoDTO evento;
     private Runnable onReprogramado;
@@ -29,11 +33,16 @@ public class ReprogramarEventoModalController {
     public void setEvento(EventoDTO evento, Runnable onReprogramado) {
         this.evento = evento;
         this.onReprogramado = onReprogramado;
+        // Se parte del horario actual; si cambia el turno, casi siempre cambian las horas.
+        cmbHoraInicio.setValue(evento.getHoraInicio());
+        cmbHoraFin.setValue(evento.getHoraFin());
     }
 
     @FXML
     public void initialize() {
         cmbNuevoTurno.setItems(FXCollections.observableArrayList(TurnoEvento.values()));
+        ComboHoras.configurarInicio(cmbHoraInicio);
+        ComboHoras.configurarFin(cmbHoraFin);
         dpNuevaFecha.setEditable(false);
     }
 
@@ -48,7 +57,8 @@ public class ReprogramarEventoModalController {
         }
 
         try {
-            reprogramarEventoUseCase.reprogramar(evento.getId(), nuevaFecha, nuevoTurno);
+            reprogramarEventoUseCase.reprogramar(evento.getId(), nuevaFecha, nuevoTurno,
+                    cmbHoraInicio.getValue(), cmbHoraFin.getValue());
             
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Éxito");

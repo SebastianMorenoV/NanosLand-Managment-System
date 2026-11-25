@@ -4,6 +4,7 @@
  */
 package com.example.negocio.cotizacion.usecase;
 
+import com.example.negocio.evento.usecase.HorarioEvento;
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.logistica.usecase.GenerarLogisticaEventoUseCase;
 import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
@@ -78,6 +79,7 @@ public class ModificarCotizacionUseCase {
         if (dto.getTurno() == null) {
             throw new CotizacionException("Debe seleccionar un turno (Matutino o Vespertino).");
         }
+        HorarioEvento.validar(dto.getHoraInicio(), dto.getHoraFin());
         if (dto.getPaqueteId() == null) {
             throw new CotizacionException("Debe seleccionar un paquete base para la cotización.");
         }
@@ -136,6 +138,13 @@ public class ModificarCotizacionUseCase {
             || !eventoExistente.getFecha().equals(fechaNueva)
             || !eventoExistente.getTurno().equals(turnoNuevo);
 
+        if (cambioFechaTurno && (eventoExistente.getEstado() == EstadoEvento.EN_CURSO
+                || eventoExistente.getEstado() == EstadoEvento.FINALIZADO)) {
+            throw new CotizacionException(eventoExistente.getEstado() == EstadoEvento.EN_CURSO
+                ? com.example.negocio.evento.usecase.ReprogramarEventoUseCase.MENSAJE_EN_CURSO
+                : "El evento ya se realizó y no se puede cambiar de fecha ni de turno.");
+        }
+
         if (cambioFechaTurno) {
             // Solo bloqueamos si la nueva fecha/turno ya tiene OTRO evento confirmado
             // (los borradores de otros clientes no apartan el turno).
@@ -155,13 +164,10 @@ public class ModificarCotizacionUseCase {
         existente.setPersonas(dto.getPersonas());
         precio.guardarEn(existente);
 
-        boolean cambioTurno = eventoExistente.getTurno() != dto.getTurno();
         eventoExistente.setFecha(dto.getFecha());
         eventoExistente.setTurno(dto.getTurno());
-        // Un evento que ya tiene horario (confirmado) toma el del nuevo turno.
-        if (cambioTurno && eventoExistente.getHoraInicio() != null) {
-            com.example.negocio.evento.usecase.HorarioTurno.asignar(eventoExistente);
-        }
+        eventoExistente.setHoraInicio(dto.getHoraInicio());
+        eventoExistente.setHoraFin(dto.getHoraFin());
         eventoExistente.setNombreFestejado(dto.getNombreFestejado());
         eventoExistente.setTematica(dto.getTematica());
         

@@ -1,5 +1,6 @@
 package com.example.negocio.cotizacion.usecase;
 
+import com.example.negocio.evento.usecase.HorarioEvento;
 import com.example.negocio.exception.CotizacionException;
 import com.example.negocio.precio.CalcularPrecioPaqueteUseCase;
 import com.example.negocio.precio.Dinero;
@@ -35,6 +36,7 @@ import java.util.Set;
  * - Verificar que el cliente y el paquete existan en la base de datos.
  * - Verificar que la fecha del evento sea futura (no en el pasado).
  * - Verificar que el turno no esté duplicado en la misma fecha.
+ * - Guardar el horario real del evento (hora de inicio y de fin) que se capturó.
  * - Generar un folio único con formato COT-YYYY-NNNN.
  * - Calcular el precio del paquete (fijo o por comida y personas, con el descuento de la fecha)
  *   y guardarlo como precio pactado.
@@ -77,6 +79,7 @@ public class CrearCotizacionUseCase {
         if (dto.getTurno() == null) {
             throw new CotizacionException("Debe seleccionar un turno (Matutino o Vespertino).");
         }
+        HorarioEvento.validar(dto.getHoraInicio(), dto.getHoraFin());
         if (dto.getPaqueteId() == null) {
             throw new CotizacionException("Debe seleccionar un paquete base para la cotización.");
         }
@@ -147,6 +150,8 @@ public class CrearCotizacionUseCase {
         Evento evento = new Evento();
         evento.setFecha(dto.getFecha());
         evento.setTurno(dto.getTurno());
+        evento.setHoraInicio(dto.getHoraInicio());
+        evento.setHoraFin(dto.getHoraFin());
         evento.setNombreFestejado(dto.getNombreFestejado());
         evento.setTematica(dto.getTematica());
         evento.setEstado(EstadoEvento.TENTATIVO);

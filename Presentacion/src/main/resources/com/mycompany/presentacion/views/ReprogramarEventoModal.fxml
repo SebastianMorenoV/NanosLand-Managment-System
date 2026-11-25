@@ -9,7 +9,7 @@
     <!-- Cabecera -->
     <VBox spacing="4">
         <Label text="Reprogramar Evento" styleClass="titulo-modal"/>
-        <Label text="Seleccione la nueva fecha y turno para el evento." styleClass="subtitulo-modal"/>
+        <Label text="Seleccione la nueva fecha, el turno y el horario del evento." styleClass="subtitulo-modal"/>
     </VBox>
 
     <!-- Formulario -->
@@ -22,6 +22,17 @@
         <Label text="NUEVO TURNO *" styleClass="label-pequeno"/>
         <ComboBox fx:id="cmbNuevoTurno" promptText="Seleccionar turno" maxWidth="Infinity"/>
     </VBox>
+
+    <HBox spacing="10">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="HORA DE INICIO *" styleClass="label-pequeno"/>
+            <ComboBox fx:id="cmbHoraInicio" maxWidth="Infinity"/>
+        </VBox>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="HORA DE FIN *" styleClass="label-pequeno"/>
+            <ComboBox fx:id="cmbHoraFin" maxWidth="Infinity"/>
+        </VBox>
+    </HBox>
 
     <!-- Acciones -->
     <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">

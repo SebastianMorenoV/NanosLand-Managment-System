@@ -1,13 +1,27 @@
 package com.mycompany.presentacion.controllers;
 
+import com.example.negocio.evento.usecase.CambiarHorarioEventoUseCase;
 import com.mycompany.common.dtos.EventoDTO;
+import com.mycompany.common.dtos.ReporteLogisticaSemanalDTO;
 import com.mycompany.persistencia.enums.EstadoEvento;
+import com.mycompany.presentacion.utils.ComboHoras;
+import com.mycompany.presentacion.utils.ModalHelper;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import javafx.scene.control.Button;
 
@@ -31,11 +45,13 @@ public class EventoDetallesModalController {
     @FXML private Button btnCancelar;
     @FXML private Button btnReprogramar;
     @FXML private Button btnFinalizar;
+    @FXML private Button btnEditarHorario;
 
     private EventoDTO evento;
     private Runnable onEstadoActualizado;
 
     private final com.example.negocio.evento.usecase.ActualizarEstadoEventoUseCase actualizarEstadoEventoUseCase;
+    private final CambiarHorarioEventoUseCase cambiarHorarioEventoUseCase;
 
     public void setEvento(EventoDTO evento, Runnable onEstadoActualizado) {
         this.evento = evento;
@@ -53,9 +69,7 @@ public class EventoDetallesModalController {
         String turnoStr = evento.getTurno() != null ? evento.getTurno().name() : "-";
         lblFechaTurno.setText(fechaStr + " (" + turnoStr + ")");
 
-        String horaInicio = evento.getHoraInicio() != null ? evento.getHoraInicio().toString() : "--:--";
-        String horaFin = evento.getHoraFin() != null ? evento.getHoraFin().toString() : "--:--";
-        lblHorario.setText(horaInicio + " a " + horaFin);
+        mostrarHorario();
 
         lblPaquete.setText(evento.getPaqueteDetalle() != null && !evento.getPaqueteDetalle().isBlank() ? evento.getPaqueteDetalle() : "Personalizado");
         lblNotas.setText((evento.getNotas() != null && !evento.getNotas().isBlank()) ? evento.getNotas() : "Sin notas adicionales.");
@@ -74,13 +88,79 @@ public class EventoDetallesModalController {
                                       evento.getEstadoEvento() == EstadoEvento.CANCELADO_TARDIO ||
                                       evento.getEstadoEvento() == EstadoEvento.FINALIZADO;
         if (btnCancelar != null) btnCancelar.setDisable(deshabilitarBotones);
-        if (btnReprogramar != null) btnReprogramar.setDisable(deshabilitarBotones);
+        // Un evento en curso (es hoy) ya no se reprograma: si no se realiza, se cancela.
+        if (btnReprogramar != null) btnReprogramar.setDisable(deshabilitarBotones
+                || evento.getEstadoEvento() == EstadoEvento.EN_CURSO);
+        // El horario se puede corregir aunque el evento ya se haya realizado; no si se canceló.
+        boolean cancelado = evento.getEstadoEvento() == EstadoEvento.CANCELADO
+                || evento.getEstadoEvento() == EstadoEvento.CANCELADO_TARDIO;
+        if (btnEditarHorario != null) btnEditarHorario.setDisable(cancelado);
 
         // Finalizar a mano: solo un evento confirmado o en curso cuya fecha ya llegó.
         boolean sePuedeFinalizar = (evento.getEstadoEvento() == EstadoEvento.CONFIRMADO
                 || evento.getEstadoEvento() == EstadoEvento.EN_CURSO)
                 && evento.getFecha() != null && !evento.getFecha().isAfter(java.time.LocalDate.now());
         if (btnFinalizar != null) btnFinalizar.setDisable(!sePuedeFinalizar);
+    }
+
+    private void mostrarHorario() {
+        if (evento.getHoraInicio() == null || evento.getHoraFin() == null) {
+            lblHorario.setText("Sin horario");
+            return;
+        }
+        lblHorario.setText(ReporteLogisticaSemanalDTO.horaTexto(evento.getHoraInicio())
+                + " a " + ReporteLogisticaSemanalDTO.horaTexto(evento.getHoraFin()));
+    }
+
+    /** Corrige la hora de inicio y de fin reales del evento (las que salen en el contrato). */
+    @FXML
+    private void editarHorario() {
+        if (evento == null || evento.getId() == null) return;
+
+        ComboBox<LocalTime> comboInicio = new ComboBox<>();
+        ComboBox<LocalTime> comboFin = new ComboBox<>();
+        ComboHoras.configurarInicio(comboInicio);
+        ComboHoras.configurarFin(comboFin);
+        comboInicio.setValue(evento.getHoraInicio());
+        comboFin.setValue(evento.getHoraFin());
+
+        Dialog<ButtonType> dialogo = new Dialog<>();
+        dialogo.setTitle("Editar horario");
+        ButtonType guardar = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
+        dialogo.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, guardar);
+
+        HBox horas = new HBox(10, ModalHelper.campo("HORA DE INICIO", comboInicio),
+                ModalHelper.campo("HORA DE FIN", comboFin));
+        horas.getChildren().forEach(c -> HBox.setHgrow(c, Priority.ALWAYS));
+        VBox contenido = new VBox(18,
+                ModalHelper.encabezado("Editar horario",
+                        "Hora real de inicio y de fin del evento. Es la que sale en el contrato."),
+                horas);
+        contenido.setPrefWidth(400);
+        dialogo.getDialogPane().setContent(contenido);
+        ModalHelper.aplicarEstilo(dialogo, lblFolio.getScene().getWindow());
+
+        // Se guarda al pulsar "Guardar"; si hay un error, el diálogo sigue abierto para corregirlo.
+        dialogo.getDialogPane().lookupButton(guardar).addEventFilter(ActionEvent.ACTION, e -> {
+            try {
+                cambiarHorarioEventoUseCase.cambiarHorario(evento.getId(), comboInicio.getValue(), comboFin.getValue());
+            } catch (Exception ex) {
+                e.consume();
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.initOwner(dialogo.getDialogPane().getScene().getWindow());
+                alert.setTitle("Editar horario");
+                alert.setHeaderText("No se pudo guardar el horario");
+                alert.setContentText(ex.getMessage());
+                alert.showAndWait();
+            }
+        });
+
+        if (dialogo.showAndWait().orElse(ButtonType.CANCEL) == guardar) {
+            evento.setHoraInicio(comboInicio.getValue());
+            evento.setHoraFin(comboFin.getValue());
+            mostrarHorario();
+            if (onEstadoActualizado != null) onEstadoActualizado.run();
+        }
     }
 
     private void actualizarBadgeEstado(EstadoEvento estado) {

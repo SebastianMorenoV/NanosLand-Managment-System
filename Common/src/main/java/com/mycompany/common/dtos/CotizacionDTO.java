@@ -3,6 +3,7 @@ package com.mycompany.common.dtos;
 import com.mycompany.persistencia.enums.EstadoCotizacion;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,9 @@ public class CotizacionDTO {
     private String notas;
     private EstadoCotizacion estado;
     private TurnoEvento turno;
+    /** Horario real del evento (el que sale en el contrato). */
+    private LocalTime horaInicio;
+    private LocalTime horaFin;
     private Long paqueteId;
     private String nombrePaquete;
     /** Comida elegida (paquetes con tabla de precios). */

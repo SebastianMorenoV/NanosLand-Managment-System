@@ -22,6 +22,8 @@ public class CotizacionMapper {
         if (cotizacion.getEvento() != null) {
             dto.setFecha(cotizacion.getEvento().getFecha());
             dto.setTurno(cotizacion.getEvento().getTurno());
+            dto.setHoraInicio(cotizacion.getEvento().getHoraInicio());
+            dto.setHoraFin(cotizacion.getEvento().getHoraFin());
             dto.setNombreFestejado(cotizacion.getEvento().getNombreFestejado());
             dto.setTematica(cotizacion.getEvento().getTematica());
         }

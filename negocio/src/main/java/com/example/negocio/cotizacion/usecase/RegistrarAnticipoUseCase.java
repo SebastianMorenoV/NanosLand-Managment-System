@@ -72,6 +72,14 @@ public class RegistrarAnticipoUseCase {
                 "La fecha y el turno de esta cotización ya fueron confirmados para otro evento. "
                 + "Cambie la fecha o el turno antes de registrar el pago.");
         }
+        // El horario va en el contrato: no se confirma un evento sin su hora real de inicio y fin
+        // (solo pasa con borradores guardados antes de que se capturara el horario).
+        if (seConfirma && eventoCotizacion != null && eventoCotizacion.getEstado() == EstadoEvento.TENTATIVO
+                && (eventoCotizacion.getHoraInicio() == null || eventoCotizacion.getHoraFin() == null)) {
+            throw new CotizacionException(
+                "Esta cotización no tiene la hora de inicio y de fin del evento. "
+                + "Captúrelas y guarde los cambios antes de registrar el anticipo.");
+        }
 
         Pago pago = new Pago();
         pago.setCotizacion(cotizacion);
@@ -90,11 +98,6 @@ public class RegistrarAnticipoUseCase {
             Evento evento = cotizacion.getEvento();
             if (evento != null && evento.getEstado() == EstadoEvento.TENTATIVO) {
                 evento.setEstado(EstadoEvento.CONFIRMADO);
-                
-                // Asignar horarios por defecto del turno si no los tiene
-                if (evento.getHoraInicio() == null || evento.getHoraFin() == null) {
-                    com.example.negocio.evento.usecase.HorarioTurno.asignar(evento);
-                }
                 eventoRepository.save(evento);
 
                 // Con el evento confirmado se abre su bitácora de logística:

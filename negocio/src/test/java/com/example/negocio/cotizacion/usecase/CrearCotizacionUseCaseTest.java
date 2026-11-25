@@ -29,6 +29,7 @@ import com.mycompany.persistencia.repository.ServicioRepository;
 import com.mycompany.persistencia.repository.UsuarioRepository;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +82,8 @@ class CrearCotizacionUseCaseTest {
         dto.setClienteId(1L);
         dto.setFecha(LocalDate.now().plusDays(10));
         dto.setTurno(TurnoEvento.MATUTINO);
+        dto.setHoraInicio(LocalTime.of(10, 30));
+        dto.setHoraFin(LocalTime.of(15, 0));
         dto.setPaqueteId(paqueteId);
         dto.setComidaId(comidaId);
         dto.setPersonas(personas);
@@ -113,6 +116,48 @@ class CrearCotizacionUseCaseTest {
         assertThat(c.getPersonas()).isEqualTo(100);
         assertThat(c.getPrecioPaquete()).isEqualTo(23800);
         assertThat(c.getTotal()).isEqualTo(24200);
+    }
+
+    @Test
+    void guardaElHorarioCapturadoEnElEvento() {
+        crear.crearCotizacion(dto(1, null, null));
+
+        Cotizacion c = guardada();
+        assertThat(c.getEvento().getHoraInicio()).isEqualTo(LocalTime.of(10, 30));
+        assertThat(c.getEvento().getHoraFin()).isEqualTo(LocalTime.of(15, 0));
+    }
+
+    @Test
+    void sinHorarioNoSeGuarda() {
+        CotizacionDTO dto = dto(1, null, null);
+        dto.setHoraFin(null);
+
+        assertThatThrownBy(() -> crear.crearCotizacion(dto))
+                .isInstanceOf(CotizacionException.class).hasMessageContaining("hora de inicio y la hora de fin");
+        verify(cotizacionRepository, never()).save(any());
+    }
+
+    @Test
+    void laHoraDeFinDebeSerPosteriorALaDeInicio() {
+        CotizacionDTO dto = dto(1, null, null);
+        dto.setHoraInicio(LocalTime.of(16, 0));
+        dto.setHoraFin(LocalTime.of(16, 0));
+
+        assertThatThrownBy(() -> crear.crearCotizacion(dto))
+                .isInstanceOf(CotizacionException.class).hasMessageContaining("posterior");
+        verify(cotizacionRepository, never()).save(any());
+    }
+
+    @Test
+    void puedeTerminarAMedianoche() {
+        CotizacionDTO dto = dto(1, null, null);
+        dto.setTurno(TurnoEvento.VESPERTINO);
+        dto.setHoraInicio(LocalTime.of(19, 0));
+        dto.setHoraFin(LocalTime.MIDNIGHT);
+
+        crear.crearCotizacion(dto);
+
+        assertThat(guardada().getEvento().getHoraFin()).isEqualTo(LocalTime.MIDNIGHT);
     }
 
     @Test
