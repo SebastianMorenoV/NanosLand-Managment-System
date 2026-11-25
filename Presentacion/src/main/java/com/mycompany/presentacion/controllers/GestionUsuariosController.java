@@ -38,10 +38,12 @@ public class GestionUsuariosController {
     private final EliminarUsuarioSistemaUseCase eliminarUsuarioUseCase;
     private final ActivarUsuarioSistemaUseCase activarUsuarioUseCase;
     private final com.mycompany.presentacion.context.SesionContext sesionContext;
+    private final com.example.negocio.usuario.usecase.CambiarContrasenaUseCase cambiarContrasenaUseCase;
 
     @FXML private TextField txtBuscar;
     @FXML private TableView<UsuarioSistemaDTO> tablaUsuarios;
     @FXML private Button btnEditar;
+    @FXML private Button btnCambiarContrasena;
     /** Desactivar / Activar (baja lógica). */
     @FXML private Button btnActivar;
     /** Eliminar definitivamente. */
@@ -77,6 +79,7 @@ public class GestionUsuariosController {
         tablaUsuarios.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             boolean hasSelection = newSelection != null;
             if (btnEditar != null) btnEditar.setDisable(!hasSelection);
+            if (btnCambiarContrasena != null) btnCambiarContrasena.setDisable(!hasSelection);
             if (btnActivar != null) {
                 btnActivar.setDisable(!hasSelection);
                 boolean activar = hasSelection && !newSelection.isActivo();
@@ -173,6 +176,16 @@ public class GestionUsuariosController {
         if (seleccionado != null) {
             abrirModalUsuario(seleccionado);
         }
+    }
+
+    /** El dueño cambia la contraseña de otro sin la actual; la suya sí la pide. */
+    @FXML
+    private void cambiarContrasena() {
+        UsuarioSistemaDTO seleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        if (seleccionado == null || sesionContext.getUsuarioAutenticado() == null) return;
+        com.mycompany.presentacion.utils.DialogoCambiarContrasena.mostrar(
+                tablaUsuarios.getScene().getWindow(), cambiarContrasenaUseCase,
+                sesionContext.getUsuarioAutenticado().getId(), seleccionado.getId(), seleccionado.getCorreo());
     }
 
     private boolean esUsuarioEnSesion(UsuarioSistemaDTO usuario) {

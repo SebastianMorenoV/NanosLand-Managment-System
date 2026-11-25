@@ -13,10 +13,10 @@
         <TextField fx:id="txtCorreo" promptText="correo@nanosland.com" styleClass="text-field-moderno"/>
     </VBox>
 
-    <VBox spacing="8">
+    <!-- Solo al registrar: la de un usuario existente se cambia con «Cambiar contraseña». -->
+    <VBox fx:id="boxContrasena" spacing="8">
         <Label text="CONTRASEÑA *" styleClass="label-pequeno"/>
         <PasswordField fx:id="txtContrasena" promptText="••••••••" styleClass="text-field-moderno"/>
-        <Label fx:id="lblContrasenaHint" text="Dejar vacío para mantener la contraseña actual." style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;" visible="false" managed="false"/>
     </VBox>
 
     <VBox spacing="8">

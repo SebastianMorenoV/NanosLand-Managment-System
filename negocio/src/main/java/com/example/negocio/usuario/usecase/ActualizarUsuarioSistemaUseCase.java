@@ -20,7 +20,6 @@ import java.util.Optional;
 public class ActualizarUsuarioSistemaUseCase {
 
     private final UsuarioRepository usuarioRepository;
-    private final com.example.negocio.sesion.usecase.Contrasenas contrasenas;
 
     @Transactional
     public UsuarioSistemaDTO actualizarUsuario(UsuarioSistemaDTO dto) {
@@ -53,11 +52,8 @@ public class ActualizarUsuarioSistemaUseCase {
         existente.setCorreo(dto.getCorreo().trim());
         existente.setTelefono(dto.getTelefono() != null ? dto.getTelefono().trim() : null);
         existente.setRol(dto.getRol());
-
-        // Solo actualizar contraseña si se proporcionó una nueva
-        if (dto.getContrasena() != null && !dto.getContrasena().trim().isEmpty()) {
-            existente.setContrasena(contrasenas.cifrar(dto.getContrasena()));
-        }
+        // La contraseña no se cambia aquí: solo con CambiarContrasenaUseCase, que pide la
+        // actual cuando es la propia.
 
         Usuario guardado = usuarioRepository.save(existente);
         return UsuarioSistemaMapper.toDTO(guardado);

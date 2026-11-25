@@ -1,7 +1,9 @@
 package com.mycompany.presentacion.controllers;
 
+import com.example.negocio.usuario.usecase.CambiarContrasenaUseCase;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.SesionContext;
+import com.mycompany.presentacion.utils.DialogoCambiarContrasena;
 import com.mycompany.presentacion.utils.ViewSwitcher;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Controller;
 public class MainShellController {
 
     private final SesionContext sesionContext;
+    private final CambiarContrasenaUseCase cambiarContrasenaUseCase;
 
     @FXML
     private BorderPane rootPane;
@@ -96,15 +99,11 @@ public class MainShellController {
             lblUsuarioActual.setText(correo + " (" + rol + ")");
         }
 
-        // Gestión de usuarios y descuentos: solo el dueño
+        // Gestión de usuarios: solo el dueño. Descuentos los ven el dueño y el administrador.
         boolean esDueno = sesionContext.esDueno();
         if (btnGestionUsuarios != null) {
             btnGestionUsuarios.setVisible(esDueno);
             btnGestionUsuarios.setManaged(esDueno);
-        }
-        if (btnDescuentos != null) {
-            btnDescuentos.setVisible(esDueno);
-            btnDescuentos.setManaged(esDueno);
         }
 
         // Ocultar reportes de adeudos e ingresos para ADMINISTRADOR (solo visible para DUEÑO)
@@ -245,6 +244,14 @@ public class MainShellController {
     @FXML
     private void navGestionUsuarios() {
         ViewSwitcher.cargarVista("GestionUsuarios.fxml");
+    }
+
+    @FXML
+    private void cambiarContrasena() {
+        if (!sesionContext.estaAutenticado()) return;
+        var usuario = sesionContext.getUsuarioAutenticado();
+        DialogoCambiarContrasena.mostrar(rootPane.getScene().getWindow(), cambiarContrasenaUseCase,
+                usuario.getId(), usuario.getId(), usuario.getCorreo());
     }
 
     @FXML

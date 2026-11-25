@@ -12,6 +12,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,8 @@ public class NuevoUsuarioSistemaModalController {
     @FXML private PasswordField txtContrasena;
     @FXML private TextField txtTelefono;
     @FXML private ComboBox<RolUsuario> comboRol;
-    @FXML private Label lblContrasenaHint;
+    /** Solo al registrar; la de un usuario existente se cambia con «Cambiar contraseña». */
+    @FXML private VBox boxContrasena;
 
     @FXML
     public void initialize() {
@@ -63,10 +65,8 @@ public class NuevoUsuarioSistemaModalController {
         txtTelefono.setText("");
         comboRol.setValue(RolUsuario.ADMINISTRADOR);
         lblTitulo.setText("Registrar Nuevo Usuario");
-        if (lblContrasenaHint != null) {
-            lblContrasenaHint.setVisible(false);
-            lblContrasenaHint.setManaged(false);
-        }
+        boxContrasena.setVisible(true);
+        boxContrasena.setManaged(true);
     }
 
     public UsuarioSistemaDTO getUsuarioCreado() {
@@ -80,11 +80,8 @@ public class NuevoUsuarioSistemaModalController {
             txtCorreo.setText(usuarioAEditar.getCorreo());
             txtTelefono.setText(usuarioAEditar.getTelefono() != null ? usuarioAEditar.getTelefono() : "");
             comboRol.setValue(usuarioAEditar.getRol());
-            txtContrasena.setPromptText("Dejar vacío para no cambiar");
-            if (lblContrasenaHint != null) {
-                lblContrasenaHint.setVisible(true);
-                lblContrasenaHint.setManaged(true);
-            }
+            boxContrasena.setVisible(false);
+            boxContrasena.setManaged(false);
         }
     }
 
@@ -125,7 +122,6 @@ public class NuevoUsuarioSistemaModalController {
                 cambios.setId(usuarioAEditar.getId());
                 cambios.setActivo(usuarioAEditar.isActivo());
                 cambios.setCorreo(correo);
-                cambios.setContrasena(contrasena != null && !contrasena.trim().isEmpty() ? contrasena : null);
                 cambios.setTelefono(telefono.isEmpty() ? null : telefono);
                 cambios.setRol(rol);
                 usuarioCreado = actualizarUsuarioUseCase.actualizarUsuario(cambios);
