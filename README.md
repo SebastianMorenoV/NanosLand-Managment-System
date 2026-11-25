@@ -91,6 +91,12 @@ La capa de presentación arranca el contexto de Spring y obtiene de él los cont
    mysql -u root -p --default-character-set=utf8mb4 < sql/catalogo_paquetes_servicios.sql
    ```
 
+   Los extras de decoración y animación (hoja "EXTRAS": mamparas, alfombra roja, payasitas, pintacaritas, show del Payasito Kiki...) van en un script aparte, `sql/catalogo_extras_decoracion_animacion.sql`. También solo inserta lo que falta y se puede ejecutar más de una vez:
+
+   ```bash
+   mysql -u root -p --default-character-set=utf8mb4 < sql/catalogo_extras_decoracion_animacion.sql
+   ```
+
 6. Inicia sesión con uno de los usuarios de ejemplo:
 
    | Rol | Correo | Contraseña |
