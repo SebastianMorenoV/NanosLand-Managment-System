@@ -129,6 +129,14 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-El workflow `.github/workflows/jdeploy.yml` compila el proyecto y sube los instaladores al release de ese tag. El nombre del tag no puede pasar de 16 caracteres.
+El workflow `.github/workflows/jdeploy.yml` compila el proyecto, corre las pruebas y sube los instaladores al release de ese tag. El nombre del tag no puede pasar de 16 caracteres.
+
+Antes de compilar, el workflow verifica el número de versión (`.github/scripts/verificar-version.sh`) y no publica si:
+
+- no tiene el formato `v1.2.3`;
+- es menor que la última versión (las versiones siempre van hacia arriba: después de `v1.5.0`, una corrección es `v1.5.1`, nunca `v1.4.1`);
+- ya se publicó antes (no se reutilizan versiones: quien ya la instaló no la vuelve a descargar, así que una corrección siempre lleva un número nuevo).
+
+También se puede revisar un número antes de crear el tag: `bash .github/scripts/verificar-version.sh v1.6.0`.
 
 En el equipo donde se instala solo hace falta tener MySQL; el instalador incluye su propio Java.

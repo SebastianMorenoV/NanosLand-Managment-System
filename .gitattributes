@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Los scripts de bash corren en Linux (GitHub Actions): siempre con saltos de línea LF.
+*.sh text eol=lf
