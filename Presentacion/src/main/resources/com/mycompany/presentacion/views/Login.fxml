@@ -3,6 +3,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.shape.SVGPath?>
 
 <BorderPane stylesheets="@../styles/styles.css" styleClass="raiz-fondo" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.presentacion.controllers.LoginController">
     <center>
@@ -27,7 +28,17 @@
 
                 <VBox spacing="8">
                     <Label text="CONTRASEÑA" styleClass="label-pequeno"/>
-                    <PasswordField fx:id="txtContrasena" promptText="••••••••" styleClass="text-field-moderno" onAction="#iniciarSesion"/>
+                    <!-- La contraseña oculta y la visible comparten el texto; el ojo alterna entre ellas. -->
+                    <StackPane alignment="CENTER_RIGHT">
+                        <PasswordField fx:id="txtContrasena" promptText="••••••••" styleClass="text-field-moderno" onAction="#iniciarSesion"/>
+                        <TextField fx:id="txtContrasenaVisible" promptText="••••••••" styleClass="text-field-moderno" onAction="#iniciarSesion" visible="false"/>
+                        <ToggleButton fx:id="btnVerContrasena" styleClass="boton-ver-contrasena" focusTraversable="false" onAction="#alternarContrasena">
+                            <graphic>
+                                <SVGPath fx:id="iconoOjo" fill="#7f8c8d"/>
+                            </graphic>
+                            <StackPane.margin><Insets right="6"/></StackPane.margin>
+                        </ToggleButton>
+                    </StackPane>
                 </VBox>
 
                 <!-- Botón -->

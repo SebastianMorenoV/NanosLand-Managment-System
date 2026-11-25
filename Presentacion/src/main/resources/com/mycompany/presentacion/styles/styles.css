@@ -1229,3 +1229,21 @@
     -fx-font-size: 14px;
     -fx-padding: 40px 0;
 }
+/* =================================================== */
+/* 22. CONTRASEÑA CON BOTÓN PARA MOSTRARLA (LOGIN)     */
+/* =================================================== */
+/* Espacio a la derecha para que el texto no quede debajo del ojo */
+.text-field-moderno.campo-contrasena {
+    -fx-padding: 10px 44px 10px 12px;
+}
+
+.boton-ver-contrasena {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-padding: 4px 6px;
+    -fx-cursor: hand;
+}
+
+.boton-ver-contrasena:hover {
+    -fx-background-color: #e8f4fa;
+}

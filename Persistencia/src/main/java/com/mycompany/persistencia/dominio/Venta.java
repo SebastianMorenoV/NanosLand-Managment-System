@@ -47,10 +47,14 @@ public class Venta {
     @Column(nullable = false, columnDefinition = "varchar(20)")
     private EstadoVenta estado = EstadoVenta.REGISTRADA;
 
-    /** Quién registró la venta. */
+    /**
+     * Quién registró la venta. Nulo si después se eliminó ese usuario: la venta se
+     * conserva. En bases ya creadas la columna era NOT NULL; la corrección al arrancar
+     * (CorregirEsquemaUseCase) la vuelve opcional.
+     */
     @ToString.Exclude
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
     private LocalDateTime fechaCancelacion;

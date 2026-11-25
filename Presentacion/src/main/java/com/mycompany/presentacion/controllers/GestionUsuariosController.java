@@ -37,10 +37,14 @@ public class GestionUsuariosController {
     private final BuscarUsuarioSistemaUseCase buscarUsuarioUseCase;
     private final EliminarUsuarioSistemaUseCase eliminarUsuarioUseCase;
     private final ActivarUsuarioSistemaUseCase activarUsuarioUseCase;
+    private final com.mycompany.presentacion.context.SesionContext sesionContext;
 
     @FXML private TextField txtBuscar;
     @FXML private TableView<UsuarioSistemaDTO> tablaUsuarios;
     @FXML private Button btnEditar;
+    /** Desactivar / Activar (baja lógica). */
+    @FXML private Button btnActivar;
+    /** Eliminar definitivamente. */
     @FXML private Button btnEliminar;
 
     @FXML private TableColumn<UsuarioSistemaDTO, Long> colId;
@@ -60,34 +64,28 @@ public class GestionUsuariosController {
     public void initialize() {
         // El botón del menú solo se muestra al dueño; se comprueba aquí también para que
         // la pantalla no dependa de que el botón esté oculto.
-        if (!com.mycompany.presentacion.utils.ViewSwitcher.getSpringContext()
-                .getBean(com.mycompany.presentacion.context.SesionContext.class).esDueno()) {
+        if (!sesionContext.esDueno()) {
             throw new IllegalStateException("Esta pantalla solo está disponible para el dueño.");
         }
         if (tablaUsuarios != null) {
             tablaUsuarios.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         }
 
-        // Listener para habilitar botones de edición y eliminación
+        // Botones según el usuario elegido. Antes el de Activar/Desactivar quedaba bloqueado
+        // para cualquier dueño, así que un dueño inactivo ya no se podía reactivar. La regla
+        // real (que el sistema no se quede sin un dueño activo) la valida el caso de uso.
         tablaUsuarios.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             boolean hasSelection = newSelection != null;
             if (btnEditar != null) btnEditar.setDisable(!hasSelection);
+            if (btnActivar != null) {
+                btnActivar.setDisable(!hasSelection);
+                boolean activar = hasSelection && !newSelection.isActivo();
+                btnActivar.setText(activar ? "Activar" : "Desactivar");
+                btnActivar.getStyleClass().setAll("button", activar ? "boton-verde" : "boton-rojo");
+            }
             if (btnEliminar != null) {
-                // Bloquear el botón para usuarios con rol DUEÑO
-                boolean esDueno = hasSelection && newSelection.getRol() == RolUsuario.DUEÑO;
-                btnEliminar.setDisable(!hasSelection || esDueno);
-                if (hasSelection) {
-                    if (newSelection.isActivo()) {
-                        btnEliminar.setText("Desactivar");
-                        btnEliminar.getStyleClass().setAll("button", "boton-rojo");
-                    } else {
-                        btnEliminar.setText("Activar");
-                        btnEliminar.getStyleClass().setAll("button", "boton-verde");
-                    }
-                } else {
-                    btnEliminar.setText("Desactivar");
-                    btnEliminar.getStyleClass().setAll("button", "boton-rojo");
-                }
+                // Nadie puede eliminar su propia cuenta mientras tiene la sesión abierta.
+                btnEliminar.setDisable(!hasSelection || esUsuarioEnSesion(newSelection));
             }
         });
 
@@ -177,8 +175,50 @@ public class GestionUsuariosController {
         }
     }
 
+    private boolean esUsuarioEnSesion(UsuarioSistemaDTO usuario) {
+        return usuario != null && sesionContext.getUsuarioAutenticado() != null
+                && java.util.Objects.equals(usuario.getId(), sesionContext.getUsuarioAutenticado().getId());
+    }
+
+    /** Elimina la cuenta definitivamente, después de confirmarlo. */
     @FXML
     private void eliminarUsuario() {
+        UsuarioSistemaDTO seleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
+        if (seleccionado == null) return;
+
+        Alert confirmar = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmar.setTitle("Eliminar usuario");
+        confirmar.setHeaderText("¿Eliminar definitivamente la cuenta " + seleccionado.getCorreo() + "?");
+        confirmar.setContentText("La cuenta se borrará y no se podrá recuperar. Las cotizaciones y ventas "
+                + "que registró se conservan.\n\nSi solo quiere impedir que inicie sesión, use «Desactivar».");
+        ButtonType eliminar = new ButtonType("Eliminar definitivamente", javafx.scene.control.ButtonBar.ButtonData.OK_DONE);
+        confirmar.getButtonTypes().setAll(ButtonType.CANCEL, eliminar);
+        com.mycompany.presentacion.utils.ModalHelper.aplicarEstilo(confirmar, tablaUsuarios.getScene().getWindow());
+        // Acción que no se puede deshacer: botón rojo y Enter no la confirma por accidente.
+        Button botonEliminar = (Button) confirmar.getDialogPane().lookupButton(eliminar);
+        botonEliminar.getStyleClass().setAll("button", "boton-rojo");
+        botonEliminar.setDefaultButton(false);
+        ((Button) confirmar.getDialogPane().lookupButton(ButtonType.CANCEL)).setDefaultButton(true);
+
+        Optional<ButtonType> respuesta = confirmar.showAndWait();
+        if (respuesta.isEmpty() || respuesta.get() != eliminar) return;
+        try {
+            eliminarUsuarioUseCase.eliminarDefinitivamente(seleccionado.getId(),
+                    sesionContext.getUsuarioAutenticado() != null ? sesionContext.getUsuarioAutenticado().getId() : null);
+            masterData.remove(seleccionado);
+            tablaUsuarios.getSelectionModel().clearSelection();
+        } catch (CotizacionException e) {
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("No se pudo eliminar");
+            errorAlert.setHeaderText(null);
+            errorAlert.setContentText(e.getMessage());
+            errorAlert.showAndWait();
+        }
+    }
+
+    /** Desactiva o reactiva la cuenta (baja lógica), después de confirmarlo. */
+    @FXML
+    private void cambiarEstado() {
         UsuarioSistemaDTO seleccionado = tablaUsuarios.getSelectionModel().getSelectedItem();
         if (seleccionado == null) return;
 
@@ -193,7 +233,7 @@ public class GestionUsuariosController {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
                 if (desactivando) {
-                    eliminarUsuarioUseCase.eliminarUsuario(seleccionado.getId());
+                    eliminarUsuarioUseCase.desactivarUsuario(seleccionado.getId());
                     seleccionado.setActivo(false);
                 } else {
                     activarUsuarioUseCase.activarUsuario(seleccionado.getId());
@@ -204,7 +244,7 @@ public class GestionUsuariosController {
                 tablaUsuarios.getSelectionModel().select(seleccionado);
             } catch (CotizacionException e) {
                 Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle("Error al eliminar");
+                errorAlert.setTitle(desactivando ? "No se pudo desactivar" : "No se pudo activar");
                 errorAlert.setHeaderText(null);
                 errorAlert.setContentText(e.getMessage());
                 errorAlert.showAndWait();

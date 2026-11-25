@@ -173,6 +173,7 @@ public class ReporteIngresosController {
         fileChooser.setTitle("Guardar Reporte de Ingresos PDF");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf"));
         fileChooser.setInitialFileName("Reporte_Ingresos_" + LocalDate.now() + ".pdf");
+        com.mycompany.presentacion.utils.DialogoGuardarPdf.abrirEnDocumentos(fileChooser);
 
         Stage stage = (Stage) btnExportar.getScene().getWindow();
         File archivo = fileChooser.showSaveDialog(stage);

@@ -26,6 +26,7 @@ import com.mycompany.persistencia.enums.MetodoPago;
 import com.mycompany.persistencia.enums.TurnoEvento;
 import com.mycompany.presentacion.context.CotizacionContext;
 import com.mycompany.presentacion.context.FiltroCotizaciones;
+import com.mycompany.presentacion.utils.DialogoGuardarPdf;
 import com.mycompany.presentacion.utils.Espera;
 import com.mycompany.presentacion.utils.ModalHelper;
 import com.mycompany.presentacion.utils.TablaPreciosPaquete;
@@ -42,7 +43,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.shape.SVGPath;
-import javafx.stage.FileChooser;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -570,12 +570,8 @@ public class CotizacionController {
                 mostrarError("No se encontró el ID de la cotización para imprimir.");
                 return;
             }
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Guardar comprobante PDF");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
-            fileChooser.setInitialFileName(cotizacionGuardada.getFolio() != null ? cotizacionGuardada.getFolio() + ".pdf" : "comprobante.pdf");
-
-            File destino = fileChooser.showSaveDialog(modalStage);
+            File destino = DialogoGuardarPdf.elegir(modalStage, "Guardar comprobante PDF",
+                    generarComprobanteUseCase.nombreArchivo(cotizacionGuardada.getId()));
             if (destino == null) return;
 
             try {
@@ -599,12 +595,8 @@ public class CotizacionController {
                 mostrarError("No se encontró el ID de la cotización para imprimir.");
                 return;
             }
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Guardar contrato PDF");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
-            fileChooser.setInitialFileName(cotizacionGuardada.getFolio() != null ? "Contrato_" + cotizacionGuardada.getFolio() + ".pdf" : "contrato.pdf");
-
-            File destino = fileChooser.showSaveDialog(modalStage);
+            File destino = DialogoGuardarPdf.elegir(modalStage, "Guardar contrato PDF",
+                    generarContratoUseCase.nombreArchivo(cotizacionGuardada.getId()));
             if (destino == null) return;
 
             try {
@@ -858,7 +850,7 @@ public class CotizacionController {
                              datePickerFecha == null || datePickerFecha.getValue() == null ||
                              comboTurnos == null || comboTurnos.getValue() == null ||
                              txtNombreFestejado == null || txtNombreFestejado.getText() == null || txtNombreFestejado.getText().trim().isEmpty() ||
-                             txtTematica == null || txtTematica.getText() == null || txtTematica.getText().trim().isEmpty() ||
+                             // La temática es opcional.
                              faltaComidaOPersonas();
                              
         if (!isModoEdicion()) {
@@ -1685,12 +1677,8 @@ public class CotizacionController {
     }
 
     private void imprimirComprobante(Long id) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Guardar comprobante PDF");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
-        fileChooser.setInitialFileName("comprobante_abono.pdf");
-        
-        File destino = fileChooser.showSaveDialog(btnConfirmarCotizacion.getScene().getWindow());
+        File destino = DialogoGuardarPdf.elegir(btnConfirmarCotizacion.getScene().getWindow(),
+                "Guardar comprobante PDF", generarComprobanteUseCase.nombreArchivo(id));
         if (destino == null) return;
         
         try {
@@ -1711,15 +1699,11 @@ public class CotizacionController {
             return;
         }
 
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Guardar contrato PDF");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF", "*.pdf"));
-        fileChooser.setInitialFileName("Contrato.pdf");
-        
-        File destino = fileChooser.showSaveDialog(btnConfirmarCotizacion.getScene().getWindow());
+        Long id = getCotizacionEnEdicionId();
+        File destino = DialogoGuardarPdf.elegir(btnConfirmarCotizacion.getScene().getWindow(),
+                "Guardar contrato PDF", generarContratoUseCase.nombreArchivo(id));
         if (destino == null) return;
 
-        Long id = getCotizacionEnEdicionId();
         Espera.ejecutar(btnConfirmarCotizacion, "Generando el contrato…", () -> {
             byte[] pdf = generarContratoUseCase.generarContrato(id);
             try (FileOutputStream fos = new FileOutputStream(destino)) {

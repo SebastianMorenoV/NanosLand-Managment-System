@@ -15,8 +15,9 @@
             <Label text="Administra las cuentas de acceso al sistema y sus roles." style="-fx-text-fill: #7f8c8d; -fx-font-size: 13px;"/>
         </VBox>
         <HBox spacing="10">
+            <Button fx:id="btnEliminar" text="Eliminar" styleClass="boton-texto-rojo" disable="true" onAction="#eliminarUsuario"/>
             <Button fx:id="btnEditar" text="Editar" styleClass="boton-azul-claro" disable="true" onAction="#editarUsuario"/>
-            <Button fx:id="btnEliminar" text="Desactivar" styleClass="boton-rojo" disable="true" onAction="#eliminarUsuario"/>
+            <Button fx:id="btnActivar" text="Desactivar" styleClass="boton-rojo" disable="true" onAction="#cambiarEstado"/>
             <Button text="+ Nuevo Usuario" styleClass="boton-azul" onAction="#nuevoUsuario"/>
         </HBox>
     </HBox>

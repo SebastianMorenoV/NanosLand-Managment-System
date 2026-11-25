@@ -152,6 +152,7 @@ public class ReporteOportunidadesController {
         fileChooser.setTitle("Guardar Reporte Oportunidades PDF");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf"));
         fileChooser.setInitialFileName("Oportunidades_Venta_" + cmbMes.getValue() + "_" + cmbAnio.getValue() + ".pdf");
+        com.mycompany.presentacion.utils.DialogoGuardarPdf.abrirEnDocumentos(fileChooser);
 
         Stage stage = (Stage) btnExportar.getScene().getWindow();
         File archivo = fileChooser.showSaveDialog(stage);

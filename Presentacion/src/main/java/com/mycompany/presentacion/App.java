@@ -216,6 +216,9 @@ public class App extends Application {
         // Cada corrección va por separado: si una falla, las demás se siguen aplicando.
         // Contraseñas que sigan en texto plano (usuarios antiguos o cargados por script).
         correccionAlArrancar(() -> contexto.getBean(com.example.negocio.sesion.usecase.Contrasenas.class).migrarTextoPlano());
+        // Ventas sin autor (usuario eliminado): la columna era obligatoria en bases anteriores.
+        correccionAlArrancar(() -> contexto.getBean(
+                com.example.negocio.esquema.CorregirEsquemaUseCase.class).permitirVentasSinUsuario());
         // Eventos confirmados cuya fecha ya llegó o pasó: en curso / finalizado.
         correccionAlArrancar(() -> contexto.getBean(ActualizarEstadosPorFechaUseCase.class).actualizar());
         // Cotizaciones de antes del precio pactado del paquete.

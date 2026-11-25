@@ -60,6 +60,13 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
     /** Cotizaciones anteriores al precio pactado, para la corrección al arrancar. */
     List<Cotizacion> findByPrecioPaqueteIsNull();
 
+    /** Antes de eliminar un usuario: sus cotizaciones se conservan, sin quién las elaboró. */
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(
+        "UPDATE Cotizacion c SET c.usuario = NULL WHERE c.usuario = :usuario")
+    int quitarUsuario(@org.springframework.data.repository.query.Param("usuario")
+                      com.mycompany.persistencia.dominio.Usuario usuario);
+
     /**
      * NOTA: Las consultas de disponibilidad por fecha y turno han sido
      * movidas a EventoRepository, ya que Evento ahora es la entidad dueña de la fecha.

@@ -170,6 +170,7 @@ public class ReporteAdeudosController {
         fileChooser.setTitle("Guardar Reporte Adeudos PDF");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf"));
         fileChooser.setInitialFileName("Reporte_Adeudos_" + LocalDate.now() + ".pdf");
+        com.mycompany.presentacion.utils.DialogoGuardarPdf.abrirEnDocumentos(fileChooser);
 
         Stage stage = (Stage) btnExportar.getScene().getWindow();
         File archivo = fileChooser.showSaveDialog(stage);

@@ -40,6 +40,28 @@ public class GenerarComprobanteUseCase {
     private final CotizacionRepository cotizacionRepository;
     private final PagoRepository pagoRepository;
 
+    /**
+     * Nombre sugerido para guardar el comprobante, con el folio de la cotización y el del
+     * último pago registrado, p. ej. "Comprobante COT-2026-0012 PAY-2026-0034 - Juan Pérez.pdf".
+     * Cada pago tiene folio único, así que el comprobante de un abono no se confunde con el
+     * de otro de la misma cotización.
+     */
+    @Transactional(readOnly = true)
+    public String nombreArchivo(Long cotizacionId) {
+        Cotizacion cotizacion = cotizacionId == null ? null : cotizacionRepository.findById(cotizacionId).orElse(null);
+        if (cotizacion == null) {
+            return NombreArchivoPdf.de("Comprobante");
+        }
+        String ultimoPago = pagoRepository.findByCotizacionId(cotizacionId).stream()
+                .max(java.util.Comparator.comparing(Pago::getFechaHora,
+                                java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder()))
+                        .thenComparing(Pago::getId, java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder())))
+                .map(Pago::getFolioPago)
+                .orElse(null);
+        return NombreArchivoPdf.de("Comprobante " + cotizacion.getFolio() + (ultimoPago != null ? " " + ultimoPago : ""),
+                cotizacion.getCliente() != null ? cotizacion.getCliente().getNombre() : null);
+    }
+
     @Transactional(readOnly = true)
     public byte[] generarComprobante(Long cotizacionId) {
         if (cotizacionId == null) {

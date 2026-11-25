@@ -84,7 +84,7 @@
                                    styleClass="text-field-moderno"/>
                     </VBox>
                     <VBox spacing="4" HBox.hgrow="ALWAYS">
-                        <Label text="TEMÁTICA" styleClass="label-pequeno"/>
+                        <Label text="TEMÁTICA (OPCIONAL)" styleClass="label-pequeno"/>
                         <TextField fx:id="txtTematica"
                                    promptText="Ej. Frozen..."
                                    styleClass="text-field-moderno"/>

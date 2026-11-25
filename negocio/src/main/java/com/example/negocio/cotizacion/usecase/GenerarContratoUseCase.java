@@ -34,6 +34,20 @@ public class GenerarContratoUseCase {
     private final CotizacionRepository cotizacionRepository;
     private final PagoRepository pagoRepository;
 
+    /**
+     * Nombre sugerido para guardar el contrato, p. ej. "Contrato COT-2026-0012 - Juan Pérez.pdf".
+     * El folio de la cotización es único, así que no se confunde con el contrato de otra.
+     */
+    @Transactional(readOnly = true)
+    public String nombreArchivo(Long cotizacionId) {
+        Cotizacion cotizacion = cotizacionId == null ? null : cotizacionRepository.findById(cotizacionId).orElse(null);
+        if (cotizacion == null) {
+            return NombreArchivoPdf.de("Contrato");
+        }
+        return NombreArchivoPdf.de("Contrato " + cotizacion.getFolio(),
+                cotizacion.getCliente() != null ? cotizacion.getCliente().getNombre() : null);
+    }
+
     @Transactional(readOnly = true)
     public byte[] generarContrato(Long cotizacionId) {
         if (cotizacionId == null) {

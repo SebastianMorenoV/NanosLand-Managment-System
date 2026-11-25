@@ -201,6 +201,7 @@ public class ReporteLogisticaSemanalController {
         fileChooser.setTitle("Guardar logística de la semana");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos PDF (*.pdf)", "*.pdf"));
         fileChooser.setInitialFileName("Logistica_semana_" + reporte.getInicio() + ".pdf");
+        com.mycompany.presentacion.utils.DialogoGuardarPdf.abrirEnDocumentos(fileChooser);
 
         File archivo = fileChooser.showSaveDialog(btnExportar.getScene().getWindow());
         if (archivo == null) {
