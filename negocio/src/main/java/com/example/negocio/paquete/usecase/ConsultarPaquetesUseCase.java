@@ -31,9 +31,18 @@ public class ConsultarPaquetesUseCase {
         return paqueteRepository.findById(id).map(PaqueteMapper::toDTO);
     }
 
-    /** Si tiene cotizaciones abiertas, sus servicios incluidos no se pueden cambiar (los precios sí). */
-    public boolean tieneCotizacionesAbiertas(Long paqueteId) {
-        return paqueteId != null && cotizacionRepository.existeCotizacionAbiertaConPaquete(
+    /**
+     * Cotizaciones abiertas del paquete que todavía no guardan su copia del paquete. Mientras haya,
+     * sus servicios incluidos no se pueden cambiar (los precios sí).
+     */
+    public List<String> cotizacionesAbiertasSinCopia(Long paqueteId) {
+        return paqueteId == null ? List.of() : cotizacionRepository.foliosAbiertosSinCopiaDelPaquete(
+            paqueteId, ActualizarPaqueteUseCase.ESTADOS_ABIERTOS, EstadoEvento.FINALIZADO);
+    }
+
+    /** Cuántas cotizaciones abiertas tiene el paquete: conservan lo que se les vendió aunque el paquete cambie. */
+    public long contarCotizacionesAbiertas(Long paqueteId) {
+        return paqueteId == null ? 0 : cotizacionRepository.contarAbiertasDePaquete(
             paqueteId, ActualizarPaqueteUseCase.ESTADOS_ABIERTOS, EstadoEvento.FINALIZADO);
     }
 }

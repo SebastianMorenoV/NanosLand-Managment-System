@@ -119,6 +119,22 @@ class CrearCotizacionUseCaseTest {
     }
 
     @Test
+    void guardaLaCopiaDeLoQueIncluyeElPaquete() {
+        Servicio mesero = servicio(22, "Mesero(a)", 500, CategoriaServicio.EXTRA);
+        incluido(full, mesero, 2);
+        full.setDescripcion("2 meseros y payasita");
+
+        crear.crearCotizacion(dto(2, 10L, 100));
+
+        Cotizacion c = guardada();
+        assertThat(c.getPaqueteNombre()).isEqualTo("Paquete Full");
+        assertThat(c.getPaqueteDescripcion()).isEqualTo("2 meseros y payasita");
+        assertThat(c.getServiciosIncluidos()).extracting(s -> s.getServicio().getId() + " " + s.getNombre() + " x" + s.getCantidad())
+                .containsExactly("22 Mesero(a) x2");
+        assertThat(c.getServiciosIncluidos()).allMatch(s -> s.getCotizacion() == c);
+    }
+
+    @Test
     void guardaElHorarioCapturadoEnElEvento() {
         crear.crearCotizacion(dto(1, null, null));
 

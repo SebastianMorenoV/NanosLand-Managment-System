@@ -26,13 +26,14 @@ public class EliminarPaqueteUseCase {
             throw new CotizacionException("El paquete no existe o ya está eliminado.");
         }
 
-        boolean enUso = cotizacionRepository.existeCotizacionAbiertaConPaquete(id,
-            java.util.List.of(com.mycompany.persistencia.enums.EstadoCotizacion.BORRADOR,
-                              com.mycompany.persistencia.enums.EstadoCotizacion.VIGENTE),
-            com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO);
-        
-        if (enUso) {
-            throw new CotizacionException("No se puede eliminar el paquete porque tiene cotizaciones activas o vigentes asociadas.");
+        // Las cotizaciones abiertas con su copia del paquete no dependen de él: conservan lo que se
+        // les vendió aunque el paquete se dé de baja. Las que aún no la tienen, sí dependen.
+        java.util.List<String> sinCopia = cotizacionRepository.foliosAbiertosSinCopiaDelPaquete(id,
+            ActualizarPaqueteUseCase.ESTADOS_ABIERTOS, com.mycompany.persistencia.enums.EstadoEvento.FINALIZADO);
+        if (!sinCopia.isEmpty()) {
+            throw new CotizacionException("No se puede eliminar el paquete todavía: estas cotizaciones abiertas no "
+                + "guardan su copia del paquete (" + String.join(", ", sinCopia) + "). Cierre y vuelva a abrir el "
+                + "sistema para que se guarde.");
         }
 
         Paquete p = opt.get();

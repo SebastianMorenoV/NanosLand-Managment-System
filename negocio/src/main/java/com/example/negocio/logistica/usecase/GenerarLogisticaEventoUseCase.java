@@ -1,10 +1,10 @@
 package com.example.negocio.logistica.usecase;
 
+import com.example.negocio.cotizacion.usecase.PaqueteCotizado;
 import com.mycompany.persistencia.dominio.Cotizacion;
 import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.dominio.LogisticaServicio;
-import com.mycompany.persistencia.dominio.PaqueteServicio;
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.EstadoEvento;
 import com.mycompany.persistencia.enums.EstadoLogistica;
@@ -173,17 +173,16 @@ public class GenerarLogisticaEventoUseCase {
 
     /**
      * Lo contratado, en las partes que llevan cada una su registro: un servicio del paquete (con la
-     * comida elegida, una porción por persona) o un extra con sus datos.
+     * comida elegida, una porción por persona) o un extra con sus datos. Lo del paquete es lo que
+     * incluía al venderse (su copia en la cotización), no como esté hoy en el catálogo.
      */
     public List<Parte> partesContratadas(Cotizacion cotizacion) {
         Map<Long, Servicio> serviciosPaquete = new LinkedHashMap<>();
         Map<Long, Integer> cantidadesPaquete = new LinkedHashMap<>();
-        if (cotizacion.getPaquete() != null && cotizacion.getPaquete().getServicios() != null) {
-            for (PaqueteServicio ps : cotizacion.getPaquete().getServicios()) {
-                if (ps == null || ps.getServicio() == null) continue;
-                serviciosPaquete.put(ps.getServicio().getId(), ps.getServicio());
-                cantidadesPaquete.merge(ps.getServicio().getId(), Math.max(1, ps.getCantidad()), Integer::sum);
-            }
+        for (PaqueteCotizado.Incluido incluido : PaqueteCotizado.serviciosIncluidos(cotizacion)) {
+            if (incluido.servicio() == null) continue;
+            serviciosPaquete.put(incluido.servicio().getId(), incluido.servicio());
+            cantidadesPaquete.merge(incluido.servicio().getId(), Math.max(1, incluido.cantidad()), Integer::sum);
         }
         if (cotizacion.getComida() != null) {
             Servicio comida = cotizacion.getComida();

@@ -192,7 +192,7 @@ public class CotizacionController {
      * selección el precio lo pide al caso de uso aunque falte elegir comida o personas
      * (p. ej. si el paquete cambió de precio fijo a tabla), para mostrar el pactado.
      */
-    private record SeleccionGuardada(Long paqueteId, Long comidaId, Integer personas) {
+    private record SeleccionGuardada(Long paqueteId, Long comidaId, Integer personas, String descripcionVendida) {
         boolean coincide(Long paqueteId, Long comidaId, Integer personas) {
             return java.util.Objects.equals(this.paqueteId, paqueteId)
                 && java.util.Objects.equals(this.comidaId, comidaId)
@@ -653,7 +653,7 @@ public class CotizacionController {
             // El precio pactado se respeta mientras no se cambie el paquete, la comida, las personas
             // o la fecha; lo decide CalcularPrecioPaqueteUseCase comparando con lo guardado.
             seleccionGuardada = new SeleccionGuardada(cotizacion.getPaqueteId(), cotizacion.getComidaId(),
-                cotizacion.getPersonas());
+                cotizacion.getPersonas(), cotizacion.getPaqueteDescripcion());
             PaqueteDTO paqueteEncontrado = comboPaquetes.getItems().stream()
                 .filter(p -> p.getId() != null && p.getId().equals(cotizacion.getPaqueteId()))
                 .findFirst()
@@ -1208,6 +1208,11 @@ public class CotizacionController {
             }
             boolean esLaGuardada = seleccionGuardada != null
                     && seleccionGuardada.coincide(paquete.getId(), comidaId, personas);
+            // Con la selección guardada, el paquete como se vendió (lo que dice su contrato);
+            // con otra, el paquete como está hoy, que es con lo que se volvería a cotizar.
+            String descripcion = esLaGuardada && seleccionGuardada.descripcionVendida() != null
+                    ? seleccionGuardada.descripcionVendida() : paquete.getDescripcion();
+            lblDetallesPaquete.setText(descripcion != null && !descripcion.isBlank() ? descripcion : "Sin detalles adicionales");
             if (!esLaGuardada && paquete.isTablaPrecios() && (comidaId == null || personas == null)) {
                 lblPrecioPaquete.setText("Desde " + TablaPreciosPaquete.dinero(paquete.getPrecioDesde()));
             } else {

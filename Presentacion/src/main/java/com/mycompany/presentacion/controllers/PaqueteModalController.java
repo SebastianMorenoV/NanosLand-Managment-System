@@ -172,9 +172,24 @@ public class PaqueteModalController {
             }
         }
 
-        serviciosBloqueados = consultarPaquetesUseCase.tieneCotizacionesAbiertas(paquete.getId());
-        lblAvisoCotizaciones.setVisible(serviciosBloqueados);
-        lblAvisoCotizaciones.setManaged(serviciosBloqueados);
+        // Las cotizaciones abiertas guardan su copia del paquete: conservan lo que se les vendió y
+        // el paquete se puede cambiar. Solo las que aún no la tienen dependen de él.
+        List<String> sinCopia = consultarPaquetesUseCase.cotizacionesAbiertasSinCopia(paquete.getId());
+        long abiertas = consultarPaquetesUseCase.contarCotizacionesAbiertas(paquete.getId());
+        serviciosBloqueados = !sinCopia.isEmpty();
+        if (serviciosBloqueados) {
+            lblAvisoCotizaciones.setText("Estas cotizaciones abiertas aún no guardan su copia del paquete: "
+                    + String.join(", ", sinCopia) + ". Por ahora no se pueden cambiar los servicios incluidos; "
+                    + "cierre y vuelva a abrir el sistema para que se guarde. El nombre, la descripción y los "
+                    + "precios sí se pueden cambiar.");
+        } else if (abiertas > 0) {
+            lblAvisoCotizaciones.setText((abiertas == 1 ? "1 cotización abierta conserva lo que se le vendió"
+                    : abiertas + " cotizaciones abiertas conservan lo que se les vendió")
+                    + " (precio y servicios). Los cambios aplican a las cotizaciones nuevas.");
+        }
+        boolean conAviso = serviciosBloqueados || abiertas > 0;
+        lblAvisoCotizaciones.setVisible(conAviso);
+        lblAvisoCotizaciones.setManaged(conAviso);
         boxAgregarServicio.setDisable(serviciosBloqueados);
         tablaServicios.refresh();
     }

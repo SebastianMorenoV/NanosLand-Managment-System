@@ -17,6 +17,7 @@ import com.mycompany.common.dtos.PaqueteServicioDTO;
 import com.mycompany.common.dtos.ServicioDTO;
 import com.mycompany.persistencia.dominio.Paquete;
 import com.mycompany.persistencia.dominio.PaquetePrecio;
+import com.mycompany.persistencia.dominio.PaqueteServicio;
 import com.mycompany.persistencia.dominio.Servicio;
 import com.mycompany.persistencia.enums.CategoriaServicio;
 import com.mycompany.persistencia.repository.CotizacionRepository;
@@ -72,6 +73,14 @@ class PaqueteUseCasesTest {
         lenient().when(paqueteRepository.findById(2L)).thenReturn(Optional.of(full));
         lenient().when(cotizacionRepository.combinacionesAbiertasDePaquete(anyLong(), anyCollection(), any()))
                 .thenReturn(List.of());
+        lenient().when(cotizacionRepository.foliosAbiertosSinCopiaDelPaquete(anyLong(), anyCollection(), any()))
+                .thenReturn(List.of());
+    }
+
+    /** Cotizaciones abiertas de antes de la copia del paquete: dependen del paquete del catálogo. */
+    private void sinCopia(String... folios) {
+        when(cotizacionRepository.foliosAbiertosSinCopiaDelPaquete(anyLong(), anyCollection(), any()))
+                .thenReturn(List.of(folios));
     }
 
     private static ServicioDTO s(Servicio servicio) {
@@ -186,17 +195,39 @@ class PaqueteUseCasesTest {
     }
 
     @Test
-    void conCotizacionesAbiertasNoSeCambianLosServiciosIncluidos() {
+    void conCotizacionesAbiertasConCopiaSeCambianLosServiciosIncluidos() {
         conCotizacionesAbiertas(new Object[]{"COT-1", 10L, 100});
+
+        actualizar.actualizarPaquete(dtoFull(new ArrayList<>(List.of(inc(mesero, 3), inc(payasita, 1))), null));
+
+        assertThat(full.getServicios()).extracting(ps -> ps.getServicio().getNombre() + " x" + ps.getCantidad())
+                .containsExactly("Mesero(a) x3", "Payasita (2 horas) x1");
+    }
+
+    @Test
+    void conCotizacionesAbiertasConCopiaSeQuitaUnaCombinacionQueUsan() {
+        conCotizacionesAbiertas(new Object[]{"COT-1", 10L, 100}, new Object[]{"COT-2", 10L, 80});
+
+        actualizar.actualizarPaquete(dtoFull(null, List.of(pr(barbacoa, 80, 22600))));
+
+        assertThat(full.getPrecios()).extracting(PaquetePrecio::getPersonas).containsExactly(80);
+    }
+
+    @Test
+    void conCotizacionesAbiertasSinCopiaNoSeCambianLosServiciosIncluidos() {
+        conCotizacionesAbiertas(new Object[]{"COT-1", 10L, 100});
+        sinCopia("COT-1");
 
         assertThatThrownBy(() -> actualizar.actualizarPaquete(dtoFull(List.of(inc(mesero, 3)), null)))
                 .isInstanceOf(CotizacionException.class)
                 .hasMessageContaining("servicios incluidos").hasMessageContaining("COT-1");
+        assertThat(full.getServicios()).extracting(PaqueteServicio::getCantidad).containsExactly(2);
     }
 
     @Test
-    void conCotizacionesAbiertasNoSeQuitaUnaCombinacionEnUso() {
+    void conCotizacionesAbiertasSinCopiaNoSeQuitaUnaCombinacionEnUso() {
         conCotizacionesAbiertas(new Object[]{"COT-1", 10L, 100}, new Object[]{"COT-2", 10L, 80});
+        sinCopia("COT-1");
 
         assertThatThrownBy(() -> actualizar.actualizarPaquete(dtoFull(null, List.of(pr(barbacoa, 80, 22600)))))
                 .isInstanceOf(CotizacionException.class)

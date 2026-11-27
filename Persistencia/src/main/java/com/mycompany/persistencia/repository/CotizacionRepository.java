@@ -57,6 +57,33 @@ public interface CotizacionRepository extends JpaRepository<Cotizacion, Long> {
         @org.springframework.data.repository.query.Param("estados") Collection<EstadoCotizacion> estados,
         @org.springframework.data.repository.query.Param("finalizado") com.mycompany.persistencia.enums.EstadoEvento finalizado);
 
+    /**
+     * Folios de las cotizaciones abiertas del paquete (mismo criterio que
+     * {@link #existeCotizacionAbiertaConPaquete}) que todavía no guardan su copia del paquete:
+     * dependen de cómo está el paquete en el catálogo.
+     */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT c.folio FROM Cotizacion c LEFT JOIN c.evento e " +
+        "WHERE c.paquete.id = :paqueteId AND c.paqueteNombre IS NULL AND c.estado IN :estados " +
+        "AND (e IS NULL OR e.estado <> :finalizado) ORDER BY c.folio")
+    List<String> foliosAbiertosSinCopiaDelPaquete(
+        @org.springframework.data.repository.query.Param("paqueteId") Long paqueteId,
+        @org.springframework.data.repository.query.Param("estados") Collection<EstadoCotizacion> estados,
+        @org.springframework.data.repository.query.Param("finalizado") com.mycompany.persistencia.enums.EstadoEvento finalizado);
+
+    /** Cuántas cotizaciones abiertas tiene el paquete (con o sin copia). */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT COUNT(c) FROM Cotizacion c LEFT JOIN c.evento e " +
+        "WHERE c.paquete.id = :paqueteId AND c.estado IN :estados " +
+        "AND (e IS NULL OR e.estado <> :finalizado)")
+    long contarAbiertasDePaquete(
+        @org.springframework.data.repository.query.Param("paqueteId") Long paqueteId,
+        @org.springframework.data.repository.query.Param("estados") Collection<EstadoCotizacion> estados,
+        @org.springframework.data.repository.query.Param("finalizado") com.mycompany.persistencia.enums.EstadoEvento finalizado);
+
+    /** Cotizaciones con paquete que aún no guardan su copia del paquete, para la corrección al arrancar. */
+    List<Cotizacion> findByPaqueteIsNotNullAndPaqueteNombreIsNull();
+
     /** Cotizaciones anteriores al precio pactado, para la corrección al arrancar. */
     List<Cotizacion> findByPrecioPaqueteIsNull();
 
