@@ -133,11 +133,11 @@ public class GenerarComprobanteUseCase {
             Font lineTitleFont = new Font(Font.HELVETICA, 11, Font.BOLD);
             document.add(new Paragraph("SERVICIOS ADICIONALES", lineTitleFont));
             if (detalles != null && !detalles.isEmpty()) {
-                for (var d : detalles) {
-                    String nombre = d.getServicio() != null ? d.getServicio().getNombre() : "Servicio";
-                    double precio = d.getPrecioUnitario();
-                    int cantidad = d.getCantidad();
-                    document.add(new Paragraph(nombre + "   x" + cantidad + "   -   " + money.format(precio), normalFont));
+                // Un renglón por servicio: las cotizaciones viejas guardaban cada unidad aparte.
+                for (var r : ExtrasCotizacion.paraMostrar(detalles)) {
+                    String nombre = r.servicio() != null ? r.servicio().getNombre() : "Servicio";
+                    document.add(new Paragraph(nombre + "   x" + r.cantidad() + "   -   "
+                            + money.format(r.precioUnitario()), normalFont));
                 }
             } else {
                 document.add(new Paragraph("Sin servicios adicionales.", normalFont));

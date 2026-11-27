@@ -1,5 +1,6 @@
 package com.example.negocio.estadoCuenta.usecase;
 
+import com.example.negocio.cotizacion.usecase.ExtrasCotizacion;
 import com.example.negocio.exception.CotizacionException;
 import com.mycompany.common.dtos.CargoExtraDTO;
 import com.mycompany.common.dtos.EstadoCuentaDTO;
@@ -9,7 +10,6 @@ import com.mycompany.common.mapper.CargoExtraMapper;
 import com.mycompany.common.mapper.PagoMapper;
 import com.mycompany.persistencia.dominio.CargoExtra;
 import com.mycompany.persistencia.dominio.Cotizacion;
-import com.mycompany.persistencia.dominio.DetalleCotizacion;
 import com.mycompany.persistencia.dominio.Evento;
 import com.mycompany.persistencia.dominio.Pago;
 import com.mycompany.persistencia.repository.CargoExtraRepository;
@@ -66,20 +66,15 @@ public class ConsultarEstadoCuentaUseCase {
         // Servicios Extras de la Cotización
         List<ServicioExtraDTO> extrasCotizacion = new ArrayList<>();
         double totalExtras = 0.0;
-        if (cotizacion.getServiciosExtra() != null) {
-            for (DetalleCotizacion det : cotizacion.getServiciosExtra()) {
-                ServicioExtraDTO sDto = new ServicioExtraDTO();
-                if (det.getServicio() != null) {
-                    sDto.setNombre(det.getServicio().getNombre());
-                } else {
-                    sDto.setNombre("Servicio Custom");
-                }
-                sDto.setPrecioUnitario(det.getPrecioUnitario());
-                sDto.setCantidad(det.getCantidad());
-                sDto.setSubtotal(det.getSubtotal());
-                extrasCotizacion.add(sDto);
-                totalExtras += det.getSubtotal();
-            }
+        // Un renglón por servicio: las cotizaciones viejas guardaban cada unidad aparte.
+        for (ExtrasCotizacion.Renglon r : ExtrasCotizacion.paraMostrar(cotizacion.getServiciosExtra())) {
+            ServicioExtraDTO sDto = new ServicioExtraDTO();
+            sDto.setNombre(r.servicio() != null ? r.servicio().getNombre() : "Servicio Custom");
+            sDto.setPrecioUnitario(r.precioUnitario());
+            sDto.setCantidad(r.cantidad());
+            sDto.setSubtotal(r.subtotal());
+            extrasCotizacion.add(sDto);
+            totalExtras += r.subtotal();
         }
         dto.setServiciosExtrasOriginales(extrasCotizacion);
         dto.setTotalServiciosExtrasOriginales(totalExtras);

@@ -6,6 +6,7 @@ import com.example.negocio.cliente.usecase.BuscarClienteUseCase;
 import com.example.negocio.cotizacion.usecase.EliminarCotizacionUseCase;
 import com.example.negocio.cotizacion.usecase.CalcularTotalCotizacionUseCase;
 import com.example.negocio.cotizacion.usecase.CrearCotizacionUseCase;
+import com.example.negocio.cotizacion.usecase.ExtrasCotizacion;
 import com.example.negocio.cotizacion.usecase.GenerarComprobanteUseCase;
 import com.example.negocio.cotizacion.usecase.GenerarContratoUseCase;
 import com.example.negocio.cotizacion.usecase.ListarCotizacionesUseCase;
@@ -130,7 +131,7 @@ public class CotizacionController {
     @FXML private Label lblRestante;
     @FXML private TextField txtAbono;
     
-    @FXML private ListView<ServicioAgrupado> listaServiciosExtras;
+    @FXML private ListView<DetalleCotizacionDTO> listaServiciosExtras;
     @FXML private Label lblSubtotalExtras;
 
     @FXML private Button btnVolver;
@@ -153,17 +154,13 @@ public class CotizacionController {
     @FXML private HBox boxBotonesEdicion;
     @FXML private Button btnGuardarCambios;
 
-    private final ObservableList<ServicioDTO> serviciosSeleccionados = FXCollections.observableArrayList();
-    private final ObservableList<ServicioAgrupado> serviciosAgrupados = FXCollections.observableArrayList();
-
     /**
-     * Datos de cada extra seleccionado que no caben en ServicioDTO: hora,
-     * especificaciones, desglose y ubicación. La clave es la instancia concreta
-     * que está en serviciosSeleccionados (por identidad, no por id), porque el
-     * mismo servicio puede agregarse varias veces con datos distintos.
+     * Servicios extra de la cotización, como se guardan: un renglón con su cantidad, precio
+     * pactado y datos de logística (hora, especificaciones, desglose y ubicación). Los
+     * renglones del mismo servicio con los mismos datos se juntan en uno solo.
      */
-    private final java.util.Map<ServicioDTO, DetalleCotizacionDTO> datosDeExtras = new java.util.IdentityHashMap<>();
-    private javafx.collections.ListChangeListener<ServicioDTO> listenerExtras;
+    private final ObservableList<DetalleCotizacionDTO> extrasSeleccionados = FXCollections.observableArrayList();
+    private ListChangeListener<DetalleCotizacionDTO> listenerExtras;
 
     /**
      * Disponibilidad ya consultada, por mes. El calendario pinta unas 42 celdas por
@@ -211,12 +208,6 @@ public class CotizacionController {
     private SeleccionGuardada seleccionGuardada;
     /** Mientras se llenan los combos por código no se recalcula en cada cambio. */
     private boolean aplicandoPaquete;
-
-    public static class ServicioAgrupado {
-        public ServicioDTO servicio;
-        public int cantidad;
-        public ServicioAgrupado(ServicioDTO s, int c) { this.servicio = s; this.cantidad = c; }
-    }
 
     private boolean isModoEdicion()              { return cotizacionContext.isModoEdicion(); }
     private Long getCotizacionEnEdicionId()       { return cotizacionContext.getCotizacionEnEdicionId(); }
@@ -273,26 +264,16 @@ public class CotizacionController {
         configurarListaServiciosExtras();
 
         if (listenerExtras != null) {
-            serviciosSeleccionados.removeListener(listenerExtras);
+            extrasSeleccionados.removeListener(listenerExtras);
         }
-        listenerExtras = (javafx.collections.ListChangeListener.Change<? extends ServicioDTO> c) -> {
-            java.util.Map<Long, java.util.List<ServicioDTO>> map = serviciosSeleccionados.stream()
-                .collect(java.util.stream.Collectors.groupingBy(ServicioDTO::getId));
-            // Se olvidan los datos de los extras que ya no están seleccionados.
-            datosDeExtras.keySet().removeIf(k -> serviciosSeleccionados.stream().noneMatch(s -> s == k));
-            serviciosAgrupados.clear();
-            for (java.util.List<ServicioDTO> group : map.values()) {
-                serviciosAgrupados.add(new ServicioAgrupado(group.get(0), group.size()));
-            }
-            
-            double subtotalExtras = serviciosSeleccionados.stream().mapToDouble(ServicioDTO::getPrecio).sum();
+        listenerExtras = c -> {
             if (lblSubtotalExtras != null) {
-                lblSubtotalExtras.setText(String.format("$%,.2f", subtotalExtras));
+                lblSubtotalExtras.setText(String.format("$%,.2f", ExtrasCotizacion.subtotal(extrasSeleccionados)));
             }
         };
-        serviciosSeleccionados.addListener(listenerExtras);
+        extrasSeleccionados.addListener(listenerExtras);
 
-        serviciosSeleccionados.clear();
+        extrasSeleccionados.clear();
         
         cambiarModoInterfaz(false);
 
@@ -702,27 +683,12 @@ public class CotizacionController {
 
         // Seleccionamos los extras previamente guardados y los metemos a la lista visual
         if (listaServiciosExtras != null) {
-            serviciosSeleccionados.clear();
-            if (cotizacion.getDetalles() != null) {
-                // Los extras se reconstruyen desde lo GUARDADO en la cotización (nombre,
-                // precio pactado y datos de logística), no desde el catálogo actual: así
-                // editar no cambia el precio si el servicio subió después, ni pierde los
-                // extras cuyo servicio fue desactivado.
-                List<ServicioDTO> guardados = new ArrayList<>();
-                for (DetalleCotizacionDTO detalle : cotizacion.getDetalles()) {
-                    if (detalle == null || detalle.getServicioId() == null) continue;
-                    int cantidad = Math.max(1, detalle.getCantidad());
-                    for (int i = 0; i < cantidad; i++) {
-                        ServicioDTO extra = new ServicioDTO();
-                        extra.setId(detalle.getServicioId());
-                        extra.setNombre(detalle.getNombreServicio());
-                        extra.setPrecio(detalle.getPrecioUnitario());
-                        datosDeExtras.put(extra, detalle);
-                        guardados.add(extra);
-                    }
-                }
-                serviciosSeleccionados.addAll(guardados);
-            }
+            // Los extras se reconstruyen desde lo GUARDADO en la cotización (nombre,
+            // precio pactado y datos de logística), no desde el catálogo actual: así
+            // editar no cambia el precio si el servicio subió después, ni pierde los
+            // extras cuyo servicio fue desactivado. Las cotizaciones viejas traen un
+            // renglón por unidad: se juntan y al guardar quedan como uno con su cantidad.
+            extrasSeleccionados.setAll(ExtrasCotizacion.juntarIguales(cotizacion.getDetalles()));
         }
 
         actualizarTotalEstimado();
@@ -822,7 +788,7 @@ public class CotizacionController {
     private boolean hayDatosCapturados() {
         return comboClientes.getValue() != null || comboPaquetes.getValue() != null
                 || comboHoraInicio.getValue() != null || comboHoraFin.getValue() != null
-                || !serviciosSeleccionados.isEmpty()
+                || !extrasSeleccionados.isEmpty()
                 || !textoVacio(txtNombreFestejado.getText()) || !textoVacio(txtTematica.getText())
                 || !textoVacio(textAreaNotas.getText());
     }
@@ -979,28 +945,8 @@ public class CotizacionController {
         dto.setTematica(tematica != null && !tematica.isBlank() ? tematica.trim() : null);
         dto.setEstado(estadoObjetivo);
 
-        // Servicios extras seleccionados
-        List<ServicioDTO> extrasSel = new ArrayList<>(serviciosSeleccionados);
-
-        List<DetalleCotizacionDTO> detalles = new ArrayList<>();
-        for (ServicioDTO s : extrasSel) {
-            if (s == null) continue;
-            DetalleCotizacionDTO d = new DetalleCotizacionDTO();
-            d.setServicioId(s.getId());
-            d.setNombreServicio(s.getNombre());
-            d.setPrecioUnitario(s.getPrecio());
-            d.setCantidad(1);
-            d.setSubtotal(s.getPrecio());
-            DetalleCotizacionDTO datos = datosDeExtras.get(s);
-            if (datos != null) {
-                d.setHoraSugerida(datos.getHoraSugerida());
-                d.setEspecificacionesCliente(datos.getEspecificacionesCliente());
-                d.setDesgloseOpciones(datos.getDesgloseOpciones());
-                d.setUbicacionMontaje(datos.getUbicacionMontaje());
-            }
-            detalles.add(d);
-        }
-        dto.setDetalles(detalles);
+        // Servicios extra: cada renglón ya trae su cantidad, precio y datos de logística.
+        dto.setDetalles(ExtrasCotizacion.juntarIguales(extrasSeleccionados));
 
         return dto;
     }
@@ -1284,12 +1230,12 @@ public class CotizacionController {
     // ─── CONFIGURACIÓN LISTA SERVICIOS EXTRAS ──────────
     private void configurarListaServiciosExtras() {
         if (listaServiciosExtras != null) {
-            listaServiciosExtras.setItems(serviciosAgrupados);
-            
+            listaServiciosExtras.setItems(extrasSeleccionados);
+
             // Formato visual para agregar el ícono de basura y el texto
-            listaServiciosExtras.setCellFactory(lv -> new ListCell<ServicioAgrupado>() {
+            listaServiciosExtras.setCellFactory(lv -> new ListCell<DetalleCotizacionDTO>() {
                 @Override
-                protected void updateItem(ServicioAgrupado item, boolean empty) {
+                protected void updateItem(DetalleCotizacionDTO item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setGraphic(null);
@@ -1306,23 +1252,37 @@ public class CotizacionController {
                         btnDelete.setGraphic(trashIcon);
                         btnDelete.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
                         btnDelete.setOnAction(e -> {
-                            serviciosSeleccionados.removeIf(s -> s.getId().equals(item.servicio.getId()));
+                            extrasSeleccionados.removeIf(s -> s == item);
                             actualizarTotalEstimado();
                         });
 
                         // Texto del servicio
-                        double subtotalItem = item.servicio.getPrecio() * item.cantidad;
+                        int cantidad = Math.max(1, item.getCantidad());
                         Label lblText;
-                        if (item.cantidad > 1) {
-                            lblText = new Label(String.format("%s ($%,.2f) * %d = $%,.2f", 
-                                item.servicio.getNombre(), item.servicio.getPrecio(), item.cantidad, subtotalItem));
+                        if (cantidad > 1) {
+                            lblText = new Label(String.format("%s ($%,.2f) × %d = $%,.2f",
+                                item.getNombreServicio(), item.getPrecioUnitario(), cantidad,
+                                item.getPrecioUnitario() * cantidad));
                         } else {
-                            lblText = new Label(String.format("%s (+$%,.2f)", 
-                                item.servicio.getNombre(), item.servicio.getPrecio()));
+                            lblText = new Label(String.format("%s (+$%,.2f)",
+                                item.getNombreServicio(), item.getPrecioUnitario()));
                         }
                         lblText.setStyle("-fx-text-fill: #2c3e50;");
 
-                        hbox.getChildren().addAll(btnDelete, lblText);
+                        // Un mismo servicio puede ir en varios renglones con datos distintos
+                        // (p. ej. bollos de dos sabores): las especificaciones los distinguen.
+                        String detalle = java.util.stream.Stream.of(
+                                item.getEspecificacionesCliente(), item.getDesgloseOpciones())
+                            .filter(t -> t != null && !t.isBlank())
+                            .collect(java.util.stream.Collectors.joining(" · "));
+                        VBox textos = new VBox(1, lblText);
+                        if (!detalle.isEmpty()) {
+                            Label lblDetalle = new Label(detalle);
+                            lblDetalle.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px;");
+                            textos.getChildren().add(lblDetalle);
+                        }
+
+                        hbox.getChildren().addAll(btnDelete, textos);
                         setGraphic(hbox);
                         setText(null);
                     }
@@ -1333,11 +1293,8 @@ public class CotizacionController {
 
     // ─── CÁLCULO DE TOTAL ESTIMADO ────────────────────────────────────────────
     private void actualizarTotalEstimado() {
-        // El total se calcula usando los servicios que están en la lista (y se pueden repetir)
-        List<ServicioDTO> extras = new ArrayList<>(serviciosSeleccionados);
-
         double total = calcularTotalCotizacionUseCase.ejecutar(
-            precioActual != null ? precioActual.precio() : 0, extras);
+            precioActual != null ? precioActual.precio() : 0, new ArrayList<>(extrasSeleccionados));
 
         if (lblTotalEstimado != null) {
             lblTotalEstimado.setText(String.format("$%,.2f", total));
@@ -1420,16 +1377,18 @@ public class CotizacionController {
             return;
         }
 
-        // Creamos el Dialog esperando una lista de servicios (para poder agregar varios según la 'cantidad')
-        Dialog<List<ServicioDTO>> dialog = new Dialog<>();
+        // El Dialog devuelve el renglón a agregar: el servicio con su cantidad y datos de logística
+        Dialog<DetalleCotizacionDTO> dialog = new Dialog<>();
         dialog.setTitle("Añadir Servicio Extra");
 
         ButtonType agregarButtonType = new ButtonType("Añadir Servicio Extra", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, agregarButtonType);
 
         // --- SECCIÓN 1: DATOS DEL COBRO ---
-        ComboBox<ServicioDTO> comboServicio = new ComboBox<>(FXCollections.observableArrayList(todosLosServicios));
-        comboServicio.setPromptText("Seleccione un servicio...");
+        // Con búsqueda, como el combo de clientes: el catálogo de extras es largo.
+        SearchableComboBox<ServicioDTO> comboServicio =
+                new SearchableComboBox<>(FXCollections.observableArrayList(todosLosServicios));
+        comboServicio.setPromptText("Buscar servicio por nombre...");
         comboServicio.setConverter(new StringConverter<ServicioDTO>() {
             @Override
             public String toString(ServicioDTO s) {
@@ -1438,16 +1397,55 @@ public class CotizacionController {
             @Override
             public ServicioDTO fromString(String string) { return null; }
         });
+        // Un renglón por servicio (nombre y precio) y pocas filas visibles: si la lista no
+        // cabe debajo del combo, JavaFX la sube y tapa el campo donde se escribe.
+        comboServicio.setVisibleRowCount(8);
+        comboServicio.setCellFactory(listView -> new ListCell<ServicioDTO>() {
+            @Override
+            protected void updateItem(ServicioDTO s, boolean empty) {
+                super.updateItem(s, empty);
+                if (empty || s == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    Label lblNombre = new Label(s.getNombre());
+                    lblNombre.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 13px;");
+                    Label lblPrecio = new Label(String.format("$%,.2f", s.getPrecio()));
+                    lblPrecio.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 12px;");
+                    lblPrecio.setMinWidth(Region.USE_PREF_SIZE);
+                    Region espacio = new Region();
+                    HBox.setHgrow(espacio, Priority.ALWAYS);
+                    HBox fila = new HBox(16, lblNombre, espacio, lblPrecio);
+                    fila.setAlignment(Pos.CENTER_LEFT);
+                    setGraphic(fila);
+                    setText(null);
+                }
+            }
+        });
 
-        ComboBox<Integer> comboCantidad = new ComboBox<>(FXCollections.observableArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
-        comboCantidad.getSelectionModel().selectFirst();
+        // La cantidad se escribe: hay servicios que se piden por pieza (20 bollos o más) y
+        // otros que ya son un bloque (un pastel para 15 personas), así que no hay tope fijo.
+        TextField txtCantidad = ModalHelper.campoTexto("1");
+        txtCantidad.setText("1");
+        int digitosCantidad = String.valueOf(ExtrasCotizacion.CANTIDAD_MAXIMA).length();
+        txtCantidad.setTextFormatter(new TextFormatter<>(change ->
+            change.getControlNewText().matches("\\d{0," + digitosCantidad + "}") ? change : null));
 
         VBox campoServicio = ModalHelper.campo("SERVICIO DEL CATÁLOGO *", comboServicio);
         HBox.setHgrow(campoServicio, Priority.ALWAYS);
-        VBox campoCantidad = ModalHelper.campo("CANTIDAD", comboCantidad);
+        VBox campoCantidad = ModalHelper.campo("CANTIDAD *", txtCantidad);
         campoCantidad.setMinWidth(110);
         campoCantidad.setPrefWidth(110);
         HBox filaServicio = new HBox(12, campoServicio, campoCantidad);
+
+        // Descripción del servicio elegido: el nombre no siempre dice qué incluye, y así
+        // se ve antes de agregarlo si es el servicio correcto.
+        Label lblDescripcion = new Label("Seleccione un servicio para ver su descripción.");
+        lblDescripcion.setWrapText(true);
+        lblDescripcion.setMinHeight(Region.USE_PREF_SIZE);
+        lblDescripcion.getStyleClass().addAll("descripcion-servicio-texto", "descripcion-servicio-vacia");
+        VBox cajaDescripcion = new VBox(3, etiqueta("DESCRIPCIÓN DEL SERVICIO", "label-pequeno"), lblDescripcion);
+        cajaDescripcion.getStyleClass().add("descripcion-servicio");
 
         // Resumen del cobro: precio unitario y total según la cantidad
         Label lblPrecioUnitario = etiqueta("—", "resumen-cobro-valor");
@@ -1462,7 +1460,8 @@ public class CotizacionController {
         resumenCobro.setAlignment(Pos.CENTER_LEFT);
         resumenCobro.getStyleClass().add("resumen-cobro");
 
-        VBox seccionCobro = new VBox(10, etiqueta("DATOS DEL COBRO", "titulo-seccion"), filaServicio, resumenCobro);
+        VBox seccionCobro = new VBox(10, etiqueta("DATOS DEL COBRO", "titulo-seccion"), filaServicio,
+                cajaDescripcion, resumenCobro);
 
         // --- SECCIÓN 2: DETALLES OPERATIVOS (LOGÍSTICA) ---
         TextField txtEspecificaciones = ModalHelper.campoTexto("Ej. Colores, temática...");
@@ -1508,10 +1507,14 @@ public class CotizacionController {
         Button agregarBtn = (Button) dialog.getDialogPane().lookupButton(agregarButtonType);
         agregarBtn.setDisable(true); // Bloqueado hasta que seleccione un servicio
 
-        // --- LÓGICA DE ACTUALIZACIÓN DE PRECIOS ---
+        // --- LÓGICA DE ACTUALIZACIÓN DE PRECIOS Y DESCRIPCIÓN ---
+        java.util.function.IntSupplier cantidadCapturada = () -> {
+            String texto = txtCantidad.getText();
+            return texto == null || texto.isBlank() ? 0 : Integer.parseInt(texto);
+        };
         Runnable actualizarResumen = () -> {
             ServicioDTO s = comboServicio.getValue();
-            int cant = comboCantidad.getValue() != null ? comboCantidad.getValue() : 1;
+            int cant = cantidadCapturada.getAsInt();
             lblTotalTitulo.setText(cant > 1 ? "TOTAL (" + cant + " UNIDADES)" : "TOTAL");
             if (s != null) {
                 lblPrecioUnitario.setText(String.format("$%,.2f", s.getPrecio()));
@@ -1520,51 +1523,57 @@ public class CotizacionController {
                 lblPrecioUnitario.setText("—");
                 lblTotal.setText("$0.00");
             }
-            agregarBtn.setDisable(s == null);
+            agregarBtn.setDisable(s == null || cant < 1);
         };
-        comboServicio.valueProperty().addListener((obs, old, newVal) -> actualizarResumen.run());
-        comboCantidad.valueProperty().addListener((obs, old, newVal) -> actualizarResumen.run());
-
-        // --- CONVERTIR RESULTADO (Se agregan los servicios X veces según la cantidad elegida) ---
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == agregarButtonType) {
-                ServicioDTO s = comboServicio.getValue();
-                if (s != null) {
-                    List<ServicioDTO> listaAEnviar = new ArrayList<>();
-                    int cant = comboCantidad.getValue() != null ? comboCantidad.getValue() : 1;
-                    
-                    // Los datos operativos viajan con cada extra y se guardan en el detalle
-                    // de la cotización; al confirmar el evento pasan a su bitácora de logística.
-                    DetalleCotizacionDTO datos = new DetalleCotizacionDTO();
-                    datos.setEspecificacionesCliente(textoONull(txtEspecificaciones.getText()));
-                    datos.setDesgloseOpciones(textoONull(txtDesglose.getText()));
-                    datos.setUbicacionMontaje(textoONull(txtUbicacion.getText()));
-                    if (comboHora.getValue() != null) {
-                        datos.setHoraSugerida(java.time.LocalTime.parse(comboHora.getValue()));
-                    }
-
-                    for(int i = 0; i < cant; i++) {
-                        // Una instancia por unidad, para que cada una conserve sus datos.
-                        ServicioDTO unidad = new ServicioDTO();
-                        unidad.setId(s.getId());
-                        unidad.setNombre(s.getNombre());
-                        unidad.setDescripcion(s.getDescripcion());
-                        unidad.setPrecio(s.getPrecio());
-                        datosDeExtras.put(unidad, datos);
-                        listaAEnviar.add(unidad);
-                    }
-                    return listaAEnviar;
+        comboServicio.valueProperty().addListener((obs, old, s) -> {
+            boolean sinDescripcion = s == null || s.getDescripcion() == null || s.getDescripcion().isBlank();
+            lblDescripcion.setText(s == null ? "Seleccione un servicio para ver su descripción."
+                    : sinDescripcion ? "Este servicio no tiene descripción en el catálogo."
+                    : s.getDescripcion().trim());
+            if (sinDescripcion) {
+                if (!lblDescripcion.getStyleClass().contains("descripcion-servicio-vacia")) {
+                    lblDescripcion.getStyleClass().add("descripcion-servicio-vacia");
                 }
+            } else {
+                lblDescripcion.getStyleClass().remove("descripcion-servicio-vacia");
             }
-            return null;
+            actualizarResumen.run();
+            // La descripción puede ocupar más renglones: el diálogo se ajusta a ella.
+            Platform.runLater(() -> dialog.getDialogPane().getScene().getWindow().sizeToScene());
+        });
+        txtCantidad.textProperty().addListener((obs, old, newVal) -> actualizarResumen.run());
+
+        // --- CONVERTIR RESULTADO: un renglón con la cantidad capturada ---
+        dialog.setResultConverter(dialogButton -> {
+            ServicioDTO s = comboServicio.getValue();
+            int cant = cantidadCapturada.getAsInt();
+            if (dialogButton != agregarButtonType || s == null || cant < 1) {
+                return null;
+            }
+            // Los datos operativos se guardan en el detalle de la cotización; al
+            // confirmar el evento pasan a su bitácora de logística.
+            DetalleCotizacionDTO renglon = new DetalleCotizacionDTO();
+            renglon.setServicioId(s.getId());
+            renglon.setNombreServicio(s.getNombre());
+            renglon.setPrecioUnitario(s.getPrecio());
+            renglon.setCantidad(cant);
+            renglon.setSubtotal(s.getPrecio() * cant);
+            renglon.setEspecificacionesCliente(textoONull(txtEspecificaciones.getText()));
+            renglon.setDesgloseOpciones(textoONull(txtDesglose.getText()));
+            renglon.setUbicacionMontaje(textoONull(txtUbicacion.getText()));
+            if (comboHora.getValue() != null) {
+                renglon.setHoraSugerida(java.time.LocalTime.parse(comboHora.getValue()));
+            }
+            return renglon;
         });
 
         // --- APLICAR RESULTADO A LA LISTA PRINCIPAL ---
-        dialog.showAndWait().ifPresent(listaServiciosElegidos -> {
-            if (listaServiciosElegidos != null && !listaServiciosElegidos.isEmpty()) {
-                serviciosSeleccionados.addAll(listaServiciosElegidos);
-                actualizarTotalEstimado();
-            }
+        // Si ya había un renglón igual (mismo servicio y mismos datos), se le suma la cantidad.
+        dialog.showAndWait().ifPresent(renglon -> {
+            List<DetalleCotizacionDTO> todos = new ArrayList<>(extrasSeleccionados);
+            todos.add(renglon);
+            extrasSeleccionados.setAll(ExtrasCotizacion.juntarIguales(todos));
+            actualizarTotalEstimado();
         });
     }
     

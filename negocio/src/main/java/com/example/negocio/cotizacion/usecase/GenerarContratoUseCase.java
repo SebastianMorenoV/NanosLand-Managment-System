@@ -191,9 +191,10 @@ public class GenerarContratoUseCase {
             }
             if (detalles != null && !detalles.isEmpty()) {
                 document.add(new Paragraph("Servicios Extra Contratados:", smallBoldFont));
-                for (var d : detalles) {
-                    String n = d.getServicio() != null ? d.getServicio().getNombre() : "Servicio";
-                    document.add(new Paragraph("- " + n + " (x" + d.getCantidad() + ")", normalFont));
+                // Un renglón por servicio: las cotizaciones viejas guardaban cada unidad aparte.
+                for (var r : ExtrasCotizacion.paraMostrar(detalles)) {
+                    String n = r.servicio() != null ? r.servicio().getNombre() : "Servicio";
+                    document.add(new Paragraph("- " + n + " (x" + r.cantidad() + ")", normalFont));
                 }
             }
             document.add(new Paragraph("Nota: ____________________________________________________________________", normalFont));

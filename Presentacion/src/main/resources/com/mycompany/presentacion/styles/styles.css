@@ -892,6 +892,25 @@
     -fx-text-fill: #1a82b8;
 }
 
+/* Descripción del servicio elegido (Añadir Servicio Extra) */
+.descripcion-servicio {
+    -fx-background-color: #f7f9fb;
+    -fx-border-color: #dfe6ec;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 8px 12px;
+}
+
+.descripcion-servicio-texto {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 13px;
+}
+
+.descripcion-servicio-vacia {
+    -fx-text-fill: #95a5a6;
+    -fx-font-style: italic;
+}
+
 /* =================================================== */
 /* 17. PANTALLA DE CARGA Y AVISOS DE ESPERA            */
 /* =================================================== */
