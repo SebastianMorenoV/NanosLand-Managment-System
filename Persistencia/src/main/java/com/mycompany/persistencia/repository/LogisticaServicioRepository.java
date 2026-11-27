@@ -29,4 +29,13 @@ public interface LogisticaServicioRepository extends JpaRepository<LogisticaServ
            "WHERE ls.evento.id = :eventoId " +
            "ORDER BY ls.id ASC")
     List<LogisticaServicio> findByEventoIdWithServicio(@Param("eventoId") Long eventoId);
+
+    /**
+     * Ids de los eventos en los estados dados con algún registro de antes de separar lo del
+     * paquete y los extras (sin origen), para la corrección al arrancar.
+     */
+    @Query("SELECT DISTINCT ls.evento.id FROM LogisticaServicio ls " +
+           "WHERE ls.origen IS NULL AND ls.evento.estado IN :estados")
+    List<Long> eventosConRegistrosSinOrigen(
+        @Param("estados") java.util.Collection<com.mycompany.persistencia.enums.EstadoEvento> estados);
 }

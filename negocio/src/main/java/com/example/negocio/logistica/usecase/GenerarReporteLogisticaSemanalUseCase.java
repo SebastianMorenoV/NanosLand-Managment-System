@@ -132,8 +132,12 @@ public class GenerarReporteLogisticaSemanalUseCase {
                 ReporteLogisticaSemanalDTO.Servicio s = new ReporteLogisticaSemanalDTO.Servicio();
                 Long idServicio = registro.getServicio() != null ? registro.getServicio().getId() : null;
                 s.setNombre(registro.getServicio() != null ? registro.getServicio().getNombre() : "Servicio");
+                // Cada registro lleva su cantidad (lo del paquete y cada extra van aparte). Los de
+                // antes de separarlos no la tienen: eran el total del servicio.
                 GenerarLogisticaEventoUseCase.Contratado c = idServicio != null ? contratados.get(idServicio) : null;
-                s.setCantidad(c != null ? Math.max(1, c.cantidad) : 1);
+                s.setCantidad(registro.getCantidad() != null ? Math.max(1, registro.getCantidad())
+                    : c != null ? Math.max(1, c.cantidad) : 1);
+                s.setExtra(registro.getOrigen() == com.mycompany.persistencia.enums.OrigenLogistica.EXTRA);
                 s.setHora(registro.getHoraRequerida());
                 s.setUbicacion(registro.getUbicacionMontaje());
                 s.setEspecificaciones(sinCantidad(registro.getEspecificaciones()));
@@ -145,15 +149,16 @@ public class GenerarReporteLogisticaSemanalUseCase {
         } else {
             // Sin bitácora (evento finalizado con datos antiguos): se listan los servicios
             // contratados en la cotización, sin estado ni responsable.
-            for (GenerarLogisticaEventoUseCase.Contratado c : contratados.values()) {
+            for (GenerarLogisticaEventoUseCase.Parte parte : generarLogisticaEventoUseCase.partesContratadas(cotizacion)) {
                 ReporteLogisticaSemanalDTO.Servicio s = new ReporteLogisticaSemanalDTO.Servicio();
-                s.setNombre(c.servicio.getNombre());
-                s.setCantidad(Math.max(1, c.cantidad));
-                if (c.detalle != null) {
-                    s.setHora(c.detalle.getHoraSugerida());
-                    s.setUbicacion(c.detalle.getUbicacionMontaje());
-                    s.setEspecificaciones(c.detalle.getEspecificacionesCliente());
-                    s.setDesglose(c.detalle.getDesgloseOpciones());
+                s.setNombre(parte.servicio().getNombre());
+                s.setCantidad(Math.max(1, parte.cantidad()));
+                s.setExtra(parte.origen() == com.mycompany.persistencia.enums.OrigenLogistica.EXTRA);
+                if (parte.detalle() != null) {
+                    s.setHora(parte.detalle().getHoraSugerida());
+                    s.setUbicacion(parte.detalle().getUbicacionMontaje());
+                    s.setEspecificaciones(parte.detalle().getEspecificacionesCliente());
+                    s.setDesglose(parte.detalle().getDesgloseOpciones());
                 }
                 servicios.add(s);
             }

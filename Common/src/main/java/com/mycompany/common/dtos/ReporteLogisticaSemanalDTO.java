@@ -137,6 +137,13 @@ public class ReporteLogisticaSemanalDTO {
         private String responsable;
         /** Null si el evento no tiene bitácora de logística (por ejemplo, datos antiguos). */
         private EstadoLogistica estado;
+        /** Es un servicio extra: va aparte de lo que incluye el paquete, aunque sea el mismo servicio. */
+        private boolean extra;
+
+        /** "Bollito" o "Bollito (extra)". El resumen del día suma por servicio, sin distinguir. */
+        public String getEtiqueta() {
+            return extra ? nombre + " (extra)" : nombre;
+        }
 
         /** Ya está montado o en el salón. */
         public boolean isListo() {

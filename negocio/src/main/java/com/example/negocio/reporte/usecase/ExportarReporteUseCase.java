@@ -861,7 +861,7 @@ public class ExportarReporteUseCase {
                     // En ZapfDingbats, "o" es una casilla vacía y "4" una palomita.
                     tabla.addCell(celdaLogistica(sv.isListo() ? "4" : "o", sv.isListo() ? fontCasillaLista : fontCasilla, Element.ALIGN_CENTER));
                     tabla.addCell(celdaLogistica(String.valueOf(sv.getCantidad()), fontServicio, Element.ALIGN_CENTER));
-                    tabla.addCell(celdaLogistica(sv.getNombre(), fontServicio, Element.ALIGN_LEFT));
+                    tabla.addCell(celdaLogistica(sv.getEtiqueta(), fontServicio, Element.ALIGN_LEFT));
                     tabla.addCell(celdaLogistica(sv.getDetalle(), fontDetalle, Element.ALIGN_LEFT));
                 }
                 document.add(tabla);

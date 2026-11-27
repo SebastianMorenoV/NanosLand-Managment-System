@@ -176,7 +176,7 @@ public class ReporteLogisticaSemanalController {
                 ? "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 4;"
                 : "-fx-border-color: #95a5a6; -fx-border-radius: 4; -fx-background-radius: 4;");
 
-        Label nombre = new Label(s.getCantidad() + "  " + s.getNombre());
+        Label nombre = new Label(s.getCantidad() + "  " + s.getEtiqueta());
         nombre.setMinWidth(Region.USE_PREF_SIZE);
         nombre.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
 
