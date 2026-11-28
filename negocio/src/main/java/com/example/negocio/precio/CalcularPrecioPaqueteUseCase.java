@@ -169,7 +169,8 @@ public class CalcularPrecioPaqueteUseCase {
                 .orElseGet(() -> PrecioPaquete.sinDescuento(precioLista, false));
     }
 
-    private static boolean mismoPaquete(Cotizacion cotizacion, Long paqueteId, Long comidaId, Integer personas) {
+    /** Indica si la cotización ya tiene ese paquete, comida y personas (entonces se respeta lo pactado). */
+    public static boolean mismoPaquete(Cotizacion cotizacion, Long paqueteId, Long comidaId, Integer personas) {
         Long paqueteActual = cotizacion.getPaquete() != null ? cotizacion.getPaquete().getId() : null;
         Long comidaActual = cotizacion.getComida() != null ? cotizacion.getComida().getId() : null;
         return Objects.equals(paqueteActual, paqueteId)

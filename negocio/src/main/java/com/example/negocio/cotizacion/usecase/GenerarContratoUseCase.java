@@ -60,8 +60,9 @@ public class GenerarContratoUseCase {
         String folio = cotizacion.getFolio();
         var cliente = cotizacion.getCliente();
         var paquete = cotizacion.getPaquete();
+        // El paquete como se vendió (su copia en la cotización), no como esté hoy en el catálogo.
         String descripcionPaquete = paquete == null ? "" : com.mycompany.common.util.DescripcionPaquete.de(
-            paquete.getNombre(),
+            PaqueteCotizado.nombre(cotizacion),
             cotizacion.getComida() != null ? cotizacion.getComida().getNombre() : null,
             cotizacion.getPersonas());
         var evento = cotizacion.getEvento();
@@ -182,8 +183,9 @@ public class GenerarContratoUseCase {
 
             // SU RENTA O PAQUETE INCLUYE
             document.add(new Paragraph("SU RENTA O PAQUETE INCLUYE:", subtitleFont));
-            if (paquete != null && paquete.getDescripcion() != null) {
-                document.add(new Paragraph(paquete.getDescripcion(), normalFont));
+            String incluye = paquete != null ? PaqueteCotizado.descripcion(cotizacion) : null;
+            if (incluye != null) {
+                document.add(new Paragraph(incluye, normalFont));
             }
             if (cotizacion.getComida() != null) {
                 document.add(new Paragraph("Comida: " + cotizacion.getComida().getNombre()

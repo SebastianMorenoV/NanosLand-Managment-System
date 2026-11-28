@@ -144,6 +144,46 @@ class ModificarCotizacionUseCaseTest {
     }
 
     @Test
+    void conservaLoQueIncluiaElPaqueteAunqueElPaqueteCambie() {
+        incluido(full, mesero, 2);
+        Cotizacion c = existente(full, barbacoa, 100, 23800.0, 23800);
+        PaqueteCotizado.guardarCopia(c);
+        full.getServicios().get(0).setCantidad(3);
+        full.setDescripcion("Ahora con 3 meseros");
+
+        modificar.modificarCotizacion(50L, dto(2, 10L, 100));
+
+        assertThat(PaqueteCotizado.serviciosIncluidos(c)).extracting(PaqueteCotizado.Incluido::cantidad).containsExactly(2);
+        assertThat(PaqueteCotizado.descripcion(c)).isNull();
+    }
+
+    @Test
+    void cambiarPersonasVuelveACotizarTambienLoQueIncluyeElPaquete() {
+        incluido(full, mesero, 2);
+        Cotizacion c = existente(full, barbacoa, 100, 23800.0, 23800);
+        PaqueteCotizado.guardarCopia(c);
+        full.getServicios().get(0).setCantidad(3);
+
+        modificar.modificarCotizacion(50L, dto(2, 10L, 80));
+
+        assertThat(PaqueteCotizado.serviciosIncluidos(c)).extracting(PaqueteCotizado.Incluido::cantidad).containsExactly(3);
+    }
+
+    @Test
+    void unaCotizacionSinCopiaLaRecibeAlEditarse() {
+        incluido(full, mesero, 2);
+        Cotizacion c = existente(full, barbacoa, 100, 23800.0, 23800);
+
+        modificar.modificarCotizacion(50L, dto(2, 10L, 100));
+
+        assertThat(c.tieneCopiaDelPaquete()).isTrue();
+        assertThat(c.getPaqueteNombre()).isEqualTo("Paquete Full");
+        assertThat(c.getServiciosIncluidos()).extracting(s -> s.getNombre() + " x" + s.getCantidad())
+                .containsExactly("Mesero(a) x2");
+        assertThat(c.getPrecioPaquete()).isEqualTo(23800);
+    }
+
+    @Test
     void cambiarPersonasTomaElPrecioDelCatalogo() {
         Cotizacion c = existente(full, barbacoa, 100, 23800.0, 23800);
 

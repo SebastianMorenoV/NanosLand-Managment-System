@@ -120,7 +120,7 @@ public class GenerarComprobanteUseCase {
             addRow(datos, "CLIENTE:", cliente != null ? cliente.getNombre() : "-", boldFont, normalFont);
             addRow(datos, "TURNO:", evento != null && evento.getTurno() != null ? evento.getTurno().name() : "-", boldFont, normalFont);
             addRow(datos, "FESTEJADO:", evento != null && evento.getNombreFestejado() != null ? evento.getNombreFestejado() : "-", boldFont, normalFont);
-            addRow(datos, "PAQUETE:", paquete != null ? paquete.getNombre() : "-", boldFont, normalFont);
+            addRow(datos, "PAQUETE:", paquete != null ? PaqueteCotizado.nombre(cotizacion) : "-", boldFont, normalFont);
             if (cotizacion.getComida() != null) {
                 addRow(datos, "COMIDA:", cotizacion.getComida().getNombre(), boldFont, normalFont);
             }

@@ -12,6 +12,7 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.ToString;
 
@@ -91,4 +92,28 @@ public class Cotizacion {
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleCotizacion> serviciosExtra;
 
+    // ── Copia del paquete al cotizar ─────────────────────────────────────────
+    // Lo que incluía el paquete cuando se vendió, para que la cotización no dependa de que el
+    // paquete siga igual en el catálogo. Se guarda al crear la cotización y se renueva solo si
+    // se elige otro paquete, comida o personas (igual que el precio pactado). Todo es opcional:
+    // las cotizaciones de antes de esta copia la reciben al arrancar si siguen abiertas; mientras
+    // no la tengan, se usa el paquete del catálogo, como antes.
+
+    /** Nombre del paquete al cotizar. Si no es nulo, la cotización tiene su copia del paquete. */
+    @Column(name = "paquete_nombre")
+    private String paqueteNombre;
+
+    /** Descripción del paquete al cotizar (lo que dice el contrato en «Su renta o paquete incluye»). */
+    @Column(name = "paquete_descripcion", length = 2000)
+    private String paqueteDescripcion;
+
+    /** Servicios que incluía el paquete al cotizar, con su cantidad. */
+    @ToString.Exclude
+    @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CotizacionServicioIncluido> serviciosIncluidos = new ArrayList<>();
+
+    /** Indica si la cotización ya guarda su copia del paquete. */
+    public boolean tieneCopiaDelPaquete() {
+        return paqueteNombre != null;
+    }
 }

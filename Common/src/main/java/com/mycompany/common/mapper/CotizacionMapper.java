@@ -38,6 +38,9 @@ public class CotizacionMapper {
             dto.setPaqueteId(cotizacion.getPaquete().getId());
             dto.setNombrePaquete(cotizacion.getPaquete().getNombre());
         }
+        if (cotizacion.tieneCopiaDelPaquete()) {
+            dto.setPaqueteDescripcion(cotizacion.getPaqueteDescripcion() != null ? cotizacion.getPaqueteDescripcion() : "");
+        }
         if (cotizacion.getComida() != null) {
             dto.setComidaId(cotizacion.getComida().getId());
             dto.setComidaNombre(cotizacion.getComida().getNombre());

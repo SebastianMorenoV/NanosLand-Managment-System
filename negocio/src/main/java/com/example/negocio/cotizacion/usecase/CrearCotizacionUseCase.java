@@ -40,6 +40,7 @@ import java.util.Set;
  * - Generar un folio único con formato COT-YYYY-NNNN.
  * - Calcular el precio del paquete (fijo o por comida y personas, con el descuento de la fecha)
  *   y guardarlo como precio pactado.
+ * - Guardar la copia de lo que incluye el paquete (nombre, descripción y servicios incluidos).
  * - Total = precio del paquete + servicios extra.
  * - Asignar el estado inicial BORRADOR.
  * - Persistir la cotización.
@@ -140,6 +141,8 @@ public class CrearCotizacionUseCase {
         cotizacion.setComida(comida);
         cotizacion.setPersonas(dto.getPersonas());
         precio.guardarEn(cotizacion);
+        // Lo que incluye el paquete hoy queda guardado en la cotización, como su precio.
+        PaqueteCotizado.guardarCopia(cotizacion);
         EstadoCotizacion estado = dto.getEstado() != null ? dto.getEstado() : EstadoCotizacion.BORRADOR;
         cotizacion.setEstado(estado);
         if (dto.getUsuarioId() != null) {

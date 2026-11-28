@@ -112,6 +112,10 @@ public class ModificarCotizacionUseCase {
         // Precio del paquete: el pactado si no cambió el paquete, la comida, las personas ni la
         // fecha; si cambiaron, se vuelve a cotizar (con el descuento de la fecha). Se calcula
         // antes de modificar la cotización porque compara contra lo guardado.
+        // Con otro paquete, comida o personas se vuelve a cotizar con el catálogo de hoy: precio y
+        // lo que incluye el paquete. Si no, se respeta lo pactado.
+        boolean otraSeleccion = !CalcularPrecioPaqueteUseCase.mismoPaquete(
+            existente, paquete.getId(), dto.getComidaId(), dto.getPersonas());
         PrecioPaquete precio = calcularPrecioPaqueteUseCase.precioParaCotizacion(
             existente, paquete, dto.getComidaId(), dto.getPersonas(), dto.getFecha());
         double precioPaquete = precio.precio();
@@ -163,6 +167,9 @@ public class ModificarCotizacionUseCase {
         existente.setComida(comida);
         existente.setPersonas(dto.getPersonas());
         precio.guardarEn(existente);
+        if (otraSeleccion || !existente.tieneCopiaDelPaquete()) {
+            PaqueteCotizado.guardarCopia(existente);
+        }
 
         eventoExistente.setFecha(dto.getFecha());
         eventoExistente.setTurno(dto.getTurno());

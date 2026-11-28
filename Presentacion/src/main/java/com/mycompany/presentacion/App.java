@@ -224,6 +224,10 @@ public class App extends Application {
         // Cotizaciones de antes del precio pactado del paquete.
         correccionAlArrancar(() -> contexto.getBean(
                 com.example.negocio.cotizacion.usecase.CompletarPrecioPaqueteUseCase.class).completar());
+        // Cotizaciones de antes de la copia del paquete (lo que incluía al venderse). Va antes de
+        // separar la logística, que toma de esa copia lo que incluye el paquete.
+        correccionAlArrancar(() -> contexto.getBean(
+                com.example.negocio.cotizacion.usecase.CompletarCopiaPaqueteUseCase.class).completar());
         // Logística de antes: lo del paquete y los extras de un mismo servicio iban en un solo registro.
         correccionAlArrancar(() -> contexto.getBean(
                 com.example.negocio.logistica.usecase.SepararLogisticaExtrasUseCase.class).separar());

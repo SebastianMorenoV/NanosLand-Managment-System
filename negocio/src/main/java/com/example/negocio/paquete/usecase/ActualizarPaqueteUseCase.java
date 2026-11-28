@@ -25,11 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Modifica un paquete.
  *
- * Cada cotización guarda su precio pactado, así que el nombre, la descripción y los precios
- * (fijo o de la tabla) se pueden cambiar aunque haya cotizaciones abiertas. Mientras las haya,
- * no se pueden cambiar los servicios incluidos (la logística de esos eventos depende de ellos),
- * ni quitar de la tabla una combinación de comida y personas que alguna use, ni pasar de precio
- * fijo a tabla (o al revés) si alguna depende de la forma actual.
+ * Cada cotización guarda su precio pactado y su copia del paquete (nombre, descripción y servicios
+ * incluidos), así que el paquete se puede cambiar aunque tenga cotizaciones abiertas: los cambios
+ * valen para las cotizaciones nuevas y las abiertas conservan lo que se les vendió.
+ * <ul>
+ *   <li>Si alguna cotización abierta todavía no tiene su copia (es de antes de la copia y la corrección
+ *       al arrancar aún no la llenó), depende del paquete del catálogo: mientras tanto no se cambian
+ *       los servicios incluidos ni se quita de la tabla la combinación de comida y personas que use.</li>
+ *   <li>No se pasa de precio fijo a tabla (o al revés) si alguna cotización abierta depende de la forma
+ *       actual: al editarla, la pantalla no podría mostrar su selección y se volvería a cotizar.</li>
+ * </ul>
  */
 @Service
 @RequiredArgsConstructor
@@ -65,12 +70,15 @@ public class ActualizarPaqueteUseCase {
         List<Object[]> abiertas = cotizacionRepository.combinacionesAbiertasDePaquete(
             p.getId(), ESTADOS_ABIERTOS, EstadoEvento.FINALIZADO);
         if (!abiertas.isEmpty()) {
-            if (serviciosDistintos) {
-                throw new CotizacionException("No se pueden cambiar los servicios incluidos porque el paquete tiene "
-                    + "cotizaciones abiertas (" + folios(abiertas) + "). El nombre, la descripción y los precios sí "
-                    + "se pueden cambiar; para otros servicios cree un paquete nuevo.");
+            // Las que aún no guardan su copia del paquete dependen de cómo está en el catálogo.
+            Set<String> sinCopia = new LinkedHashSet<>(cotizacionRepository.foliosAbiertosSinCopiaDelPaquete(
+                p.getId(), ESTADOS_ABIERTOS, EstadoEvento.FINALIZADO));
+            if (serviciosDistintos && !sinCopia.isEmpty()) {
+                throw new CotizacionException("Todavía no se pueden cambiar los servicios incluidos: estas cotizaciones "
+                    + "abiertas no guardan su copia del paquete (" + String.join(", ", sinCopia) + "). Cierre y vuelva "
+                    + "a abrir el sistema para que se guarde. El nombre, la descripción y los precios sí se pueden cambiar.");
             }
-            validarCombinacionesAbiertas(p, abiertas, conTabla, precios);
+            validarCombinacionesAbiertas(p, abiertas, conTabla, precios, sinCopia);
         }
 
         p.setNombre(paqueteDTO.getNombre().trim());
@@ -87,9 +95,13 @@ public class ActualizarPaqueteUseCase {
         return PaqueteMapper.toDTO(guardado);
     }
 
-    /** Las cotizaciones abiertas deben poder seguir cotizándose con la forma de precio y combinaciones nuevas. */
+    /**
+     * Las cotizaciones abiertas deben poder seguir editándose: la forma de precio (fija o por tabla)
+     * no cambia si alguna depende de ella, y las que no tienen su copia del paquete conservan su
+     * combinación de comida y personas en la tabla.
+     */
     private void validarCombinacionesAbiertas(Paquete p, List<Object[]> abiertas, boolean conTabla,
-                                              List<ValidadorPaquete.Precio> precios) {
+                                              List<ValidadorPaquete.Precio> precios, Set<String> sinCopia) {
         List<String> deFijo = new ArrayList<>();
         Map<String, List<String>> combinacionesQuitadas = new LinkedHashMap<>();
         Set<String> disponibles = precios == null ? null : precios.stream()
@@ -104,7 +116,8 @@ public class ActualizarPaqueteUseCase {
                 if (conTabla) deFijo.add(folio);
             } else if (!conTabla) {
                 combinacionesQuitadas.computeIfAbsent(describir(p, comidaId, personas), k -> new ArrayList<>()).add(folio);
-            } else if (disponibles != null && !disponibles.contains(ValidadorPaquete.clave(comidaId, personas == null ? 0 : personas))) {
+            } else if (sinCopia.contains(folio) && disponibles != null
+                    && !disponibles.contains(ValidadorPaquete.clave(comidaId, personas == null ? 0 : personas))) {
                 combinacionesQuitadas.computeIfAbsent(describir(p, comidaId, personas), k -> new ArrayList<>()).add(folio);
             }
         }
@@ -142,11 +155,5 @@ public class ActualizarPaqueteUseCase {
             .map(c -> c.getNombre())
             .findFirst().orElse("comida " + comidaId);
         return comida + " con " + personas + " personas";
-    }
-
-    private static String folios(List<Object[]> abiertas) {
-        Set<String> folios = new LinkedHashSet<>();
-        for (Object[] fila : abiertas) folios.add((String) fila[0]);
-        return String.join(", ", folios);
     }
 }

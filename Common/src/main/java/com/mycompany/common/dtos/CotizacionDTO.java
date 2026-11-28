@@ -30,6 +30,11 @@ public class CotizacionDTO {
     private LocalTime horaFin;
     private Long paqueteId;
     private String nombrePaquete;
+    /**
+     * Solo de salida: descripción del paquete como se vendió (la copia que guarda la cotización;
+     * "" si el paquete no tenía descripción). Nula si la cotización no tiene copia del paquete.
+     */
+    private String paqueteDescripcion;
     /** Comida elegida (paquetes con tabla de precios). */
     private Long comidaId;
     private String comidaNombre;
