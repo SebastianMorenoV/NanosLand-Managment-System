@@ -12,7 +12,7 @@ Aplicación de escritorio para administrar el negocio de **NanosLand**, un saló
 - **Cotizaciones**: armado de una cotización para un cliente a partir de un paquete (con su comida y número de personas, si aplica) y servicios extra, con selección de fecha y turno según la disponibilidad de la agenda. El paquete lleva el descuento que toque por la fecha del evento. Cada cotización guarda el precio pactado del paquete y su descuento: si después cambian los precios del catálogo o los descuentos, las cotizaciones hechas conservan el suyo.
 - **Lista de cotizaciones**: por confirmar, confirmadas, vencidas y canceladas, desde donde se abren para editarlas, cobrar o generar el contrato.
 - **Eventos**: eventos confirmados, en curso y realizados, con detalle, cancelación y reprogramación.
-- **Logística**: seguimiento del estado de cada servicio contratado para un evento.
+- **Logística**: seguimiento del estado de cada servicio contratado para un evento. Lo que incluye el paquete y cada servicio extra van en registros separados, cada uno con su cantidad y sus datos (hora, ubicación, especificaciones), aunque sea el mismo servicio (p. ej. los bollitos del paquete y 100 bollitos extra temáticos).
 - **Estado de cuenta**: pagos recibidos, cargos extra y saldo pendiente de cada evento.
 - **Ventas extra**: venta de productos aparte de los eventos (por ejemplo, calcetines), que cuenta como ingreso del negocio sin afectar a ningún evento.
 - **Reportes**: ingresos, adeudos, eventos y oportunidades de recompra, con exportación a PDF.

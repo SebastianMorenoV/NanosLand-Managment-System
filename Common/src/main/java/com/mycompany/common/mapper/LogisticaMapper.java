@@ -18,6 +18,7 @@ public class LogisticaMapper {
         dto.setUbicacionMontaje(entidad.getUbicacionMontaje());
         dto.setResponsableTurno(entidad.getResponsableTurno());
         dto.setEstado(entidad.getEstado());
+        dto.setExtra(entidad.getOrigen() == com.mycompany.persistencia.enums.OrigenLogistica.EXTRA);
 
         if (entidad.getEvento() != null) {
             dto.setEventoId(entidad.getEvento().getId());

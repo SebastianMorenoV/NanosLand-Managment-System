@@ -5,6 +5,7 @@
 package com.mycompany.persistencia.dominio;
 
 import com.mycompany.persistencia.enums.EstadoLogistica;
+import com.mycompany.persistencia.enums.OrigenLogistica;
 import jakarta.persistence.*;
 import java.time.LocalTime;
 import lombok.Getter;
@@ -53,4 +54,22 @@ public class LogisticaServicio {
     @JoinColumn(name = "evento_id")
     private Evento evento;
 
+    // Lo que incluye el paquete y cada extra van en registros separados, cada uno con sus datos.
+    // Las tres columnas son opcionales: los registros de antes de separarlos no las tienen hasta
+    // que la corrección al arrancar (o la siguiente edición de la cotización) los separa.
+
+    /** Del paquete o de un extra. Nulo en registros de antes de separarlos. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private OrigenLogistica origen;
+
+    /** Cantidad de este registro (la que va también al inicio de las especificaciones). */
+    private Integer cantidad;
+
+    /**
+     * Solo de un extra: sus datos tal como estaban en la cotización (servicio, hora, especificaciones,
+     * desglose y ubicación). Así se reconoce el extra aunque aquí se editen esos datos.
+     */
+    @Column(name = "clave_extra", length = 1500)
+    private String claveExtra;
 }

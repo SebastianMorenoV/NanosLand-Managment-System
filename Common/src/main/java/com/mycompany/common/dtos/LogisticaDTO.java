@@ -23,4 +23,6 @@ public class LogisticaDTO {
     private String responsableTurno;
     private LocalTime horaRequerida;
     private EstadoLogistica estado;
+    /** Es un servicio extra de la cotización (no lo que incluye el paquete). */
+    private boolean extra;
 }

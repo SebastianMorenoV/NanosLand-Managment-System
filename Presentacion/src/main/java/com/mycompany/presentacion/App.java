@@ -224,6 +224,9 @@ public class App extends Application {
         // Cotizaciones de antes del precio pactado del paquete.
         correccionAlArrancar(() -> contexto.getBean(
                 com.example.negocio.cotizacion.usecase.CompletarPrecioPaqueteUseCase.class).completar());
+        // Logística de antes: lo del paquete y los extras de un mismo servicio iban en un solo registro.
+        correccionAlArrancar(() -> contexto.getBean(
+                com.example.negocio.logistica.usecase.SepararLogisticaExtrasUseCase.class).separar());
     }
 
     private static void correccionAlArrancar(Runnable correccion) {

@@ -154,7 +154,9 @@ public class LogisticaController {
                 }
 
                 // Nombre del servicio
-                Label lblNombre = new Label(item.getNombreServicio() != null ? item.getNombreServicio() : "Servicio");
+                // Un extra va aparte de lo que incluye el paquete, aunque sea el mismo servicio.
+                Label lblNombre = new Label((item.getNombreServicio() != null ? item.getNombreServicio() : "Servicio")
+                        + (item.isExtra() ? " · extra" : ""));
                 lblNombre.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 14px;");
 
                 // Hora
